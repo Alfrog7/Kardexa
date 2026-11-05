@@ -20,6 +20,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Glosario de términos de negocio y su nombre en el código.
 - Contrato OpenAPI 3.1 de la API v1 (27 operaciones).
 
+- Esqueleto del backend: Spring Boot 4.1.2 con Maven Wrapper, seis módulos hexagonales, objetos de valor `Money` y `Quantity`, errores Problem Details, prefijo `/api/v1`, Swagger UI, Actuator, Flyway y JaCoCo.
+- Siete reglas de arquitectura con ArchUnit que hacen fallar el build si se rompe el ADR 0002.
+
 ### Cambiado
 
 - El stack pasa de Spring Boot 3 a **Spring Boot 4.1**, porque la rama 3.x ya no tiene soporte gratuito (ADR 0001).
@@ -28,3 +31,4 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 ### Corregido
 
 - La plantilla de PR usa `Closes #N` para que GitHub cierre el issue al hacer merge.
+- El `.gitignore` ya no ignora los paquetes `port/out` y `adapter/out` (la regla `out/` de IntelliJ se limita a la raíz de cada proyecto).
