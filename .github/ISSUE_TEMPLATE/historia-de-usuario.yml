@@ -1,0 +1,49 @@
+name: Historia de usuario
+description: Funcionalidad descrita desde el punto de vista de un actor.
+title: "HU-XX: "
+labels: ["feature"]
+body:
+  - type: input
+    id: actor
+    attributes:
+      label: Como…
+      placeholder: administrador / empleado
+    validations:
+      required: true
+  - type: input
+    id: deseo
+    attributes:
+      label: Quiero…
+      placeholder: registrar una venta
+    validations:
+      required: true
+  - type: input
+    id: beneficio
+    attributes:
+      label: Para…
+      placeholder: que el stock se descuente automáticamente
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Formato Dado / Cuando / Entonces.
+      value: |
+        - **Dado** …
+          **Cuando** …
+          **Entonces** …
+    validations:
+      required: true
+  - type: input
+    id: requisitos
+    attributes:
+      label: Requisitos relacionados
+      placeholder: RF-01, RN-03
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad (MoSCoW)
+      options: ["Must", "Should", "Could", "Won't (por ahora)"]
+    validations:
+      required: true
