@@ -6,7 +6,8 @@ Kardexa es un proyecto personal, pero se trabaja con el mismo flujo que un equip
 
 1. **Issue primero.** Cada historia de usuario o tarea tiene su issue, con etiquetas y milestone de su fase.
 2. **Rama desde `main`.** Nunca se hace commit directo a `main`.
-3. **PR que cierra el issue.** Usa la plantilla, incluye `Cierra #N` y copia las etiquetas y el milestone del issue.
+3. **PR que cierra el issue.** Usa la plantilla, incluye `Closes #N` y copia las etiquetas y el milestone del issue.
+   > GitHub solo reconoce palabras clave en inglés (`Closes`, `Fixes`, `Resolves`); con `Cierra #N` el issue no se cierra solo. Es la única excepción a la regla de idioma.
 4. **Merge con squash.** El título del PR queda como mensaje del commit en `main`.
 5. **Al cerrar una fase:** tag `vX.Y-faseN` y entrada en el [CHANGELOG](CHANGELOG.md).
 

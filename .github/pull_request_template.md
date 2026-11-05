@@ -2,7 +2,8 @@
 
 <!-- Una o dos frases: qué resuelve este PR y por qué. -->
 
-Cierra #
+<!-- GitHub solo cierra issues con palabras clave en inglés: Closes / Fixes / Resolves. -->
+Closes #
 
 ## Qué cambió
 
