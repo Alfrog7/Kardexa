@@ -8,6 +8,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Agregado
 
+- **HU-05 · Gestionar categorías (API):** `GET`, `POST` y `PUT /api/v1/categories`, con nombre único sin distinguir mayúsculas y desactivación sin borrado. Es la primera funcionalidad de punta a punta del backend.
+- Tests de integración contra PostgreSQL real con Testcontainers. La CI ya no necesita un servicio de base de datos.
+- Respuestas Problem Details 404 (`recurso-no-encontrado`) y 409 (`conflicto`) para las excepciones de dominio.
+
 - Licencia MIT, `.gitignore`, `.gitattributes` y `.editorconfig`.
 - Plantilla de pull request y plantillas de issue (historia de usuario, tarea, bug).
 - Guía de contribución con convención de ramas, commits y etiquetas.

@@ -5,7 +5,7 @@ API REST de Kardexa: Java 21 · Spring Boot 4.1 · PostgreSQL · arquitectura he
 ## Requisitos
 
 - JDK 21 (no hace falta instalar Maven: se usa el wrapper `mvnw`)
-- PostgreSQL 18 en local, o Docker para levantarlo con `docker-compose.yml` (fase 2)
+- Docker en marcha: los tests de integración levantan PostgreSQL 18 con Testcontainers, y `docker-compose.yml` lo levanta para desarrollo
 
 ## Comandos
 

@@ -8,21 +8,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Arranca la aplicación completa contra un PostgreSQL real.
- *
- * <p>Solo corre si existe la variable {@code DB_URL}: en la CI la define el workflow (servicio de
- * PostgreSQL) y en local basta con {@code docker compose up -d} y exportar {@code DB_URL}.
+ * Arranca la aplicación completa contra un PostgreSQL real levantado con Testcontainers
+ * (requiere Docker en marcha).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@EnabledIfEnvironmentVariable(named = "DB_URL", matches = ".+")
+@Import(TestcontainersConfiguration.class)
 @DisplayName("Arranque completo contra PostgreSQL")
 class KardexaApplicationSmokeTest {
 
