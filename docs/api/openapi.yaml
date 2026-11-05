@@ -1,0 +1,966 @@
+openapi: 3.1.0
+info:
+  title: Kardexa API
+  version: 1.0.0-draft
+  summary: Inventario y ventas para pequeños negocios.
+  description: |
+    Contrato de diseño de la API REST de Kardexa (fase 1).
+
+    - Autenticación con JWT propio: `Authorization: Bearer <token>`.
+    - Errores en formato Problem Details (RFC 9457), con mensajes en español.
+    - Montos en PEN con 2 decimales y cantidades con hasta 3 decimales, enviados como **string decimal** para no perder precisión.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+tags:
+  - name: auth
+    description: Autenticación (HU-01, HU-02, HU-04)
+  - name: users
+    description: Usuarios y roles (HU-03)
+  - name: catalog
+    description: Categorías y productos (HU-05 a HU-07)
+  - name: inventory
+    description: Stock, kárdex y ajustes (HU-08 a HU-10)
+  - name: purchasing
+    description: Proveedores y compras (HU-11 a HU-13)
+  - name: sales
+    description: Ventas y comprobantes (HU-14 a HU-16)
+  - name: dashboard
+    description: Indicadores (HU-17)
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/setup:
+    post:
+      tags: [auth]
+      operationId: registerFirstAdmin
+      summary: Registra al primer administrador (RF-01)
+      description: Solo funciona mientras no exista ningún usuario.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterAdminRequest' }
+      responses:
+        '201':
+          description: Administrador creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403':
+          description: Ya existen usuarios; el registro inicial está cerrado
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Inicia sesión (RF-02)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Credenciales válidas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401':
+          description: Correo o contraseña incorrectos, o usuario desactivado
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getCurrentUser
+      summary: Devuelve el usuario autenticado
+      responses:
+        '200':
+          description: Usuario actual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me/password:
+    put:
+      tags: [auth]
+      operationId: changeOwnPassword
+      summary: Cambia la contraseña propia (RF-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '204': { description: Contraseña actualizada }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /users:
+    get:
+      tags: [users]
+      operationId: listUsers
+      summary: Lista usuarios (solo ADMIN)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de usuarios
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [users]
+      operationId: createUser
+      summary: Crea un usuario (RF-03, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateUserRequest' }
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [users]
+      operationId: updateUser
+      summary: Cambia nombre, rol o estado (RF-03, RN-11)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
+  /categories:
+    get:
+      tags: [catalog]
+      operationId: listCategories
+      summary: Lista categorías
+      responses:
+        '200':
+          description: Categorías
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Category' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [catalog]
+      operationId: createCategory
+      summary: Crea una categoría (RF-06, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '201':
+          description: Categoría creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      tags: [catalog]
+      operationId: updateCategory
+      summary: Edita o desactiva una categoría (RF-06)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '200':
+          description: Categoría actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /products:
+    get:
+      tags: [catalog]
+      operationId: searchProducts
+      summary: Busca productos por nombre o código (RF-08)
+      parameters:
+        - name: q
+          in: query
+          description: Texto contenido en el nombre o el código
+          schema: { type: string, maxLength: 100 }
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: criticalOnly
+          in: query
+          description: Solo productos con stock ≤ mínimo (RF-14)
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de productos con su stock
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [catalog]
+      operationId: createProduct
+      summary: Crea un producto con stock 0 (RF-07, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductRequest' }
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [catalog]
+      operationId: getProduct
+      summary: Obtiene un producto
+      responses:
+        '200':
+          description: Producto
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [catalog]
+      operationId: updateProduct
+      summary: Edita un producto o lo desactiva (RF-07, RF-09)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductRequest' }
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /products/{id}/kardex:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [inventory]
+      operationId: getKardex
+      summary: Kárdex del producto en un rango de fechas (RF-12)
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Saldo inicial, movimientos y saldo final
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Kardex' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /stock-adjustments:
+    post:
+      tags: [inventory]
+      operationId: adjustStock
+      summary: Registra un ajuste de stock (RF-11, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockAdjustmentRequest' }
+      responses:
+        '201':
+          description: Ajuste registrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StockMovement' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
+  /suppliers:
+    get:
+      tags: [purchasing]
+      operationId: listSuppliers
+      summary: Lista proveedores
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Proveedores
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Supplier' }
+    post:
+      tags: [purchasing]
+      operationId: createSupplier
+      summary: Registra un proveedor (RF-15, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierRequest' }
+      responses:
+        '201':
+          description: Proveedor creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Supplier' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /suppliers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      tags: [purchasing]
+      operationId: updateSupplier
+      summary: Edita un proveedor (RF-15)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierRequest' }
+      responses:
+        '200':
+          description: Proveedor actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Supplier' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /purchases:
+    get:
+      tags: [purchasing]
+      operationId: listPurchases
+      summary: Lista compras
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de compras
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchasePage' }
+    post:
+      tags: [purchasing]
+      operationId: registerPurchase
+      summary: Registra una compra que suma stock (RF-16, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PurchaseRequest' }
+      responses:
+        '201':
+          description: Compra registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Purchase' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
+
+  /purchases/{id}/void:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [purchasing]
+      operationId: voidPurchase
+      summary: Anula una compra (RF-17, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoidRequest' }
+      responses:
+        '200':
+          description: Compra anulada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Purchase' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
+  /sales:
+    get:
+      tags: [sales]
+      operationId: listSales
+      summary: Historial de ventas (RF-21; un EMPLOYEE solo ve las suyas)
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - name: sellerId
+          in: query
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de ventas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalePage' }
+    post:
+      tags: [sales]
+      operationId: registerSale
+      summary: Registra una venta que descuenta stock (RF-18, RF-19)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaleRequest' }
+      responses:
+        '201':
+          description: Venta registrada con su comprobante
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sale' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
+  /sales/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [sales]
+      operationId: getSale
+      summary: Comprobante de una venta (RF-19)
+      responses:
+        '200':
+          description: Venta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sale' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sales/{id}/void:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [sales]
+      operationId: voidSale
+      summary: Anula una venta y devuelve el stock (RF-20, solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoidRequest' }
+      responses:
+        '200':
+          description: Venta anulada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sale' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
+  /dashboard:
+    get:
+      tags: [dashboard]
+      operationId: getDashboard
+      summary: Indicadores del panel (RF-22, RF-23, RF-24)
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Ventas por día, más vendidos y stock crítico
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dashboard' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    From:
+      name: from
+      in: query
+      description: Fecha inicial inclusiva (zona America/Lima)
+      schema: { type: string, format: date }
+    To:
+      name: to
+      in: query
+      description: Fecha final inclusiva (zona America/Lima)
+      schema: { type: string, format: date }
+
+  responses:
+    ValidationError:
+      description: Datos inválidos
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ValidationProblem' }
+    Unauthorized:
+      description: Falta el token o venció
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: El rol no permite esta operación
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: El recurso no existe
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Ya existe un recurso con ese valor único (código, RUC, correo)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ConcurrentModification:
+      description: El stock cambió por otra operación; reintentar (ADR 0006)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    BusinessRuleViolation:
+      description: Se viola una regla de negocio (por ejemplo, stock insuficiente)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: https://kardexa.dev/problemas/stock-insuficiente
+            title: Stock insuficiente
+            status: 422
+            detail: 'Stock insuficiente para "Arroz 5 kg": disponible 2, solicitado 3.'
+            rule: RN-01
+
+  schemas:
+    Decimal2:
+      type: string
+      pattern: '^-?\d{1,10}(\.\d{1,2})?$'
+      description: Monto en PEN con hasta 2 decimales
+      examples: ['12.50']
+    Decimal3:
+      type: string
+      pattern: '^\d{1,9}(\.\d{1,3})?$'
+      description: Cantidad con hasta 3 decimales
+      examples: ['1.250']
+
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details
+      required: [title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        rule:
+          type: string
+          description: Regla de negocio violada, si aplica (RN-XX)
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+
+    Role:
+      type: string
+      enum: [ADMIN, EMPLOYEE]
+    User:
+      type: object
+      required: [id, fullName, email, role, active]
+      properties:
+        id: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        active: { type: boolean }
+    UserPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/User' }
+    RegisterAdminRequest:
+      type: object
+      required: [fullName, email, password]
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 72 }
+    CreateUserRequest:
+      allOf:
+        - $ref: '#/components/schemas/RegisterAdminRequest'
+        - type: object
+          required: [role]
+          properties:
+            role: { $ref: '#/components/schemas/Role' }
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 120 }
+        role: { $ref: '#/components/schemas/Role' }
+        active: { type: boolean }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    TokenResponse:
+      type: object
+      required: [accessToken, tokenType, expiresIn, user]
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string, const: Bearer }
+        expiresIn:
+          type: integer
+          description: Segundos hasta el vencimiento
+        user: { $ref: '#/components/schemas/User' }
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string, minLength: 8, maxLength: 72 }
+
+    Category:
+      type: object
+      required: [id, name, active]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        active: { type: boolean }
+    CategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 60 }
+        active: { type: boolean, default: true }
+
+    Unit:
+      type: string
+      enum: [UNIT, KG, LITER, BOX]
+    ProductRequest:
+      type: object
+      required: [code, name, categoryId, unit, salePrice, minStock]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 40 }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        categoryId: { type: string, format: uuid }
+        unit: { $ref: '#/components/schemas/Unit' }
+        salePrice: { $ref: '#/components/schemas/Decimal2' }
+        minStock: { $ref: '#/components/schemas/Decimal3' }
+        active: { type: boolean, default: true }
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductRequest'
+        - type: object
+          required: [id, stock, referenceCost, critical]
+          properties:
+            id: { type: string, format: uuid }
+            categoryName: { type: string }
+            referenceCost: { $ref: '#/components/schemas/Decimal2' }
+            stock: { $ref: '#/components/schemas/Decimal3' }
+            critical:
+              type: boolean
+              description: stock ≤ minStock (RN-09)
+    ProductPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/Product' }
+
+    Direction:
+      type: string
+      enum: [IN, OUT]
+    MovementType:
+      type: string
+      enum: [PURCHASE, SALE, ADJUSTMENT, PURCHASE_VOID, SALE_VOID]
+    StockMovement:
+      type: object
+      required: [id, occurredAt, type, direction, quantity, balanceAfter, sourceId, user]
+      properties:
+        id: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        type: { $ref: '#/components/schemas/MovementType' }
+        direction: { $ref: '#/components/schemas/Direction' }
+        quantity: { $ref: '#/components/schemas/Decimal3' }
+        balanceAfter: { $ref: '#/components/schemas/Decimal3' }
+        sourceId: { type: string, format: uuid }
+        sourceLabel:
+          type: string
+          description: Documento de origen legible, por ejemplo V-000123
+        user: { type: string, description: Nombre del usuario }
+    Kardex:
+      type: object
+      required: [productId, productName, openingBalance, closingBalance, movements]
+      properties:
+        productId: { type: string, format: uuid }
+        productName: { type: string }
+        openingBalance: { $ref: '#/components/schemas/Decimal3' }
+        closingBalance: { $ref: '#/components/schemas/Decimal3' }
+        movements:
+          type: array
+          items: { $ref: '#/components/schemas/StockMovement' }
+    StockAdjustmentRequest:
+      type: object
+      required: [productId, direction, quantity, reason]
+      properties:
+        productId: { type: string, format: uuid }
+        direction: { $ref: '#/components/schemas/Direction' }
+        quantity: { $ref: '#/components/schemas/Decimal3' }
+        reason:
+          type: string
+          enum: [SHRINKAGE, PHYSICAL_COUNT, CORRECTION]
+        note: { type: string, maxLength: 255 }
+
+    SupplierRequest:
+      type: object
+      required: [ruc, businessName]
+      properties:
+        ruc: { type: string, pattern: '^\d{11}$' }
+        businessName: { type: string, minLength: 2, maxLength: 150 }
+        phone: { type: string, maxLength: 20 }
+        email: { type: string, format: email }
+        active: { type: boolean, default: true }
+    Supplier:
+      allOf:
+        - $ref: '#/components/schemas/SupplierRequest'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+
+    DocumentStatus:
+      type: string
+      enum: [REGISTERED, COMPLETED, VOIDED]
+    VoidRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 255 }
+
+    PurchaseItemRequest:
+      type: object
+      required: [productId, quantity, unitCost]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { $ref: '#/components/schemas/Decimal3' }
+        unitCost: { $ref: '#/components/schemas/Decimal2' }
+    PurchaseRequest:
+      type: object
+      required: [supplierId, purchaseDate, items]
+      properties:
+        supplierId: { type: string, format: uuid }
+        supplierDocument: { type: string, maxLength: 40 }
+        purchaseDate: { type: string, format: date }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/PurchaseItemRequest' }
+    Purchase:
+      type: object
+      required: [id, supplier, purchaseDate, status, total, items]
+      properties:
+        id: { type: string, format: uuid }
+        supplier: { $ref: '#/components/schemas/Supplier' }
+        supplierDocument: { type: string }
+        purchaseDate: { type: string, format: date }
+        status: { $ref: '#/components/schemas/DocumentStatus' }
+        voidReason: { type: string }
+        total: { $ref: '#/components/schemas/Decimal2' }
+        items:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/PurchaseItemRequest'
+              - type: object
+                properties:
+                  productName: { type: string }
+                  subtotal: { $ref: '#/components/schemas/Decimal2' }
+    PurchasePage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/Purchase' }
+
+    SaleItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { $ref: '#/components/schemas/Decimal3' }
+    SaleRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/SaleItemRequest' }
+    SaleItem:
+      type: object
+      required: [productId, productName, quantity, unitPrice, subtotal]
+      properties:
+        productId: { type: string, format: uuid }
+        productName: { type: string }
+        quantity: { $ref: '#/components/schemas/Decimal3' }
+        unitPrice: { $ref: '#/components/schemas/Decimal2' }
+        subtotal: { $ref: '#/components/schemas/Decimal2' }
+    Sale:
+      type: object
+      required: [id, number, soldAt, seller, status, total, items]
+      properties:
+        id: { type: string, format: uuid }
+        number:
+          type: string
+          pattern: '^V-\d{6,}$'
+          examples: [V-000123]
+        soldAt: { type: string, format: date-time }
+        seller: { type: string, description: Nombre del vendedor }
+        status: { $ref: '#/components/schemas/DocumentStatus' }
+        voidReason: { type: string }
+        total: { $ref: '#/components/schemas/Decimal2' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SaleItem' }
+    SalePage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/Sale' }
+
+    Dashboard:
+      type: object
+      required: [salesByDay, topProducts, criticalStock]
+      properties:
+        salesByDay:
+          type: array
+          items:
+            type: object
+            required: [date, total, count]
+            properties:
+              date: { type: string, format: date }
+              total: { $ref: '#/components/schemas/Decimal2' }
+              count: { type: integer }
+        topProducts:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required: [productId, productName, quantity]
+            properties:
+              productId: { type: string, format: uuid }
+              productName: { type: string }
+              quantity: { $ref: '#/components/schemas/Decimal3' }
+        criticalStock:
+          type: array
+          items: { $ref: '#/components/schemas/Product' }
+
+    PageMeta:
+      type: object
+      required: [page, size, totalElements, totalPages]
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }

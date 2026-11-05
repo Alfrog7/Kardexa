@@ -5,9 +5,9 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-0F766E"></a>
-  <img alt="Estado: fase 0" src="https://img.shields.io/badge/estado-fase%200%20%C2%B7%20requisitos-F59E0B">
+  <img alt="Estado: fase 1" src="https://img.shields.io/badge/estado-fase%201%20%C2%B7%20dise%C3%B1o-F59E0B">
   <img alt="Java 21" src="https://img.shields.io/badge/Java-21-0F172A?logo=openjdk&logoColor=white">
-  <img alt="Spring Boot 3" src="https://img.shields.io/badge/Spring%20Boot-3-0F172A?logo=springboot&logoColor=6DB33F">
+  <img alt="Spring Boot 4" src="https://img.shields.io/badge/Spring%20Boot-4-0F172A?logo=springboot&logoColor=6DB33F">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-0F172A?logo=react&logoColor=61DAFB">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-Flyway-0F172A?logo=postgresql&logoColor=4169E1">
 </p>
@@ -31,23 +31,23 @@ Este repositorio también documenta **el proceso**: requisitos, diagramas, decis
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 21 · Spring Boot 3 · arquitectura hexagonal · Spring Security con JWT propio |
-| Base de datos | PostgreSQL · Flyway |
+| Backend | Java 21 · Spring Boot 4 · arquitectura hexagonal · Spring Security con JWT propio |
+| Base de datos | PostgreSQL 18 · Flyway |
 | Frontend (panel) | React · TypeScript · Vite |
 | Documentación de API | OpenAPI / Swagger |
 | Landing | Astro |
 | Entorno local | Docker Compose (PostgreSQL) |
 | CI | GitHub Actions |
 
-> El stack se confirma con un ADR en la fase 1. Sin servicios externos de autenticación: todas las APIs son propias.
+> Decisión y alternativas en el [ADR 0001](docs/adr/0001-stack-tecnologico.md). Sin servicios externos de autenticación: todas las APIs son propias.
 
 ## Plan por fases
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 0 · Problemática | Problema, actores, alcance, requisitos e historias de usuario | 🟡 En curso |
-| 1 · Diseño | C4, modelo ER, flujos, contrato OpenAPI, ADRs | ⚪ Pendiente |
-| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | ⚪ Pendiente |
+| 0 · Problemática | Problema, actores, alcance, requisitos e historias de usuario | ✅ Completada |
+| 1 · Diseño | C4, modelo ER, flujos, contrato OpenAPI, ADRs | ✅ Completada |
+| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | 🟡 En curso |
 | 3 · Autenticación | Registro, login, roles, JWT | ⚪ Pendiente |
 | 4 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ⚪ Pendiente |
 | 5 · Proveedores y compras | Una compra suma stock | ⚪ Pendiente |
@@ -78,6 +78,14 @@ Kardexa/
 - [01 · Problemática](docs/01-problematica.md): contexto, problema, actores, objetivos y alcance del MVP.
 - [02 · Requisitos](docs/02-requisitos.md): funcionales, no funcionales, reglas de negocio y trazabilidad.
 - [03 · Historias de usuario](docs/03-historias-de-usuario.md): 18 historias con criterios de aceptación.
+**Fase 1 · Diseño**
+
+- [Arquitectura](docs/arquitectura/README.md): C4 (contexto, contenedores, componentes), modelo ER, flujos y glosario.
+- [Decisiones (ADR)](docs/adr/README.md): stack, hexagonal, nombres, monorepo, frontend y concurrencia.
+- [Contrato de la API](docs/api/README.md): OpenAPI 3.1 con 27 operaciones.
+
+**Proceso**
+
 - [Bitácora](docs/bitacora/README.md): qué hice, qué aprendí y qué decidí cada semana.
 
 **Proyecto**
