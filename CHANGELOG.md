@@ -11,6 +11,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Licencia MIT, `.gitignore`, `.gitattributes` y `.editorconfig`.
 - Plantilla de pull request y plantillas de issue (historia de usuario, tarea, bug).
 - Guía de contribución con convención de ramas, commits y etiquetas.
+- Identidad visual: isotipo, logo (claro y oscuro), banner y guía de marca.
+- README con banner, badges, stack previsto, plan por fases y estructura.
 
 ### Corregido
 

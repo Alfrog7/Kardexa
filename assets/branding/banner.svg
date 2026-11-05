@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="t d">
+  <title id="t">Kardexa</title>
+  <desc id="d">Inventario y ventas para pequeños negocios</desc>
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F0FDFA"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <pattern id="cuadricula" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#CCFBF1" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="320" fill="url(#fondo)"/>
+  <rect width="1280" height="320" fill="url(#cuadricula)" opacity="0.7"/>
+
+  <!-- Isotipo -->
+  <g transform="translate(80 96) scale(2)">
+    <rect width="64" height="64" rx="14" fill="#0f766e"/>
+    <rect x="16" y="14" width="8" height="36" rx="2" fill="#ffffff"/>
+    <line x1="28" y1="33" x2="44" y2="49" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+    <line x1="28" y1="31" x2="40" y2="19" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
+    <polygon points="48,11 48,25 34,11" fill="#F59E0B"/>
+  </g>
+
+  <!-- Textos -->
+  <g font-family="'Segoe UI', Inter, 'Helvetica Neue', Arial, sans-serif">
+    <text x="240" y="150" font-size="64" font-weight="700" letter-spacing="-1" fill="#0F172A">Kardexa</text>
+    <text x="242" y="192" font-size="24" fill="#334155">Inventario y ventas para pequeños negocios</text>
+    <text x="242" y="228" font-size="16" fill="#64748B">Spring Boot · React · PostgreSQL · Arquitectura hexagonal</text>
+  </g>
+
+  <!-- Tarjeta de kárdex -->
+  <g font-family="'Segoe UI', Inter, 'Helvetica Neue', Arial, sans-serif">
+    <rect x="880" y="48" width="340" height="224" rx="16" fill="#FFFFFE" stroke="#99F6E4" stroke-width="2"/>
+    <text x="904" y="82" font-size="14" font-weight="700" fill="#0F766E">KÁRDEX · Arroz 5 kg</text>
+    <g font-size="12" fill="#64748B">
+      <text x="904" y="112">Fecha</text>
+      <text x="1032" y="112" text-anchor="end">Entrada</text>
+      <text x="1110" y="112" text-anchor="end">Salida</text>
+      <text x="1196" y="112" text-anchor="end">Saldo</text>
+    </g>
+    <rect x="896" y="122" width="308" height="28" rx="6" fill="#F8FAFC"/>
+    <rect x="896" y="178" width="308" height="28" rx="6" fill="#F8FAFC"/>
+    <g font-size="14" fill="#334155">
+      <text x="904" y="141">03/11</text>
+      <text x="1032" y="141" text-anchor="end">50</text>
+      <text x="1110" y="141" text-anchor="end">—</text>
+      <text x="1196" y="141" text-anchor="end" font-weight="700">50</text>
+      <text x="904" y="169">04/11</text>
+      <text x="1032" y="169" text-anchor="end">—</text>
+      <text x="1110" y="169" text-anchor="end">12</text>
+      <text x="1196" y="169" text-anchor="end" font-weight="700">38</text>
+      <text x="904" y="197">05/11</text>
+      <text x="1032" y="197" text-anchor="end">—</text>
+      <text x="1110" y="197" text-anchor="end">30</text>
+      <text x="1196" y="197" text-anchor="end" font-weight="700" fill="#F59E0B">8</text>
+    </g>
+    <text x="904" y="238" font-size="12" fill="#64748B">Stock</text>
+    <rect x="948" y="229" width="248" height="10" rx="5" fill="#CCFBF1"/>
+    <rect x="948" y="229" width="40" height="10" rx="5" fill="#F59E0B"/>
+    <text x="1196" y="258" font-size="12" font-weight="700" fill="#F59E0B" text-anchor="end">Bajo stock mínimo (10)</text>
+  </g>
+</svg>
