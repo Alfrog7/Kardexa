@@ -1,48 +1,36 @@
-## Resumen
+## Qué resuelve
 
-<!-- Una o dos frases: qué resuelve este PR y por qué. -->
+<!-- Una o dos frases: la historia de usuario o la tarea, y por qué importa. -->
 
 <!-- GitHub solo cierra issues con palabras clave en inglés: Closes / Fixes / Resolves. -->
 Closes #
 
-## Qué cambió
+## Qué hace ahora el sistema
 
-<!-- Lista de cambios concretos (archivos, módulos, endpoints, pantallas). -->
-
--
-
-## Diagnóstico
-
-<!-- Si corrige algo: cuál era el problema y su causa raíz. Si es una funcionalidad nueva: qué necesidad cubre. -->
-
-## Arreglos / solución aplicada
-
-<!-- Cómo se resolvió y por qué se eligió este enfoque frente a otros. -->
-
-## Fuera de alcance
-
-<!-- Lo que deliberadamente NO se hace aquí (y en qué issue/fase se hará). -->
+<!-- Comportamiento observable: endpoints, pantallas, reglas de negocio. No una lista de archivos. -->
 
 -
 
-## Plan de pruebas
+## Cómo probarlo
 
-<!-- Pasos para verificar el cambio. Marca lo que ya ejecutaste. -->
+<!-- Comandos o peticiones que cualquiera puede ejecutar para ver el cambio funcionando. -->
 
-- [ ]
+```bash
 
-## Evidencias
+```
 
-<!-- Salida de tests, comandos, respuestas de la API, enlaces a diagramas renderizados… -->
+## Evidencia
 
-## Notas del merge
+<!-- Resumen de los tests (cuántos, qué cubren) y estado de la CI. Nada de logs completos. -->
 
-<!-- Estrategia (squash / merge), migraciones, variables de entorno nuevas, pasos posteriores. -->
+## Decisiones y pendientes
+
+<!-- Opcional. Decisiones de diseño no obvias y lo que queda para otro issue. Bórralo si no aplica. -->
 
 ## Verificaciones
 
-- [ ] El título sigue la convención `tipo(alcance): descripción`
-- [ ] El PR tiene las mismas etiquetas y milestone que el issue que cierra
-- [ ] La documentación afectada está actualizada (README, docs/, CHANGELOG)
-- [ ] El build y los tests pasan en local (cuando aplique)
-- [ ] No se incluyen secretos ni archivos `.env`
+- [ ] Título con la convención `tipo(alcance): descripción`
+- [ ] Mismas etiquetas y milestone que el issue
+- [ ] Los tests cubren los criterios de aceptación
+- [ ] Documentación afectada actualizada (README, docs/, contrato OpenAPI, CHANGELOG)
+- [ ] Sin secretos ni archivos `.env`
