@@ -1,0 +1,24 @@
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, var(--color-surface-soft), var(--color-bg));
+}
+
+.login__card {
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 26rem;
+}
+
+.login__title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-1);
+}
+
+.login__form {
+  display: grid;
+  gap: var(--space-4);
+}
