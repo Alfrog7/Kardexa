@@ -1,0 +1,28 @@
+name: Tarea
+description: Trabajo técnico, documentación o configuración.
+labels: ["chore"]
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: ¿Por qué hace falta esta tarea?
+    validations:
+      required: true
+  - type: textarea
+    id: tareas
+    attributes:
+      label: Tareas
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+  - type: input
+    id: evidencia
+    attributes:
+      label: Evidencia esperada
+      placeholder: docs/…, endpoint, pantalla
