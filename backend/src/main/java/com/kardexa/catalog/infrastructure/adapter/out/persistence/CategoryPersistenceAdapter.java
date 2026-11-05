@@ -3,6 +3,8 @@ package com.kardexa.catalog.infrastructure.adapter.out.persistence;
 import com.kardexa.catalog.application.port.out.CategoryRepository;
 import com.kardexa.catalog.domain.exception.DuplicateCategoryNameException;
 import com.kardexa.catalog.domain.model.Category;
+import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations.violates;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,13 +56,4 @@ class CategoryPersistenceAdapter implements CategoryRepository {
         return jpa.existsByNameIgnoreCaseAndIdNot(name, excludedId);
     }
 
-    private static boolean violates(Throwable ex, String constraint) {
-        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
-            String message = cause.getMessage();
-            if (message != null && message.contains(constraint)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
