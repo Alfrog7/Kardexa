@@ -1,6 +1,8 @@
 package com.kardexa.shared.infrastructure.web;
 
+import com.kardexa.shared.domain.ConflictException;
 import com.kardexa.shared.domain.DomainException;
+import com.kardexa.shared.domain.NotFoundException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +21,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * Traduce las excepciones a respuestas Problem Details (RFC 9457) con mensajes en español.
  *
  * <ul>
- *   <li>{@link DomainException} → 422, con el campo {@code rule} (RN-XX).
+ *   <li>{@link NotFoundException} → 404 y {@link ConflictException} → 409.
+ *   <li>Cualquier otra {@link DomainException} → 422.
+ *   <li>Las tres incluyen el campo {@code rule} (RN-XX o RF-XX).
  *   <li>Errores de validación de Bean Validation → 400, con la lista {@code errors}.
  * </ul>
  */
@@ -30,9 +34,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     ProblemDetail handleDomainException(DomainException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+        return domainProblem(HttpStatus.UNPROCESSABLE_CONTENT, "regla-de-negocio", ex);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    ProblemDetail handleNotFound(NotFoundException ex) {
+        return domainProblem(HttpStatus.NOT_FOUND, "recurso-no-encontrado", ex);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    ProblemDetail handleConflict(ConflictException ex) {
+        return domainProblem(HttpStatus.CONFLICT, "conflicto", ex);
+    }
+
+    private static ProblemDetail domainProblem(HttpStatus status, String type, DomainException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
         problem.setTitle(ex.title());
-        problem.setType(URI.create(PROBLEM_BASE_URI + "regla-de-negocio"));
+        problem.setType(URI.create(PROBLEM_BASE_URI + type));
         problem.setProperty("rule", ex.rule());
         return problem;
     }
