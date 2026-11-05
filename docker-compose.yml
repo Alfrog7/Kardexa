@@ -1,0 +1,31 @@
+# Entorno local de Kardexa: solo la base de datos (ADR 0001).
+# El backend y el frontend se ejecutan en la máquina con ./mvnw y npm.
+#
+#   docker compose up -d      # levanta PostgreSQL en localhost:5432
+#   docker compose down       # lo detiene (los datos se conservan en el volumen)
+#   docker compose down -v    # lo detiene y BORRA los datos
+
+name: kardexa
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    container_name: kardexa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-kardexa}
+      POSTGRES_USER: ${DB_USER:-kardexa}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-kardexa}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/<versión>/docker
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

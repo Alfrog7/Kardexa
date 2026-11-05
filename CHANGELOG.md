@@ -19,10 +19,12 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Diagramas C4 de contexto, contenedores y componentes, modelo entidad-relación y flujos de venta, compra y ajuste, en Mermaid.
 - Glosario de términos de negocio y su nombre en el código.
 - Contrato OpenAPI 3.1 de la API v1 (27 operaciones).
-
 - Esqueleto del backend: Spring Boot 4.1.2 con Maven Wrapper, seis módulos hexagonales, objetos de valor `Money` y `Quantity`, errores Problem Details, prefijo `/api/v1`, Swagger UI, Actuator, Flyway y JaCoCo.
 - Siete reglas de arquitectura con ArchUnit que hacen fallar el build si se rompe el ADR 0002.
 - Esqueleto del frontend: React 19, TypeScript 7 en modo estricto, Vite 8 y React Router 8, organizado por funcionalidades, con layout del panel adaptable a móvil, pantalla de inicio de sesión, tokens de marca (claro/oscuro), cliente HTTP con Problem Details y 18 tests con Vitest.
+- Entorno local con `docker-compose.yml` (PostgreSQL 18.6) y `.env.example`.
+- CI con GitHub Actions: build y tests del backend contra PostgreSQL real, typecheck, lint, tests y build del frontend, ejecución por carpeta modificada y un check único "CI completa".
+- Prueba de arranque completo del backend (Flyway, Actuator y Swagger) contra PostgreSQL.
 
 ### Cambiado
 
