@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="64" viewBox="0 0 280 64" role="img" aria-labelledby="t">
+  <title id="t">Kardexa</title>
+  <rect width="64" height="64" rx="14" fill="#0F766E"/>
+  <rect x="16" y="14" width="8" height="36" rx="2" fill="#FFFFFF"/>
+  <line x1="28" y1="33" x2="44" y2="49" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="28" y1="31" x2="40" y2="19" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
+  <polygon points="48,11 48,25 34,11" fill="#F59E0B"/>
+  <text x="80" y="45" font-family="'Segoe UI', Inter, 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="-0.5" fill="#0F172A">Kardexa</text>
+</svg>
