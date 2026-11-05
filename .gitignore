@@ -50,7 +50,11 @@ pnpm-debug.log*
 *.iml
 *.iws
 *.ipr
-out/
+# Salida de IntelliJ solo en la raíz de cada proyecto. Un "out/" genérico ignoraría
+# los paquetes hexagonales application/port/out y adapter/out.
+/out/
+/backend/out/
+/frontend/out/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
