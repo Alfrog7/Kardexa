@@ -4,8 +4,9 @@
 </picture>
 
 <p align="center">
+  <a href="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-0F766E"></a>
-  <img alt="Estado: fase 1" src="https://img.shields.io/badge/estado-fase%201%20%C2%B7%20dise%C3%B1o-F59E0B">
+  <img alt="Estado: fase 2" src="https://img.shields.io/badge/estado-fase%202%20%C2%B7%20base%20t%C3%A9cnica-F59E0B">
   <img alt="Java 21" src="https://img.shields.io/badge/Java-21-0F172A?logo=openjdk&logoColor=white">
   <img alt="Spring Boot 4" src="https://img.shields.io/badge/Spring%20Boot-4-0F172A?logo=springboot&logoColor=6DB33F">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-0F172A?logo=react&logoColor=61DAFB">
@@ -27,19 +28,37 @@ Muchos negocios pequeños controlan su stock en un cuaderno o en Excel. No saben
 
 Este repositorio también documenta **el proceso**: requisitos, diagramas, decisiones de arquitectura (ADR) y una bitácora semanal.
 
-## Stack previsto
+## Stack
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 21 · Spring Boot 4 · arquitectura hexagonal · Spring Security con JWT propio |
+| Backend | Java 21 · Spring Boot 4.1 · arquitectura hexagonal · Spring Security con JWT propio (fase 3) |
 | Base de datos | PostgreSQL 18 · Flyway |
-| Frontend (panel) | React · TypeScript · Vite |
+| Frontend (panel) | React 19 · TypeScript 7 · Vite 8 · React Router 8 |
 | Documentación de API | OpenAPI / Swagger |
 | Landing | Astro |
 | Entorno local | Docker Compose (PostgreSQL) |
 | CI | GitHub Actions |
 
 > Decisión y alternativas en el [ADR 0001](docs/adr/0001-stack-tecnologico.md). Sin servicios externos de autenticación: todas las APIs son propias.
+
+## Cómo levantarlo en local
+
+Requisitos: **JDK 21**, **Node.js 22.12+** y **Docker** (solo para PostgreSQL).
+
+```bash
+docker compose up -d                       # 1. PostgreSQL en localhost:5432
+cd backend && ./mvnw spring-boot:run       # 2. API en http://localhost:8080
+cd frontend && npm install && npm run dev  # 3. Panel en http://localhost:5173
+```
+
+| URL | Qué es |
+|---|---|
+| http://localhost:5173 | Panel web |
+| http://localhost:8080/swagger-ui.html | Documentación interactiva de la API |
+| http://localhost:8080/actuator/health | Estado de la API |
+
+Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](frontend/README.md). En Windows se usa `mvnw.cmd` en lugar de `./mvnw`.
 
 ## Plan por fases
 
@@ -64,9 +83,11 @@ El avance se sigue en los [milestones](https://github.com/Alfrog7/Kardexa/milest
 Kardexa/
 ├── assets/branding/   # logo, isotipo y banner (SVG)
 ├── docs/              # problemática, requisitos, arquitectura, ADRs y bitácora
-├── backend/           # API Spring Boot (fase 2)
-├── frontend/          # panel React (fase 2)
+├── backend/           # API Spring Boot · hexagonal por módulo (ADR 0002)
+├── frontend/          # panel React · por funcionalidades (ADR 0005)
 ├── landing/           # página pública (fase 8)
+├── .github/workflows/ # CI
+├── docker-compose.yml # PostgreSQL local
 ├── CHANGELOG.md
 └── CONTRIBUTING.md
 ```
