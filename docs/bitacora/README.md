@@ -4,7 +4,7 @@ Registro semanal del proceso: qué hice, qué aprendí y qué decidí. Una entra
 
 | Semana | Fechas | Fase | Resumen |
 |---|---|---|---|
-| [2026 · 45](2026-semana-45.md) | 2 – 8 nov | 0 | Arranque del repositorio, identidad visual y requisitos del MVP |
+| [2026 · 45](2026-semana-45.md) | 2 – 8 nov | 0 – 2 | Requisitos, diseño (ADRs, C4, ER, OpenAPI), esqueletos de backend y frontend, CI |
 
 ## Plantilla
 
