@@ -1,0 +1,82 @@
+.panel {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+
+.panel__sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: var(--space-6) var(--space-4);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.panel__brand {
+  padding: 0 var(--space-2) var(--space-6);
+}
+
+.panel__nav {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__link {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.panel__link:hover {
+  background: var(--color-surface-soft);
+}
+
+.panel__link.active {
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+  font-weight: 700;
+}
+
+.panel__content {
+  padding: var(--space-8);
+  min-width: 0;
+}
+
+/* Móvil (RNF-11): la barra lateral pasa arriba y la navegación se desplaza en horizontal. */
+@media (max-width: 48rem) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .panel__sidebar {
+    position: static;
+    height: auto;
+    padding: var(--space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .panel__brand {
+    padding-bottom: var(--space-3);
+  }
+
+  .panel__nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .panel__link {
+    white-space: nowrap;
+  }
+
+  .panel__content {
+    padding: var(--space-4);
+  }
+}
