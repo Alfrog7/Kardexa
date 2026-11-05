@@ -30,6 +30,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 - El stack pasa de Spring Boot 3 a **Spring Boot 4.1**, porque la rama 3.x ya no tiene soporte gratuito (ADR 0001).
 - Las rutas de la API pasan a inglés (`/api/v1/products`) según el ADR 0003.
+- Flujo de ramas `main` + `develop`: el trabajo se integra en `develop` y `main` solo recibe fases cerradas. La plantilla de PR se centra en el comportamiento que se puede probar.
 
 ### Corregido
 

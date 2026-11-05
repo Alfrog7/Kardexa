@@ -5,11 +5,27 @@ Kardexa es un proyecto personal, pero se trabaja con el mismo flujo que un equip
 ## Flujo de trabajo
 
 1. **Issue primero.** Cada historia de usuario o tarea tiene su issue, con etiquetas y milestone de su fase.
-2. **Rama desde `main`.** Nunca se hace commit directo a `main`.
-3. **PR que cierra el issue.** Usa la plantilla, incluye `Closes #N` y copia las etiquetas y el milestone del issue.
+2. **Rama desde `develop`.** Nunca se hace commit directo a `develop` ni a `main`.
+3. **PR hacia `develop` que cierra el issue.** Usa la plantilla, incluye `Closes #N` y copia las etiquetas y el milestone del issue.
    > GitHub solo reconoce palabras clave en inglés (`Closes`, `Fixes`, `Resolves`); con `Cierra #N` el issue no se cierra solo. Es la única excepción a la regla de idioma.
-4. **Merge con squash.** El título del PR queda como mensaje del commit en `main`.
-5. **Al cerrar una fase:** tag `vX.Y-faseN` y entrada en el [CHANGELOG](CHANGELOG.md).
+4. **Merge con squash.** El título del PR queda como mensaje del commit en `develop`.
+5. **Al cerrar una fase:** PR `develop → main` con **merge commit** (no squash, para que las dos ramas no se separen), tag `vX.Y-faseN` y entrada en el [CHANGELOG](CHANGELOG.md).
+
+## Ramas permanentes
+
+| Rama | Contenido |
+|---|---|
+| `main` | Solo versiones cerradas: cada commit corresponde a una fase terminada y etiquetada. |
+| `develop` | Rama de integración y rama por defecto del repositorio. Siempre compila y pasa la CI. |
+
+Las ramas de trabajo se borran solas al fusionar el PR.
+
+## Qué hace aceptable a un PR
+
+- **Una historia de usuario o una tarea por PR.** Si el cambio no cabe en una frase, hay que dividirlo.
+- **Comportamiento que se pueda probar.** Una funcionalidad entra de punta a punta: migración, dominio, caso de uso, adaptadores, endpoint y tests. Las carpetas o clases vacías "para después" no cuentan como avance.
+- **Tests que demuestren los criterios de aceptación** de la historia de usuario, no solo que el código compila.
+- **Descripción corta y verificable:** qué hace ahora el sistema, cómo probarlo y la evidencia. Sin secciones de relleno.
 
 ## Ramas
 
