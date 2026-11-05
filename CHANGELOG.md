@@ -13,6 +13,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Guía de contribución con convención de ramas, commits y etiquetas.
 - Identidad visual: isotipo, logo (claro y oscuro), banner y guía de marca.
 - README con banner, badges, stack previsto, plan por fases y estructura.
+- Documentos de la fase 0: problemática, requisitos (25 RF, 16 RNF, 12 reglas de negocio) e historias de usuario (18 HU).
 
 ### Corregido
 
