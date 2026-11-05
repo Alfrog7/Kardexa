@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────
+# Kardexa · .gitignore
+# Backend (Java/Spring Boot), frontend (Node/React/Astro), IDEs y secretos
+# ─────────────────────────────────────────────
+
+# ── Secretos y variables de entorno ──
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# ── Java / Maven / Gradle ──
+target/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+replay_pid*
+.mvn/wrapper/maven-wrapper.jar
+
+# ── Spring Boot ──
+application-local.yml
+application-local.properties
+
+# ── Node / Vite / Astro ──
+node_modules/
+dist/
+dist-ssr/
+.astro/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ── IDEs y editores ──
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.project
+.classpath
+.settings/
+.factorypath
+bin/
+*.swp
+*~
+
+# ── Sistema operativo ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Docker (volúmenes locales) ──
+.docker-data/
+postgres-data/
