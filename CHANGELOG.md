@@ -11,3 +11,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Licencia MIT, `.gitignore`, `.gitattributes` y `.editorconfig`.
 - Plantilla de pull request y plantillas de issue (historia de usuario, tarea, bug).
 - Guía de contribución con convención de ramas, commits y etiquetas.
+
+### Corregido
+
+- La plantilla de PR usa `Closes #N` para que GitHub cierre el issue al hacer merge.
