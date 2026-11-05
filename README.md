@@ -78,6 +78,7 @@ Kardexa/
 - [01 · Problemática](docs/01-problematica.md): contexto, problema, actores, objetivos y alcance del MVP.
 - [02 · Requisitos](docs/02-requisitos.md): funcionales, no funcionales, reglas de negocio y trazabilidad.
 - [03 · Historias de usuario](docs/03-historias-de-usuario.md): 18 historias con criterios de aceptación.
+- [Bitácora](docs/bitacora/README.md): qué hice, qué aprendí y qué decidí cada semana.
 
 **Proyecto**
 

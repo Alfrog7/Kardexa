@@ -14,6 +14,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Identidad visual: isotipo, logo (claro y oscuro), banner y guía de marca.
 - README con banner, badges, stack previsto, plan por fases y estructura.
 - Documentos de la fase 0: problemática, requisitos (25 RF, 16 RNF, 12 reglas de negocio) e historias de usuario (18 HU).
+- Bitácora semanal con plantilla y primera entrada (semana 45 de 2026).
 
 ### Corregido
 
