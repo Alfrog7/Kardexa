@@ -90,6 +90,42 @@ describe('ProductsPage', () => {
     expect(within(normal).queryByText('Stock crítico')).not.toBeInTheDocument()
   })
 
+  it('mantiene en la lista los inhabilitados, marcados con texto y sin alerta de stock', async () => {
+    vi.mocked(searchProducts).mockResolvedValue(pageOf([{ ...aceite, active: false }]))
+    render(<ProductsPage />)
+
+    const row = (await screen.findByText('Aceite 1 L')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Inhabilitado')).toBeInTheDocument()
+    expect(within(row).queryByText('Stock crítico')).not.toBeInTheDocument()
+    expect(searchProducts).toHaveBeenCalledWith(expect.objectContaining({ includeInactive: true, criticalOnly: false }))
+  })
+
+  it('reactiva un producto inhabilitado desde su edición', async () => {
+    vi.mocked(searchProducts).mockResolvedValue(pageOf([{ ...aceite, active: false }]))
+    vi.mocked(updateProduct).mockResolvedValue(aceite)
+    render(<ProductsPage />)
+    await screen.findByRole('option', { name: 'Abarrotes' })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    expect(screen.getByText('Seguirá en la lista como inhabilitado.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('switch', { name: /Producto activo/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await screen.findByText('Producto Aceite 1 L guardado.')
+    expect(updateProduct).toHaveBeenCalledWith('p1', expect.objectContaining({ active: true }))
+  })
+
+  it('el filtro de stock crítico deja fuera a los inhabilitados', async () => {
+    render(<ProductsPage />)
+    await screen.findByText('Aceite 1 L')
+
+    fireEvent.click(screen.getByLabelText('Solo stock crítico'))
+
+    await waitFor(() =>
+      expect(searchProducts).toHaveBeenLastCalledWith(expect.objectContaining({ criticalOnly: true, includeInactive: false })),
+    )
+  })
+
   it('busca tras una espera corta, sin consultar por cada tecla', async () => {
     render(<ProductsPage />)
     await screen.findByText('Aceite 1 L')

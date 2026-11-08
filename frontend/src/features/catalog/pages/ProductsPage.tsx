@@ -31,6 +31,11 @@ function messageOf(error: unknown): string {
   return error instanceof ApiError ? error.message : 'Algo salió mal. Inténtalo otra vez.'
 }
 
+function rowClass(product: Product): string | undefined {
+  if (!product.active) return 'products__row--inactive'
+  return product.critical ? 'products__row--critical' : undefined
+}
+
 /** Productos (HU-06, HU-07, HU-10): búsqueda, filtros, marca de stock crítico, alta y edición. */
 export function ProductsPage() {
   const [text, setText] = useState('')
@@ -47,7 +52,8 @@ export function ProductsPage() {
   const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   const query = useMemo(
-    () => ({ q, categoryId, criticalOnly, page, attempt }),
+    // Un producto inhabilitado no requiere reposición: el filtro de stock crítico solo muestra activos.
+    () => ({ q, categoryId, criticalOnly, includeInactive: !criticalOnly, page, attempt }),
     [q, categoryId, criticalOnly, page, attempt],
   )
 
@@ -214,7 +220,7 @@ export function ProductsPage() {
             </thead>
             <tbody>
               {found.content.map((product) => (
-                <tr key={product.id} className={product.critical ? 'products__row--critical' : undefined}>
+                <tr key={product.id} className={rowClass(product)}>
                   <td data-label="Código">{product.code}</td>
                   <td data-label="Nombre">
                     <button
@@ -233,7 +239,9 @@ export function ProductsPage() {
                     {formatQuantity(product.stock)}
                   </td>
                   <td data-label="Estado">
-                    {product.critical ? (
+                    {!product.active ? (
+                      <span className="status status--disabled">Inhabilitado</span>
+                    ) : product.critical ? (
                       <span className="badge">
                         <span aria-hidden="true">⚠ </span>
                         Stock crítico

@@ -84,8 +84,8 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
 
     @Override
     public ResultPage<ProductView> search(ProductSearch search) {
-        ResultPage<Product> page = products.searchActive(
-                search.text(), search.categoryId(), search.criticalOnly(), search.page());
+        ResultPage<Product> page = products.search(
+                search.text(), search.categoryId(), search.criticalOnly(), search.includeInactive(), search.page());
         if (page.content().isEmpty()) {
             return new ResultPage<>(List.of(), page.page(), page.size(), page.totalElements());
         }

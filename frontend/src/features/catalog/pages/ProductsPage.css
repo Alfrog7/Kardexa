@@ -53,6 +53,10 @@
   gap: var(--space-4);
 }
 
+.products__row--inactive {
+  background: var(--color-surface-soft);
+}
+
 /* En móvil, cada fila pasa a ser una ficha con la etiqueta de cada dato. */
 @media (max-width: 48rem) {
   .products__table thead {

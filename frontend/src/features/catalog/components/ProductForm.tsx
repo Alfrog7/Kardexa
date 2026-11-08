@@ -196,6 +196,7 @@ export function ProductForm({ product, categories, onSubmit }: ProductFormProps)
         <label className="switch">
           <input type="checkbox" role="switch" checked={active} onChange={(event) => setActive(event.target.checked)} />
           Producto activo
+          {active ? null : <span className="muted">Seguirá en la lista como inhabilitado.</span>}
         </label>
       ) : null}
 
