@@ -42,14 +42,17 @@ export interface ProductSearch {
   q: string
   categoryId: string
   criticalOnly: boolean
+  /** Incluye los productos inhabilitados, para gestionarlos y reactivarlos. */
+  includeInactive: boolean
   page: number
 }
 
-export function searchProducts({ q, categoryId, criticalOnly, page }: ProductSearch): Promise<ProductPage> {
+export function searchProducts({ q, categoryId, criticalOnly, includeInactive, page }: ProductSearch): Promise<ProductPage> {
   const params = new URLSearchParams({ page: String(page) })
   if (q) params.set('q', q)
   if (categoryId) params.set('categoryId', categoryId)
   if (criticalOnly) params.set('criticalOnly', 'true')
+  if (includeInactive) params.set('includeInactive', 'true')
   return apiRequest<ProductPage>(`/products?${params}`)
 }
 

@@ -314,6 +314,10 @@ a {
   background: var(--color-surface-soft);
 }
 
+.status--disabled {
+  border: 1px dashed var(--color-text-muted);
+}
+
 .status--active {
   color: var(--color-primary);
 }
