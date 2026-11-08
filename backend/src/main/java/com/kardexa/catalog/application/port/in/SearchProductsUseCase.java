@@ -16,7 +16,7 @@ public interface SearchProductsUseCase {
     /**
      * Criterios de búsqueda. Un texto vacío o solo con espacios equivale a no filtrar por texto.
      *
-     * @param text       texto contenido en el código o el nombre, sin distinguir mayúsculas; opcional
+     * @param text         texto contenido en el código o el nombre, sin distinguir mayúsculas; opcional
      * @param categoryId   categoría de los productos; opcional
      * @param criticalOnly solo productos con stock actual ≤ stock mínimo
      * @param page         página pedida

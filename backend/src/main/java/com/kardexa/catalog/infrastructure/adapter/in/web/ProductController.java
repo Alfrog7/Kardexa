@@ -23,6 +23,7 @@ import jakarta.validation.constraints.Size;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,7 +60,7 @@ class ProductController {
 
     /** HU-07 y HU-10 · Búsqueda paginada de productos activos ({@code searchProducts} en el contrato). */
     @GetMapping
-    ProductPageResponse search(@Valid SearchParams params) {
+    ProductPageResponse search(@Valid @ParameterObject SearchParams params) {
         ResultPage<ProductView> page = searchProducts.search(new ProductSearch(
                 params.q(), params.categoryId(), params.criticalOnlyOrDefault(),
                 PageQuery.of(params.page(), params.size())));
