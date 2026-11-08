@@ -259,7 +259,8 @@ a {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   min-height: 2.75rem;
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border);
@@ -370,4 +371,72 @@ a {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* ── Tablas de datos ── */
+
+.data-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+}
+
+.data-table thead th {
+  border-top: 0;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-soft);
+}
+
+.data-table .data-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* En móvil, cada fila pasa a ser una ficha con la etiqueta de cada dato. */
+@media (max-width: 48rem) {
+  .data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .data-table tr {
+    display: block;
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .data-table tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .data-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-4);
+    border-top: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
 }
