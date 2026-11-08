@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 /** HU-06 de punta a punta: HTTP → caso de uso → JPA e inventario → PostgreSQL real (Testcontainers). */
 @SpringBootTest
@@ -288,6 +289,18 @@ class ProductApiIntegrationTest {
         mvc.perform(get(URL).param("criticalOnly", "quizás"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("criticalOnly"));
+    }
+
+    @Test
+    @DisplayName("Swagger muestra cada parámetro de la búsqueda por separado, todos opcionales")
+    void documentsSearchParams() throws Exception {
+        String parameters = "$.paths['/api/v1/products'].get.parameters";
+
+        mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(parameters + "[*].name",
+                        containsInAnyOrder("q", "categoryId", "criticalOnly", "page", "size")))
+                .andExpect(jsonPath(parameters + "[?(@.required == true)]").isEmpty());
     }
 
     @Test
