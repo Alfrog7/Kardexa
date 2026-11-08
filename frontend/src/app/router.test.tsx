@@ -14,7 +14,7 @@ describe('rutas del panel', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Módulos' })
-    for (const label of ['Inicio', 'Ventas', 'Productos', 'Inventario', 'Compras']) {
+    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario', 'Compras']) {
       expect(nav).toHaveTextContent(label)
     }
   })
