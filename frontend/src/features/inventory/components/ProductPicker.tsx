@@ -22,21 +22,18 @@ export function ProductPicker({ onSelect }: ProductPickerProps) {
 
   useEffect(() => {
     if (!term) return
-    let current = true
+    // Una respuesta atrasada no se muestra: su término ya no coincide con el escrito.
     const timer = setTimeout(() => {
       findProducts(term)
         .then((options) => {
-          if (current) setResult({ term, options })
+          setResult({ term, options })
         })
         .catch((error: unknown) => {
           const message = error instanceof ApiError ? error.message : 'No pudimos buscar. Inténtalo otra vez.'
-          if (current) setResult({ term, error: message })
+          setResult({ term, error: message })
         })
     }, SEARCH_DELAY_MS)
-    return () => {
-      current = false
-      clearTimeout(timer)
-    }
+    return () => clearTimeout(timer)
   }, [term])
 
   const shown = term && result?.term === term ? result : undefined

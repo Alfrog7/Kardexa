@@ -34,7 +34,7 @@
     box-shadow: none;
   }
 
-  .products__table tr.products__row--critical {
+  .data-table tr.products__row--critical {
     box-shadow: inset 4px 0 0 var(--color-accent);
   }
 }

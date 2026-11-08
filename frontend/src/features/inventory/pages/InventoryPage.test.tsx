@@ -134,7 +134,7 @@ describe('InventoryPage', () => {
   })
 
   it('registra una salida por merma y actualiza el kárdex', async () => {
-    vi.mocked(registerAdjustment).mockResolvedValue(kardex.movements[1])
+    vi.mocked(registerAdjustment).mockResolvedValue(kardex.movements[1]!)
     await pickProduct()
     vi.mocked(getKardex).mockClear()
 
