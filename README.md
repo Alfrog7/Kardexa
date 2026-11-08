@@ -6,7 +6,7 @@
 <p align="center">
   <a href="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-0F766E"></a>
-  <img alt="Estado: fase 2" src="https://img.shields.io/badge/estado-fase%202%20%C2%B7%20base%20t%C3%A9cnica-F59E0B">
+  <img alt="Estado: fase 4 cerrada" src="https://img.shields.io/badge/estado-fase%204%20%C2%B7%20cat%C3%A1logo%20e%20inventario-0F766E">
   <img alt="Java 21" src="https://img.shields.io/badge/Java-21-0F172A?logo=openjdk&logoColor=white">
   <img alt="Spring Boot 4" src="https://img.shields.io/badge/Spring%20Boot-4-0F172A?logo=springboot&logoColor=6DB33F">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-0F172A?logo=react&logoColor=61DAFB">
@@ -86,9 +86,9 @@ Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](fr
 |---|---|---|
 | 0 · Problemática | Problema, actores, alcance, requisitos e historias de usuario | ✅ Completada |
 | 1 · Diseño | C4, modelo ER, flujos, contrato OpenAPI, ADRs | ✅ Completada |
-| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | 🟡 En curso |
+| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | ✅ Completada |
 | 3 · Autenticación | Registro, login, roles, JWT | ⚪ Pendiente |
-| 4 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ⚪ Pendiente |
+| 4 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ✅ Completada |
 | 5 · Proveedores y compras | Una compra suma stock | ⚪ Pendiente |
 | 6 · Ventas | Una venta descuenta stock | ⚪ Pendiente |
 | 7 · Panel y reportes | Dashboard con indicadores | ⚪ Pendiente |
