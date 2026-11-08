@@ -13,22 +13,29 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, UUID id);
 
-    /** {@code pattern} ya viene en minúsculas, con comodines escapados con {@code !}. */
-    @Query(value = """
-            select p from ProductJpaEntity p
-            where p.active = true
-              and (:categoryId is null or p.categoryId = :categoryId)
-              and (:pattern is null
-                   or lower(p.code) like :pattern escape '!'
-                   or lower(p.name) like :pattern escape '!')
-            order by lower(p.name), p.id""",
-            countQuery = """
-            select count(p) from ProductJpaEntity p
-            where p.active = true
-              and (:categoryId is null or p.categoryId = :categoryId)
-              and (:pattern is null
-                   or lower(p.code) like :pattern escape '!'
-                   or lower(p.name) like :pattern escape '!')""")
+    /**
+     * Búsqueda de HU-07 y HU-10. SQL nativo porque cruza con {@code product_stock}, tabla del módulo
+     * {@code inventory}: es una lectura permitida por el ADR 0007 (solo lectura, solo en este adaptador).
+     *
+     * <p>Ningún parámetro es nulo, para que PostgreSQL conozca siempre su tipo: sin texto, el patrón es
+     * {@code %}; sin categoría, {@code anyCategory} es verdadero. {@code pattern} llega en minúsculas,
+     * con los comodines escapados con {@code !}. Sin fila de stock, el stock es 0.
+     */
+    @Query(nativeQuery = true, value = "SELECT p.* " + SEARCH_FROM + " ORDER BY lower(p.name), p.id",
+            countQuery = "SELECT count(*) " + SEARCH_FROM)
     Page<ProductJpaEntity> searchActive(
-            @Param("pattern") String pattern, @Param("categoryId") UUID categoryId, Pageable pageable);
+            @Param("pattern") String pattern,
+            @Param("anyCategory") boolean anyCategory,
+            @Param("categoryId") UUID categoryId,
+            @Param("criticalOnly") boolean criticalOnly,
+            Pageable pageable);
+
+    String SEARCH_FROM = """
+            FROM product p
+            LEFT JOIN product_stock s ON s.product_id = p.id
+            WHERE p.active
+              AND (:anyCategory OR p.category_id = :categoryId)
+              AND (lower(p.code) LIKE :pattern ESCAPE '!' OR lower(p.name) LIKE :pattern ESCAPE '!')
+              AND (NOT :criticalOnly OR coalesce(s.quantity, 0) <= p.min_stock)
+            """;
 }

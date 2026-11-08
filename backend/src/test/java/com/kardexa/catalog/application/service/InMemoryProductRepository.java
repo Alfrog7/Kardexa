@@ -4,6 +4,7 @@ import com.kardexa.catalog.application.port.out.ProductRepository;
 import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.shared.domain.Quantity;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,11 +12,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 /** Doble de prueba del puerto: guarda copias para que los cambios no se filtren sin {@code save}. */
 class InMemoryProductRepository implements ProductRepository {
 
     private final Map<UUID, Product> rows = new LinkedHashMap<>();
+    private final Function<UUID, Quantity> stock;
+
+    /** @param stock stock actual de cada producto, como lo vería la consulta que cruza con el inventario */
+    InMemoryProductRepository(Function<UUID, Quantity> stock) {
+        this.stock = stock;
+    }
 
     @Override
     public Product save(Product product) {
@@ -39,11 +47,12 @@ class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
-    public ResultPage<Product> searchActive(String text, UUID categoryId, PageQuery page) {
+    public ResultPage<Product> searchActive(String text, UUID categoryId, boolean criticalOnly, PageQuery page) {
         String needle = text == null ? null : text.toLowerCase(Locale.ROOT);
         List<Product> matches = rows.values().stream()
                 .filter(Product::isActive)
                 .filter(p -> categoryId == null || p.categoryId().equals(categoryId))
+                .filter(p -> !criticalOnly || p.isCritical(stock.apply(p.id())))
                 .filter(p -> needle == null
                         || p.code().toLowerCase(Locale.ROOT).contains(needle)
                         || p.name().toLowerCase(Locale.ROOT).contains(needle))

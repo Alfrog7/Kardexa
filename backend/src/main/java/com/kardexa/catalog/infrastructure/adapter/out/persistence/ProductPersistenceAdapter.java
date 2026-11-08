@@ -22,6 +22,9 @@ class ProductPersistenceAdapter implements ProductRepository {
     /** Índice único de la migración V3 sobre {@code lower(code)} (RN-10). */
     static final String UNIQUE_CODE_INDEX = "uk_product_code";
 
+    /** Valor de relleno cuando no se filtra por categoría (la consulta no admite parámetros nulos). */
+    private static final UUID NO_CATEGORY = new UUID(0, 0);
+
     private final ProductJpaRepository jpa;
 
     ProductPersistenceAdapter(ProductJpaRepository jpa) {
@@ -46,10 +49,10 @@ class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public ResultPage<Product> searchActive(String text, UUID categoryId, PageQuery page) {
-        String pattern = text == null ? null : "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";
-        Page<ProductJpaEntity> result =
-                jpa.searchActive(pattern, categoryId, PageRequest.of(page.page(), page.size()));
+    public ResultPage<Product> searchActive(String text, UUID categoryId, boolean criticalOnly, PageQuery page) {
+        String pattern = text == null ? "%" : "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";
+        Page<ProductJpaEntity> result = jpa.searchActive(pattern, categoryId == null,
+                categoryId == null ? NO_CATEGORY : categoryId, criticalOnly, PageRequest.of(page.page(), page.size()));
         return ResultPage.of(
                 result.getContent().stream().map(ProductJpaEntity::toDomain).toList(), page, result.getTotalElements());
     }

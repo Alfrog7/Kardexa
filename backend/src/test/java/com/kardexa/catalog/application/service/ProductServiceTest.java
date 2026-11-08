@@ -39,7 +39,8 @@ class ProductServiceTest {
     @BeforeEach
     void setUp() {
         categories = new InMemoryCategoryRepository();
-        service = new ProductService(new InMemoryProductRepository(), categories, ids -> {
+        service = new ProductService(
+                new InMemoryProductRepository(id -> stock.getOrDefault(id, Quantity.ZERO)), categories, ids -> {
             stockQueries.add(List.copyOf(ids));
             Map<UUID, Quantity> result = new HashMap<>();
             ids.forEach(id -> result.put(id, stock.getOrDefault(id, Quantity.ZERO)));
@@ -57,7 +58,11 @@ class ProductServiceTest {
     }
 
     private ResultPage<ProductView> search(String text, UUID categoryId, int page, int size) {
-        return service.search(new ProductSearch(text, categoryId, new PageQuery(page, size)));
+        return service.search(new ProductSearch(text, categoryId, false, new PageQuery(page, size)));
+    }
+
+    private ResultPage<ProductView> critical(String text) {
+        return service.search(new ProductSearch(text, null, true, new PageQuery(0, 20)));
     }
 
     private static List<String> codes(ResultPage<ProductView> page) {
@@ -237,6 +242,22 @@ class ProductServiceTest {
         assertThat(page.content()).isEmpty();
         assertThat(page.totalElements()).isZero();
         assertThat(stockQueries).isEmpty();
+    }
+
+    @Test
+    @DisplayName("HU-10 · RN-09: solo stock crítico muestra los productos con stock ≤ mínimo")
+    void filtersCritical() {
+        UUID atMinimum = service.create(details("AB-001", "Gaseosa", drinks.id())).product().id();
+        UUID above = service.create(details("AB-002", "Agua", drinks.id())).product().id();
+        service.create(details("AB-003", "Jugo", drinks.id()));
+        stock.put(atMinimum, Quantity.of("5"));
+        stock.put(above, Quantity.of("5.001"));
+
+        ResultPage<ProductView> page = critical(null);
+
+        assertThat(codes(page)).containsExactly("AB-001", "AB-003");
+        assertThat(page.content()).allSatisfy(v -> assertThat(v.critical()).isTrue());
+        assertThat(codes(critical("jugo"))).containsExactly("AB-003");
     }
 
     @Test
