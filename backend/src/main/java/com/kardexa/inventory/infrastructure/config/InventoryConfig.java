@@ -2,9 +2,11 @@ package com.kardexa.inventory.infrastructure.config;
 
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
+import com.kardexa.inventory.application.port.out.StockMovementQueries;
 import com.kardexa.inventory.application.port.out.StockProducts;
 import com.kardexa.inventory.application.port.out.StockRecords;
 import com.kardexa.inventory.application.service.AdjustStockService;
+import com.kardexa.inventory.application.service.KardexService;
 import com.kardexa.inventory.application.service.StockQueryService;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,11 @@ class InventoryConfig {
     @Bean
     StockQueryService stockQueryService(ProductStockRepository productStockRepository) {
         return new StockQueryService(productStockRepository);
+    }
+
+    @Bean
+    KardexService kardexService(StockMovementQueries movements, StockProducts products) {
+        return new KardexService(movements, products);
     }
 
     /** Solo el decorador es un bean: nadie puede llamar al servicio fuera de su transacción. */

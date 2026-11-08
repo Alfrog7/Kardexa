@@ -316,6 +316,9 @@ paths:
       tags: [inventory]
       operationId: getKardex
       summary: Kárdex del producto en un rango de fechas (RF-12)
+      description: >-
+        Las dos fechas son opcionales. Sin `from`, el saldo inicial es 0 y empieza en el primer movimiento.
+        Sin `to`, llega hasta el último. Los movimientos van en orden cronológico.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
@@ -325,6 +328,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Kardex' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /stock-adjustments:
