@@ -1,0 +1,52 @@
+name: Épica
+description: Agrupa todo el trabajo de una fase o de un objetivo grande (backend, frontend, landing, docs) como sub-issues.
+title: "Épica · Fase N: "
+labels: ["epic"]
+body:
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: Qué podrá hacer el negocio al cerrar la épica, y qué HU, RF y RN incluye.
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance
+      value: |
+        **Incluye**
+
+        -
+
+        **No incluye**
+
+        -
+    validations:
+      required: true
+  - type: textarea
+    id: sub-issues
+    attributes:
+      label: Sub-issues, en orden sugerido
+      description: Crea cada issue, agrégalo como sub-issue de la épica y lístalo aquí.
+      value: |
+        | # | Issue | Área | Depende de | Estado |
+        |---|---|---|---|---|
+        | 1 | # | backend | — | |
+    validations:
+      required: true
+  - type: textarea
+    id: riesgos
+    attributes:
+      label: Riesgos y decisiones abiertas
+  - type: textarea
+    id: terminado
+    attributes:
+      label: Definición de terminado
+      value: |
+        - [ ] Todas las sub-issues cerradas.
+        - [ ] CI en verde en `develop`.
+        - [ ] Contrato OpenAPI y CHANGELOG actualizados.
+        - [ ] Release de la fase publicado.
+    validations:
+      required: true

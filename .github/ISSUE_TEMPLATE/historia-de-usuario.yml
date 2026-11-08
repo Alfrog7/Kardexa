@@ -1,49 +1,46 @@
 name: Historia de usuario
-description: Funcionalidad descrita desde el punto de vista de un actor.
-title: "HU-XX: "
-labels: ["feature"]
+description: Funcionalidad de punta a punta que cierra una HU (o parte de ella) dentro de una épica.
+title: "HU-XX · "
+labels: ["enhancement"]
 body:
   - type: input
-    id: actor
+    id: epica
     attributes:
-      label: Como…
-      placeholder: administrador / empleado
+      label: Parte de la épica
+      description: Número de la épica de la fase. Agrega luego este issue como sub-issue de la épica.
+      placeholder: "#27"
     validations:
       required: true
-  - type: input
-    id: deseo
+  - type: textarea
+    id: alcance
     attributes:
-      label: Quiero…
-      placeholder: registrar una venta
+      label: Alcance
+      description: Qué podrá hacer el usuario al cerrar el issue, y qué RF, RN o HU cubre.
+      placeholder: |
+        Implementar `GET /api/v1/...` para que el usuario ...
+        Cubre la HU-XX, RF-XX y RN-XX.
     validations:
       required: true
-  - type: input
-    id: beneficio
+  - type: textarea
+    id: que-hacer
     attributes:
-      label: Para…
-      placeholder: que el stock se descuente automáticamente
+      label: Qué hacer
+      description: Pasos técnicos concretos (migraciones, dominio, casos de uso, adaptadores, pantallas, tests, docs).
+      value: |
+        -
     validations:
       required: true
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas
+      description: Dependencias, decisiones abiertas, riesgos y lo que queda fuera.
   - type: textarea
     id: criterios
     attributes:
       label: Criterios de aceptación
-      description: Formato Dado / Cuando / Entonces.
+      description: Comportamiento verificable, uno por casilla. Cada uno debe tener su test.
       value: |
-        - **Dado** …
-          **Cuando** …
-          **Entonces** …
-    validations:
-      required: true
-  - type: input
-    id: requisitos
-    attributes:
-      label: Requisitos relacionados
-      placeholder: RF-01, RN-03
-  - type: dropdown
-    id: prioridad
-    attributes:
-      label: Prioridad (MoSCoW)
-      options: ["Must", "Should", "Could", "Won't (por ahora)"]
+        - [ ]
     validations:
       required: true

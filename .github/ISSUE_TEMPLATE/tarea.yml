@@ -1,28 +1,38 @@
 name: Tarea
-description: Trabajo técnico, documentación o configuración.
+description: Trabajo técnico, documentación o configuración que no es una HU.
 labels: ["chore"]
 body:
-  - type: textarea
-    id: contexto
+  - type: input
+    id: epica
     attributes:
-      label: Contexto
-      description: ¿Por qué hace falta esta tarea?
+      label: Parte de la épica
+      description: Déjalo vacío si la tarea no pertenece a ninguna fase.
+      placeholder: "#27"
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance
+      description: Qué problema resuelve y por qué hace falta ahora.
     validations:
       required: true
   - type: textarea
-    id: tareas
+    id: que-hacer
     attributes:
-      label: Tareas
+      label: Qué hacer
       value: |
-        - [ ]
+        -
     validations:
       required: true
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas
+      description: Dependencias, decisiones abiertas y lo que queda fuera.
   - type: textarea
     id: criterios
     attributes:
       label: Criterios de aceptación
-  - type: input
-    id: evidencia
-    attributes:
-      label: Evidencia esperada
-      placeholder: docs/…, endpoint, pantalla
+      value: |
+        - [ ]
+    validations:
+      required: true
