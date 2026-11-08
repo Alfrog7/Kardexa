@@ -4,15 +4,12 @@ import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase.AdjustStockCommand;
 import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
-import com.kardexa.inventory.domain.model.MovementType;
 import com.kardexa.inventory.domain.model.StockAdjustment;
-import com.kardexa.inventory.domain.model.StockMovement;
 import com.kardexa.shared.domain.Quantity;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.time.Instant;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,9 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/stock-adjustments")
 class StockAdjustmentController {
-
-    /** Hasta que exista la autenticación (Fase 3), los movimientos no tienen un usuario real. */
-    static final String SYSTEM_USER = "Sistema";
 
     private final AdjustStockUseCase adjustStock;
 
@@ -61,25 +55,6 @@ class StockAdjustmentController {
         AdjustStockCommand toCommand() {
             return new AdjustStockCommand(productId, Direction.valueOf(direction), Quantity.of(quantity),
                     AdjustmentReason.valueOf(reason), note);
-        }
-    }
-
-    /** Esquema {@code StockMovement}. */
-    record StockMovementResponse(
-            UUID id,
-            Instant occurredAt,
-            MovementType type,
-            Direction direction,
-            String quantity,
-            String balanceAfter,
-            UUID sourceId,
-            String sourceLabel,
-            String user) {
-
-        static StockMovementResponse from(StockMovement movement) {
-            return new StockMovementResponse(movement.id(), movement.occurredAt(), movement.type(),
-                    movement.direction(), movement.quantity().toString(), movement.balanceAfter().toString(),
-                    movement.sourceId(), "Ajuste", SYSTEM_USER);
         }
     }
 }
