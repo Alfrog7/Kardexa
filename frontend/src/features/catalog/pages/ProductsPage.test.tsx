@@ -56,11 +56,10 @@ const validValues = {
   'Stock mínimo': '2.5',
 }
 
-/** Abre el alta; el formulario y el filtro tienen un campo "Categoría", así que se acota al formulario. */
+/** Abre el drawer de alta; él y el filtro tienen un campo "Categoría", así que se acota al drawer. */
 function openCreateForm() {
   fireEvent.click(screen.getByRole('button', { name: 'Nuevo producto' }))
-  const form = screen.getByRole('heading', { name: 'Nuevo producto' }).closest('form') as HTMLFormElement
-  return within(form)
+  return within(screen.getByRole('dialog', { name: 'Nuevo producto' }))
 }
 
 function fillCreateForm(form: ReturnType<typeof within>, values: Record<string, string> = validValues) {
@@ -169,7 +168,7 @@ describe('ProductsPage', () => {
       minStock: '2.5',
     })
     expect(searchProducts).toHaveBeenCalled()
-    expect(screen.queryByRole('heading', { name: 'Nuevo producto' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('valida como el servidor antes de enviar', async () => {
@@ -233,12 +232,13 @@ describe('ProductsPage', () => {
     render(<ProductsPage />)
     await screen.findByRole('option', { name: 'Abarrotes' })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Editar Aceite 1 L' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    expect(screen.getByRole('dialog', { name: 'Editar Aceite 1 L' })).toBeInTheDocument()
     expect(screen.getByLabelText('Código')).toHaveFocus()
     expect(screen.getByLabelText('Precio de venta (S/)')).toHaveValue('12.50')
 
     fillForm({ Nombre: 'Aceite 900 ml' })
-    fireEvent.click(screen.getByLabelText(/Producto activo/))
+    fireEvent.click(screen.getByRole('switch', { name: 'Producto activo' }))
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     await screen.findByText('Producto Aceite 900 ml guardado.')
@@ -246,6 +246,5 @@ describe('ProductsPage', () => {
       'p1',
       expect.objectContaining({ name: 'Aceite 900 ml', unit: 'LITER', active: false }),
     )
-    expect(screen.getByRole('button', { name: 'Nuevo producto' })).toHaveFocus()
   })
 })

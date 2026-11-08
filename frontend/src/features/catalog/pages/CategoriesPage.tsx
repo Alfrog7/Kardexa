@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import { Dialog } from '@shared/ui/Dialog'
+import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
 import { CategoryForm } from '../components/CategoryForm'
 import './CategoriesPage.css'
+
+/** La modal está cerrada, crea una categoría o edita la indicada. */
+type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; category: Category }
 
 function sortByName(categories: Category[]): Category[] {
   return [...categories].sort((a, b) => a.name.localeCompare(b.name, 'es'))
@@ -17,10 +22,11 @@ export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>()
   const [loadError, setLoadError] = useState<string>()
   const [actionError, setActionError] = useState<string>()
-  const [editingId, setEditingId] = useState<string>()
+  const [form, setForm] = useState<FormMode>({ kind: 'closed' })
   const [togglingId, setTogglingId] = useState<string>()
   const [loadAttempt, setLoadAttempt] = useState(0)
-  const [focusForm, setFocusForm] = useState(false)
+  const [notice, setNotice] = useState<string>()
+  const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   useEffect(() => {
     let current = true
@@ -41,27 +47,19 @@ export function CategoriesPage() {
     setLoadAttempt((attempt) => attempt + 1)
   }
 
-  function startEditing(id: string) {
-    setActionError(undefined)
-    setFocusForm(true)
-    setEditingId(id)
-  }
-
-  const editing = categories?.find((category) => category.id === editingId)
-
   function replace(updated: Category) {
     setCategories((current) => sortByName((current ?? []).map((item) => (item.id === updated.id ? updated : item))))
   }
 
   async function handleSubmit(name: string) {
-    setActionError(undefined)
-    if (editing) {
-      replace(await updateCategory(editing.id, name, editing.active))
-      setEditingId(undefined)
+    if (form.kind === 'edit') {
+      replace(await updateCategory(form.category.id, name, form.category.active))
     } else {
       const created = await createCategory(name)
       setCategories((current) => sortByName([...(current ?? []), created]))
     }
+    setForm({ kind: 'closed' })
+    setNotice(`Categoría ${name.trim()} guardada.`)
   }
 
   async function handleToggle(category: Category) {
@@ -78,17 +76,23 @@ export function CategoriesPage() {
 
   return (
     <section className="page">
-      <header className="page__header">
+      <header className="page__header page__header--spread">
         <h1>Categorías</h1>
+        <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+          Nueva categoría
+        </button>
       </header>
 
-      <CategoryForm
-        key={editingId ?? 'new'}
-        category={editing}
-        focusOnMount={focusForm}
-        onSubmit={handleSubmit}
-        onCancel={() => setEditingId(undefined)}
-      />
+      {form.kind !== 'closed' ? (
+        <Dialog
+          title={form.kind === 'edit' ? `Editar ${form.category.name}` : 'Nueva categoría'}
+          onClose={() => setForm({ kind: 'closed' })}
+        >
+          <CategoryForm category={form.kind === 'edit' ? form.category : undefined} onSubmit={handleSubmit} />
+        </Dialog>
+      ) : null}
+
+      {notice ? <Toast message={notice} onDismiss={dismissNotice} /> : null}
 
       {actionError ? (
         <p className="alert" role="alert">
@@ -108,34 +112,29 @@ export function CategoriesPage() {
           Cargando categorías…
         </p>
       ) : categories.length === 0 ? (
-        <p className="muted">Aún no tienes categorías. Crea la primera con el formulario.</p>
+        <p className="muted">Aún no tienes categorías. Crea la primera con «Nueva categoría».</p>
       ) : (
         <ul className="category-list card" aria-label="Categorías">
           {categories.map((category) => (
             <li key={category.id} className="category-list__item">
-              <span className="category-list__name">{category.name}</span>
-              <span className={category.active ? 'status status--active' : 'status'}>
-                {category.active ? 'Activa' : 'Desactivada'}
-              </span>
-              <span className="category-list__actions">
-                <button
-                  className="button button--secondary"
-                  type="button"
-                  aria-label={`Editar ${category.name}`}
-                  onClick={() => startEditing(category.id)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="button button--secondary"
-                  type="button"
-                  aria-label={`${category.active ? 'Desactivar' : 'Reactivar'} ${category.name}`}
+              <button
+                className="link-button category-list__name"
+                type="button"
+                onClick={() => setForm({ kind: 'edit', category })}
+              >
+                {category.name}
+              </button>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-label={`${category.name} activa`}
+                  checked={category.active}
                   disabled={togglingId === category.id}
-                  onClick={() => void handleToggle(category)}
-                >
-                  {category.active ? 'Desactivar' : 'Reactivar'}
-                </button>
-              </span>
+                  onChange={() => void handleToggle(category)}
+                />
+                <span aria-hidden="true">{category.active ? 'Activa' : 'Desactivada'}</span>
+              </label>
             </li>
           ))}
         </ul>
