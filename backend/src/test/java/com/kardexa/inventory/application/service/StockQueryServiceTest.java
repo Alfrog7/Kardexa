@@ -3,6 +3,7 @@ package com.kardexa.inventory.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
+import com.kardexa.inventory.domain.model.ProductStock;
 import com.kardexa.shared.domain.Quantity;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +33,16 @@ class StockQueryServiceTest {
             Map<UUID, Quantity> found = new HashMap<>();
             productIds.stream().filter(rows::containsKey).forEach(id -> found.put(id, rows.get(id)));
             return found;
+        }
+
+        @Override
+        public ProductStock load(UUID productId) {
+            throw new UnsupportedOperationException("La consulta no modifica el stock");
+        }
+
+        @Override
+        public void save(ProductStock stock) {
+            throw new UnsupportedOperationException("La consulta no modifica el stock");
         }
     });
 
