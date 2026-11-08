@@ -44,6 +44,7 @@ erDiagram
 
     stock_movement {
         uuid id PK
+        bigint seq "orden real del kárdex"
         uuid product_id FK
         varchar type "PURCHASE | SALE | ADJUSTMENT | PURCHASE_VOID | SALE_VOID"
         varchar direction "IN | OUT"
@@ -60,7 +61,7 @@ erDiagram
         uuid product_id FK
         varchar direction "IN | OUT"
         decimal quantity "12,3"
-        varchar reason "MERMA | CONTEO | CORRECCION"
+        varchar reason "SHRINKAGE | PHYSICAL_COUNT | CORRECTION"
         varchar note
         uuid user_id FK
         timestamptz created_at
@@ -138,7 +139,7 @@ erDiagram
 |---|---|---|
 | `product_stock` | `CHECK (quantity >= 0)` | RN-01 |
 | `stock_movement` | `CHECK (quantity > 0)`; índice `(product_id, occurred_at)` | RN-02, RF-12 |
-| `stock_movement` | Sin `UPDATE` ni `DELETE` desde la aplicación | RN-03 |
+| `stock_movement`, `stock_adjustment` | Un *trigger* rechaza `UPDATE` y `DELETE` | RN-03 |
 | `product` | `UNIQUE (code)`; índice `lower(name)` para búsqueda | RN-10, RF-08 |
 | `supplier` | `UNIQUE (ruc)`; `CHECK (ruc ~ '^[0-9]{11}$')` | RN-10 |
 | `sale` | `number` generado con la secuencia `sale_number_seq`; `UNIQUE (number)` | RN-07 |

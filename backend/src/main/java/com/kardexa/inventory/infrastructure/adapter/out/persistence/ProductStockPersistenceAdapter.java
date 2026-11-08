@@ -1,6 +1,8 @@
 package com.kardexa.inventory.infrastructure.adapter.out.persistence;
 
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
+import com.kardexa.inventory.domain.exception.StaleStockException;
+import com.kardexa.inventory.domain.model.ProductStock;
 import com.kardexa.shared.domain.Quantity;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -14,8 +16,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * Lee {@code product_stock} con JDBC. Cuando lleguen los movimientos (HU-09) se pasará a una
- * entidad JPA con {@code @Version} para el bloqueo optimista del ADR 0006.
+ * {@code product_stock} con JDBC. El bloqueo optimista del ADR 0006 se aplica en el propio SQL: la
+ * escritura solo afecta a la fila si su versión sigue siendo la que se leyó.
  */
 @Component
 class ProductStockPersistenceAdapter implements ProductStockRepository {
@@ -33,6 +35,41 @@ class ProductStockPersistenceAdapter implements ProductStockRepository {
                 .query(BigDecimal.class)
                 .optional()
                 .map(Quantity::new);
+    }
+
+    @Override
+    public ProductStock load(UUID productId) {
+        return jdbc.sql("SELECT quantity, version FROM product_stock WHERE product_id = ?")
+                .param(productId)
+                .query((row, rowNumber) -> new ProductStock(
+                        productId, new Quantity(row.getBigDecimal("quantity")), row.getLong("version")))
+                .optional()
+                .orElseGet(() -> ProductStock.empty(productId));
+    }
+
+    @Override
+    public void save(ProductStock stock) {
+        int affected = stock.version() == ProductStock.NEVER_SAVED ? insert(stock) : update(stock);
+        if (affected == 0) {
+            throw new StaleStockException(stock.productId());
+        }
+    }
+
+    /** Si otro creó la fila primero no inserta nada, y se trata como un stock que cambió. */
+    private int insert(ProductStock stock) {
+        return jdbc.sql("""
+                INSERT INTO product_stock (product_id, quantity) VALUES (?, ?)
+                ON CONFLICT (product_id) DO NOTHING""")
+                .params(stock.productId(), stock.quantity().value())
+                .update();
+    }
+
+    private int update(ProductStock stock) {
+        return jdbc.sql("""
+                UPDATE product_stock SET quantity = ?, version = version + 1, updated_at = now()
+                WHERE product_id = ? AND version = ?""")
+                .params(stock.quantity().value(), stock.productId(), stock.version())
+                .update();
     }
 
     @Override

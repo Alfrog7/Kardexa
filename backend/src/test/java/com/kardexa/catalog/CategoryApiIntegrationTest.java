@@ -47,9 +47,7 @@ class CategoryApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.update("DELETE FROM product_stock");
-        jdbc.update("DELETE FROM product");
-        jdbc.update("DELETE FROM category");
+        jdbc.execute("TRUNCATE stock_movement, stock_adjustment, product_stock, product, category");
     }
 
     @Test

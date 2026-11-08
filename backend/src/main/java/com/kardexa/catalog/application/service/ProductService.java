@@ -1,6 +1,7 @@
 package com.kardexa.catalog.application.service;
 
 import com.kardexa.catalog.application.port.in.CreateProductUseCase;
+import com.kardexa.catalog.application.port.in.GetProductSummaryUseCase;
 import com.kardexa.catalog.application.port.in.GetProductUseCase;
 import com.kardexa.catalog.application.port.in.ProductView;
 import com.kardexa.catalog.application.port.in.SearchProductsUseCase;
@@ -23,8 +24,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /** Casos de uso de HU-06, HU-07 y HU-10. Java puro: se registra como bean en {@code CatalogConfig}. */
-public class ProductService
-        implements CreateProductUseCase, UpdateProductUseCase, GetProductUseCase, SearchProductsUseCase {
+public class ProductService implements CreateProductUseCase, UpdateProductUseCase, GetProductUseCase,
+        SearchProductsUseCase, GetProductSummaryUseCase {
 
     private final ProductRepository products;
     private final CategoryRepository categories;
@@ -73,6 +74,12 @@ public class ProductService
     public ProductView get(UUID id) {
         Product product = products.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         return view(product, existingCategory(product.categoryId()));
+    }
+
+    @Override
+    public ProductSummary getSummary(UUID id) {
+        Product product = products.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+        return new ProductSummary(product.id(), product.name(), product.isActive());
     }
 
     @Override
