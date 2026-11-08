@@ -3,18 +3,25 @@ package com.kardexa.catalog.infrastructure.adapter.in.web;
 import com.kardexa.catalog.application.port.in.CreateProductUseCase;
 import com.kardexa.catalog.application.port.in.GetProductUseCase;
 import com.kardexa.catalog.application.port.in.ProductView;
+import com.kardexa.catalog.application.port.in.SearchProductsUseCase.ProductSearch;
+import com.kardexa.catalog.application.port.in.SearchProductsUseCase;
 import com.kardexa.catalog.application.port.in.UpdateProductUseCase;
 import com.kardexa.catalog.application.port.in.UpdateProductUseCase.UpdateProductCommand;
 import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.catalog.domain.model.Unit;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +35,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * {@code /api/v1/products} según el contrato {@code docs/api/openapi.yaml} (HU-06). No hay
- * {@code DELETE}: un producto solo se desactiva (RF-09). La búsqueda llega con HU-07.
+ * {@code DELETE}: un producto solo se desactiva (RF-09). La búsqueda es de HU-07.
  */
 @RestController
 @RequestMapping("/products")
@@ -37,14 +44,25 @@ class ProductController {
     private final CreateProductUseCase createProduct;
     private final UpdateProductUseCase updateProduct;
     private final GetProductUseCase getProduct;
+    private final SearchProductsUseCase searchProducts;
 
     ProductController(
             CreateProductUseCase createProduct,
             UpdateProductUseCase updateProduct,
-            GetProductUseCase getProduct) {
+            GetProductUseCase getProduct,
+            SearchProductsUseCase searchProducts) {
         this.createProduct = createProduct;
         this.updateProduct = updateProduct;
         this.getProduct = getProduct;
+        this.searchProducts = searchProducts;
+    }
+
+    /** HU-07 · Búsqueda paginada de productos activos ({@code searchProducts} en el contrato). */
+    @GetMapping
+    ProductPageResponse search(@Valid SearchParams params) {
+        ResultPage<ProductView> page = searchProducts.search(new ProductSearch(
+                params.q(), params.categoryId(), PageQuery.of(params.page(), params.size())));
+        return ProductPageResponse.from(page);
     }
 
     @PostMapping
@@ -97,6 +115,27 @@ class ProductController {
 
         boolean activeOrDefault() {
             return active == null || active;
+        }
+    }
+
+    /** Parámetros de consulta de {@code GET /products}; los que no llegan toman su valor por defecto. */
+    record SearchParams(
+            @Size(max = ProductSearch.TEXT_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
+            String q,
+            UUID categoryId,
+            @Min(value = 0, message = "Debe ser 0 o mayor.")
+            Integer page,
+            @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
+            @Max(value = PageQuery.MAX_SIZE, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
+            Integer size) {
+    }
+
+    /** Esquema {@code ProductPage}: {@code PageMeta} más el contenido. */
+    record ProductPageResponse(List<ProductResponse> content, int page, int size, long totalElements, int totalPages) {
+
+        static ProductPageResponse from(ResultPage<ProductView> page) {
+            return new ProductPageResponse(page.content().stream().map(ProductResponse::from).toList(),
+                    page.page(), page.size(), page.totalElements(), page.totalPages());
         }
     }
 

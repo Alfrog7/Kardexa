@@ -228,6 +228,9 @@ paths:
       tags: [catalog]
       operationId: searchProducts
       summary: Busca productos por nombre o código (RF-08)
+      description: >-
+        Solo productos activos, ordenados por nombre. `q` se busca sin distinguir mayúsculas
+        dentro del código o del nombre; `%` y `_` se toman como texto, no como comodines.
       parameters:
         - name: q
           in: query
@@ -248,6 +251,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProductPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [catalog]

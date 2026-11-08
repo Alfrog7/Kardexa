@@ -3,8 +3,13 @@ package com.kardexa.inventory.infrastructure.adapter.out.persistence;
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
 import com.kardexa.shared.domain.Quantity;
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
@@ -28,5 +33,18 @@ class ProductStockPersistenceAdapter implements ProductStockRepository {
                 .query(BigDecimal.class)
                 .optional()
                 .map(Quantity::new);
+    }
+
+    @Override
+    public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds) {
+        Map<UUID, Quantity> result = new HashMap<>();
+        if (productIds.isEmpty()) {
+            return result;
+        }
+        jdbc.sql("SELECT product_id, quantity FROM product_stock WHERE product_id IN (:ids)")
+                .param("ids", List.copyOf(productIds))
+                .query((RowCallbackHandler) row -> result.put(
+                        row.getObject("product_id", UUID.class), new Quantity(row.getBigDecimal("quantity"))));
+        return result;
     }
 }

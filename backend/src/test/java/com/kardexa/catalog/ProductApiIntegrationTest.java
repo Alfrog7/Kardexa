@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import static org.hamcrest.Matchers.contains;
 
 /** HU-06 de punta a punta: HTTP → caso de uso → JPA e inventario → PostgreSQL real (Testcontainers). */
 @SpringBootTest
@@ -143,6 +144,102 @@ class ProductApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("HU-07 criterio 1: busca por parte del nombre o código, sin mayúsculas, con precio y stock")
+    void searchesByText() throws Exception {
+        String soda = idOf(create(product("AB-001", "Gaseosa 500 ml", drinks)));
+        create(product("GAS-02", "Agua mineral", drinks));
+        create(product("AR-003", "Arroz 5 kg", drinks));
+        jdbc.update("INSERT INTO product_stock (product_id, quantity) VALUES (?::uuid, 7)", soda);
+
+        mvc.perform(get(URL).param("q", "GAS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].code").value("GAS-02"))
+                .andExpect(jsonPath("$.content[1].code").value("AB-001"))
+                .andExpect(jsonPath("$.content[1].salePrice").value("3.50"))
+                .andExpect(jsonPath("$.content[1].stock").value("7.000"))
+                .andExpect(jsonPath("$.content[1].categoryName").value("Bebidas"))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("HU-07: los comodines % y _ escritos por el usuario se buscan tal cual")
+    void escapesWildcards() throws Exception {
+        create(product("AB-001", "Gaseosa 500 ml", drinks));
+        create(product("AB_002", "Detergente 100% limpio", drinks));
+
+        mvc.perform(get(URL).param("q", "100%"))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].code").value("AB_002"));
+        mvc.perform(get(URL).param("q", "_"))
+                .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    @Test
+    @DisplayName("HU-07 criterio 2: filtra por categoría y lo combina con el texto")
+    void filtersByCategory() throws Exception {
+        String groceries = createCategory("Abarrotes");
+        create(product("AB-001", "Gaseosa 500 ml", drinks));
+        create(product("AR-003", "Arroz 5 kg", groceries));
+        create(product("AR-004", "Arroz 1 kg", groceries));
+
+        mvc.perform(get(URL).param("categoryId", groceries))
+                .andExpect(jsonPath("$.content[*].code", contains("AR-004", "AR-003")));
+        mvc.perform(get(URL).param("categoryId", groceries).param("q", "5 KG"))
+                .andExpect(jsonPath("$.content[*].code", contains("AR-003")));
+    }
+
+    @Test
+    @DisplayName("HU-07: los productos desactivados no aparecen")
+    void excludesInactive() throws Exception {
+        String id = idOf(create(product("AB-001", "Gaseosa 500 ml", drinks)));
+        create(product("AB-002", "Gaseosa 1 l", drinks));
+        mvc.perform(put(URL + "/" + id).contentType(MediaType.APPLICATION_JSON)
+                .content(product("AB-001", "Gaseosa 500 ml", drinks).replace("}", ", \"active\": false}")));
+
+        mvc.perform(get(URL))
+                .andExpect(jsonPath("$.content[*].code", contains("AB-002")))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("HU-07: pagina en orden estable por nombre, con el total")
+    void paginates() throws Exception {
+        for (int i = 5; i >= 1; i--) {
+            create(product("P-00" + i, "Producto " + i, drinks));
+        }
+
+        mvc.perform(get(URL).param("page", "1").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].code", contains("P-003", "P-004")))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(5))
+                .andExpect(jsonPath("$.totalPages").value(3));
+        mvc.perform(get(URL))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.content.length()").value(5));
+    }
+
+    @Test
+    @DisplayName("HU-07: parámetros inválidos devuelven 400 con el campo")
+    void rejectsInvalidParams() throws Exception {
+        mvc.perform(get(URL).param("q", "x".repeat(101)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("q"));
+        mvc.perform(get(URL).param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("size"));
+        mvc.perform(get(URL).param("page", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("page"));
+        mvc.perform(get(URL).param("categoryId", "no-es-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("categoryId"))
+                .andExpect(jsonPath("$.errors[0].message").value("Formato inválido."));
+    }
+
+    @Test
     @DisplayName("el índice único de la base frena códigos repetidos aunque se salte el servicio")
     void databaseEnforcesUniqueCode() {
         UUID category = UUID.fromString(drinks);
@@ -158,6 +255,10 @@ class ProductApiIntegrationTest {
         return """
                 {"code": "%s", "name": "Gaseosa 500 ml", "categoryId": "%s", "unit": "UNIT",
                  "salePrice": "%s", "minStock": "%s"}""".formatted(code, categoryId, price, minStock);
+    }
+
+    private static String product(String code, String name, String categoryId) {
+        return body(code, categoryId, "3.50", "5").replace("Gaseosa 500 ml", name);
     }
 
     private ResultActions create(String json) throws Exception {

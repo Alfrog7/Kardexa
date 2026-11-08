@@ -2,6 +2,7 @@ package com.kardexa.catalog.application.service;
 
 import com.kardexa.catalog.application.port.out.CategoryRepository;
 import com.kardexa.catalog.domain.model.Category;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +32,11 @@ class InMemoryCategoryRepository implements CategoryRepository {
         return rows.values().stream()
                 .sorted(Comparator.comparing(c -> c.name().toLowerCase()))
                 .toList();
+    }
+
+    @Override
+    public List<Category> findAllById(Collection<UUID> ids) {
+        return ids.stream().map(this::findById).flatMap(Optional::stream).toList();
     }
 
     @Override

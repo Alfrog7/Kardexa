@@ -61,7 +61,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> Map.of(
                         "field", error.getField(),
-                        "message", String.valueOf(error.getDefaultMessage())))
+                        // Un valor que no se pudo convertir (un UUID mal escrito, texto en un número)
+                        // trae un mensaje técnico en inglés: se reemplaza por uno claro.
+                        "message", error.isBindingFailure()
+                                ? "Formato inválido."
+                                : String.valueOf(error.getDefaultMessage())))
                 .toList();
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Revisa los campos marcados.");

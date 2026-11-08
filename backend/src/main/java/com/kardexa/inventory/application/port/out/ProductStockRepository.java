@@ -1,6 +1,8 @@
 package com.kardexa.inventory.application.port.out;
 
 import com.kardexa.shared.domain.Quantity;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -8,4 +10,7 @@ import java.util.UUID;
 public interface ProductStockRepository {
 
     Optional<Quantity> findQuantity(UUID productId);
+
+    /** Stock de los productos que tienen fila; los que no la tienen no aparecen en el mapa. */
+    Map<UUID, Quantity> findQuantities(Collection<UUID> productIds);
 }
