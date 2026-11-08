@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/** Casos de uso de HU-06 y HU-07. Java puro: se registra como bean en {@code CatalogConfig}. */
+/** Casos de uso de HU-06, HU-07 y HU-10. Java puro: se registra como bean en {@code CatalogConfig}. */
 public class ProductService
         implements CreateProductUseCase, UpdateProductUseCase, GetProductUseCase, SearchProductsUseCase {
 
@@ -77,7 +77,8 @@ public class ProductService
 
     @Override
     public ResultPage<ProductView> search(ProductSearch search) {
-        ResultPage<Product> page = products.searchActive(search.text(), search.categoryId(), search.page());
+        ResultPage<Product> page = products.searchActive(
+                search.text(), search.categoryId(), search.criticalOnly(), search.page());
         if (page.content().isEmpty()) {
             return new ResultPage<>(List.of(), page.page(), page.size(), page.totalElements());
         }

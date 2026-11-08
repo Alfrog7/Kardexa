@@ -10,6 +10,7 @@ Cada decisión técnica relevante se documenta en un ADR: contexto, alternativas
 | [0004](0004-monorepo.md) | Monorepo con backend, frontend y landing | Aceptado | 2026-11-05 |
 | [0005](0005-frontend-por-funcionalidades.md) | Frontend organizado por funcionalidades | Aceptado | 2026-11-05 |
 | [0006](0006-concurrencia-del-stock.md) | Control de concurrencia del stock | Aceptado | 2026-11-05 |
+| [0007](0007-consultas-de-lectura-entre-modulos.md) | Consultas de lectura entre módulos | Aceptado | 2026-11-07 |
 
 ## Plantilla
 

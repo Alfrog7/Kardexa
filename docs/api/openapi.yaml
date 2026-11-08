@@ -241,7 +241,7 @@ paths:
           schema: { type: string, format: uuid }
         - name: criticalOnly
           in: query
-          description: Solo productos con stock ≤ mínimo (RF-14)
+          description: Solo productos con stock actual ≤ stock mínimo (RF-14, RN-09). Sin movimientos, el stock es 0.
           schema: { type: boolean, default: false }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'

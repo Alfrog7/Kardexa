@@ -25,6 +25,8 @@ public interface ProductRepository {
     /**
      * Productos activos cuyo código o nombre contiene {@code text} (sin distinguir mayúsculas),
      * opcionalmente de una categoría, ordenados por nombre. Los filtros nulos no se aplican.
+     * Con {@code criticalOnly}, solo los que tienen stock actual ≤ stock mínimo (RN-09); un producto
+     * sin movimientos tiene stock 0.
      */
-    ResultPage<Product> searchActive(String text, UUID categoryId, PageQuery page);
+    ResultPage<Product> searchActive(String text, UUID categoryId, boolean criticalOnly, PageQuery page);
 }

@@ -5,7 +5,10 @@ import com.kardexa.shared.application.ResultPage;
 import java.util.Objects;
 import java.util.UUID;
 
-/** HU-07 · Buscar productos activos por nombre o código y filtrarlos por categoría (RF-08). */
+/**
+ * HU-07 · Buscar productos activos por nombre o código y filtrarlos por categoría (RF-08).
+ * HU-10 · Opcionalmente, solo los que están en stock crítico (RF-14, RN-09).
+ */
 public interface SearchProductsUseCase {
 
     ResultPage<ProductView> search(ProductSearch search);
@@ -14,10 +17,11 @@ public interface SearchProductsUseCase {
      * Criterios de búsqueda. Un texto vacío o solo con espacios equivale a no filtrar por texto.
      *
      * @param text       texto contenido en el código o el nombre, sin distinguir mayúsculas; opcional
-     * @param categoryId categoría de los productos; opcional
-     * @param page       página pedida
+     * @param categoryId   categoría de los productos; opcional
+     * @param criticalOnly solo productos con stock actual ≤ stock mínimo
+     * @param page         página pedida
      */
-    record ProductSearch(String text, UUID categoryId, PageQuery page) {
+    record ProductSearch(String text, UUID categoryId, boolean criticalOnly, PageQuery page) {
 
         public static final int TEXT_MAX_LENGTH = 100;
 

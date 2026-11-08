@@ -240,6 +240,57 @@ class ProductApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("HU-10 criterio 1 · RN-09: criticalOnly muestra los productos con stock ≤ mínimo")
+    void filtersCriticalStock() throws Exception {
+        String atMinimum = idOf(create(product("AB-001", "Arroz", drinks, "10")));
+        String below = idOf(create(product("AB-002", "Azúcar", drinks, "10")));
+        String above = idOf(create(product("AB-003", "Fideos", drinks, "10")));
+        create(product("AB-004", "Sal", drinks, "10"));
+        setStock(atMinimum, "10");
+        setStock(below, "3.5");
+        setStock(above, "11");
+
+        mvc.perform(get(URL).param("criticalOnly", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].code", contains("AB-001", "AB-002", "AB-004")))
+                .andExpect(jsonPath("$.content[*].critical", contains(true, true, true)))
+                .andExpect(jsonPath("$.totalElements").value(3));
+        mvc.perform(get(URL).param("criticalOnly", "false"))
+                .andExpect(jsonPath("$.totalElements").value(4));
+    }
+
+    @Test
+    @DisplayName("HU-10 criterio 2: al subir el stock por encima del mínimo deja de aparecer")
+    void leavesCriticalWhenStockRises() throws Exception {
+        String id = idOf(create(product("AB-001", "Arroz", drinks, "10")));
+        mvc.perform(get(URL).param("criticalOnly", "true")).andExpect(jsonPath("$.totalElements").value(1));
+
+        setStock(id, "10.001");
+
+        mvc.perform(get(URL).param("criticalOnly", "true")).andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("HU-10: criticalOnly se combina con texto, categoría y paginación")
+    void combinesCriticalWithOtherFilters() throws Exception {
+        String groceries = createCategory("Abarrotes");
+        create(product("AB-001", "Arroz 5 kg", groceries));
+        create(product("AB-002", "Arroz 1 kg", groceries));
+        create(product("AB-003", "Arroz 750 g", drinks));
+        String stocked = idOf(create(product("AB-004", "Arroz 2 kg", groceries)));
+        setStock(stocked, "50");
+
+        mvc.perform(get(URL).param("criticalOnly", "true").param("q", "arroz")
+                        .param("categoryId", groceries).param("size", "1").param("page", "1"))
+                .andExpect(jsonPath("$.content[*].code", contains("AB-001")))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2));
+        mvc.perform(get(URL).param("criticalOnly", "quizás"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("criticalOnly"));
+    }
+
+    @Test
     @DisplayName("el índice único de la base frena códigos repetidos aunque se salte el servicio")
     void databaseEnforcesUniqueCode() {
         UUID category = UUID.fromString(drinks);
@@ -258,7 +309,17 @@ class ProductApiIntegrationTest {
     }
 
     private static String product(String code, String name, String categoryId) {
-        return body(code, categoryId, "3.50", "5").replace("Gaseosa 500 ml", name);
+        return product(code, name, categoryId, "5");
+    }
+
+    private static String product(String code, String name, String categoryId, String minStock) {
+        return body(code, categoryId, "3.50", minStock).replace("Gaseosa 500 ml", name);
+    }
+
+    /** Simula el stock que dejará un movimiento de inventario (los ajustes llegan con HU-09). */
+    private void setStock(String productId, String quantity) {
+        jdbc.update("INSERT INTO product_stock (product_id, quantity) VALUES (?::uuid, ?::numeric) "
+                + "ON CONFLICT (product_id) DO UPDATE SET quantity = EXCLUDED.quantity", productId, quantity);
     }
 
     private ResultActions create(String json) throws Exception {

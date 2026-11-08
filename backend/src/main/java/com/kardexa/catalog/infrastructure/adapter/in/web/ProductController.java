@@ -57,11 +57,12 @@ class ProductController {
         this.searchProducts = searchProducts;
     }
 
-    /** HU-07 · Búsqueda paginada de productos activos ({@code searchProducts} en el contrato). */
+    /** HU-07 y HU-10 · Búsqueda paginada de productos activos ({@code searchProducts} en el contrato). */
     @GetMapping
     ProductPageResponse search(@Valid SearchParams params) {
         ResultPage<ProductView> page = searchProducts.search(new ProductSearch(
-                params.q(), params.categoryId(), PageQuery.of(params.page(), params.size())));
+                params.q(), params.categoryId(), params.criticalOnlyOrDefault(),
+                PageQuery.of(params.page(), params.size())));
         return ProductPageResponse.from(page);
     }
 
@@ -123,11 +124,16 @@ class ProductController {
             @Size(max = ProductSearch.TEXT_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
             String q,
             UUID categoryId,
+            Boolean criticalOnly,
             @Min(value = 0, message = "Debe ser 0 o mayor.")
             Integer page,
             @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
             @Max(value = PageQuery.MAX_SIZE, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
             Integer size) {
+
+        boolean criticalOnlyOrDefault() {
+            return Boolean.TRUE.equals(criticalOnly);
+        }
     }
 
     /** Esquema {@code ProductPage}: {@code PageMeta} más el contenido. */
