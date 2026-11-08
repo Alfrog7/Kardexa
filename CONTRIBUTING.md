@@ -55,12 +55,26 @@ Tipos: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `style`, `perf`
 
 | Grupo | Etiquetas |
 |---|---|
-| Tipo | `feature`, `bug`, `docs`, `chore`, `ci`, `refactor`, `test`, `branding` |
+| Tipo | `epic`, `enhancement`, `bug`, `documentation`, `chore`, `ci`, `refactor`, `test`, `branding` |
 | Área | `backend`, `frontend`, `landing`, `infra` |
-| Fase | `fase-0` … `fase-9` |
-| Prioridad | `prioridad: alta`, `prioridad: media`, `prioridad: baja` |
+| Fase | `phase-0` … `phase-9` |
+| Prioridad | `priority: high`, `priority: medium`, `priority: low` |
 
-Todo issue lleva al menos una etiqueta de **tipo** y una de **fase**. El PR lleva las mismas que el issue que cierra.
+Las etiquetas van en inglés, como es habitual en GitHub. Todo issue lleva al menos una etiqueta de **tipo** y una de **fase**. El PR lleva las mismas que el issue que cierra.
+
+## Issues
+
+Cada fase tiene una **épica** (plantilla "Épica") que agrupa todo su trabajo como **sub-issues**: backend, frontend, landing, documentación y el cierre de la fase. Así se ve en un solo lugar qué falta y en qué orden.
+
+Cada sub-issue sigue el mismo formato:
+
+- **Parte de la épica #N**
+- **Alcance**: qué podrá hacer el usuario y qué HU, RF o RN cubre.
+- **Qué hacer**: pasos técnicos concretos.
+- **Notas**: dependencias, decisiones abiertas y lo que queda fuera.
+- **Criterios de aceptación**: comportamiento verificable, uno por casilla `- [ ]`, cada uno con su test.
+
+Ejemplo: la épica de la Fase 4 (#27).
 
 ## Idioma
 
