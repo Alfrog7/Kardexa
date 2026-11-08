@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError } from '@shared/api/http'
 import { formatMoney, formatQuantity } from '@shared/lib/format'
+import { Dialog } from '@shared/ui/Dialog'
+import { Toast } from '@shared/ui/Toast'
 import { listCategories, type Category } from '../api/categories'
 import {
   createProduct,
@@ -41,8 +43,8 @@ export function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesError, setCategoriesError] = useState<string>()
   const [form, setForm] = useState<FormMode>({ kind: 'closed' })
-  const [saved, setSaved] = useState<string>()
-  const newButton = useRef<HTMLButtonElement>(null)
+  const [notice, setNotice] = useState<string>()
+  const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   const query = useMemo(
     () => ({ q, categoryId, criticalOnly, page, attempt }),
@@ -90,50 +92,41 @@ export function ProductsPage() {
   const loading = result?.query !== query
   const found = result?.page
 
-  function closeForm() {
-    setForm({ kind: 'closed' })
-    newButton.current?.focus()
-  }
-
   async function handleSubmit(request: ProductRequest) {
     if (form.kind === 'edit') {
       await updateProduct(form.product.id, request)
     } else {
       await createProduct(request)
     }
-    setSaved(`Producto ${request.name} guardado.`)
+    setNotice(`Producto ${request.name} guardado.`)
     setAttempt((value) => value + 1)
-    closeForm()
+    setForm({ kind: 'closed' })
   }
 
   return (
     <section className="page">
-      <header className="page__header products__header">
+      <header className="page__header page__header--spread">
         <h1>Productos</h1>
-        <button
-          ref={newButton}
-          className="button"
-          type="button"
-          onClick={() => {
-            setSaved(undefined)
-            setForm({ kind: 'create' })
-          }}
-        >
+        <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
           Nuevo producto
         </button>
       </header>
 
       {form.kind !== 'closed' ? (
-        <ProductForm
-          key={form.kind === 'edit' ? form.product.id : 'new'}
-          product={form.kind === 'edit' ? form.product : undefined}
-          categories={categories}
-          onSubmit={handleSubmit}
-          onCancel={closeForm}
-        />
+        <Dialog
+          variant="drawer"
+          title={form.kind === 'edit' ? `Editar ${form.product.name}` : 'Nuevo producto'}
+          onClose={() => setForm({ kind: 'closed' })}
+        >
+          <ProductForm
+            product={form.kind === 'edit' ? form.product : undefined}
+            categories={categories}
+            onSubmit={handleSubmit}
+          />
+        </Dialog>
       ) : null}
 
-      {saved ? <p role="status">{saved}</p> : null}
+      {notice ? <Toast message={notice} onDismiss={dismissNotice} /> : null}
 
       {categoriesError ? (
         <p className="alert" role="alert">
@@ -217,16 +210,21 @@ export function ProductsPage() {
                   Stock
                 </th>
                 <th scope="col">Estado</th>
-                <th scope="col">
-                  <span className="visually-hidden">Acciones</span>
-                </th>
               </tr>
             </thead>
             <tbody>
               {found.content.map((product) => (
                 <tr key={product.id} className={product.critical ? 'products__row--critical' : undefined}>
                   <td data-label="Código">{product.code}</td>
-                  <td data-label="Nombre">{product.name}</td>
+                  <td data-label="Nombre">
+                    <button
+                      className="link-button"
+                      type="button"
+                      onClick={() => setForm({ kind: 'edit', product })}
+                    >
+                      {product.name}
+                    </button>
+                  </td>
                   <td data-label="Categoría">{product.categoryName}</td>
                   <td data-label="Precio" className="products__number">
                     {formatMoney(product.salePrice)}
@@ -243,19 +241,6 @@ export function ProductsPage() {
                     ) : (
                       <span className="status">Stock normal</span>
                     )}
-                  </td>
-                  <td className="products__actions">
-                    <button
-                      className="button button--secondary"
-                      type="button"
-                      aria-label={`Editar ${product.name}`}
-                      onClick={() => {
-                        setSaved(undefined)
-                        setForm({ kind: 'edit', product })
-                      }}
-                    >
-                      Editar
-                    </button>
                   </td>
                 </tr>
               ))}

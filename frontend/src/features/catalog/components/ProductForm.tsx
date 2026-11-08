@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { ApiError } from '@shared/api/http'
 import type { Category } from '../api/categories'
 import type { Product, ProductRequest, Unit } from '../api/products'
@@ -35,11 +35,10 @@ interface ProductFormProps {
   product?: Product
   categories: Category[]
   onSubmit: (request: ProductRequest) => Promise<void>
-  onCancel: () => void
 }
 
-/** Alta y edición. La página le da una `key` por producto, así que cada modo empieza limpio. */
-export function ProductForm({ product, categories, onSubmit, onCancel }: ProductFormProps) {
+/** Alta y edición. Se monta al abrir el drawer, así que cada apertura empieza limpia. */
+export function ProductForm({ product, categories, onSubmit }: ProductFormProps) {
   const [code, setCode] = useState(product?.code ?? '')
   const [name, setName] = useState(product?.name ?? '')
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? '')
@@ -50,11 +49,6 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
   const [errors, setErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string>()
   const [saving, setSaving] = useState(false)
-  const firstField = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    firstField.current?.focus()
-  }, [])
 
   // Solo se ofrecen categorías activas; al editar se conserva la actual aunque esté desactivada.
   const options = categories.filter((category) => category.active || category.id === product?.categoryId)
@@ -115,14 +109,12 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
   }
 
   return (
-    <form className="card product-form" noValidate onSubmit={handleSubmit}>
-      <h2 className="product-form__title">{product ? `Editar ${product.name}` : 'Nuevo producto'}</h2>
-
+    <form className="form" noValidate onSubmit={handleSubmit}>
       <div className="product-form__grid">
         <div className="field">
           <label htmlFor="product-code">Código</label>
           <input
-            ref={firstField}
+            data-autofocus
             id="product-code"
             value={code}
             maxLength={40}
@@ -201,10 +193,9 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
       </div>
 
       {product ? (
-        <label className="check">
-          <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
+        <label className="switch">
+          <input type="checkbox" role="switch" checked={active} onChange={(event) => setActive(event.target.checked)} />
           Producto activo
-          <span className="muted">Si lo desactivas, deja de aparecer en esta lista.</span>
         </label>
       ) : null}
 
@@ -214,14 +205,9 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
         </p>
       ) : null}
 
-      <div className="product-form__actions">
-        <button className="button" type="submit" disabled={saving}>
-          {product ? 'Guardar cambios' : 'Crear producto'}
-        </button>
-        <button className="button button--secondary" type="button" onClick={onCancel}>
-          Cancelar
-        </button>
-      </div>
+      <button className="button" type="submit" disabled={saving}>
+        {product ? 'Guardar cambios' : 'Crear producto'}
+      </button>
     </form>
   )
 }
