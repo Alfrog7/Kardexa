@@ -1,5 +1,10 @@
 package com.kardexa.catalog.infrastructure.adapter.out.persistence;
 
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
+import java.util.Locale;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations.violates;
 
 import com.kardexa.catalog.application.port.out.ProductRepository;
@@ -38,6 +43,20 @@ class ProductPersistenceAdapter implements ProductRepository {
     @Override
     public Optional<Product> findById(UUID id) {
         return jpa.findById(id).map(ProductJpaEntity::toDomain);
+    }
+
+    @Override
+    public ResultPage<Product> searchActive(String text, UUID categoryId, PageQuery page) {
+        String pattern = text == null ? null : "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";
+        Page<ProductJpaEntity> result =
+                jpa.searchActive(pattern, categoryId, PageRequest.of(page.page(), page.size()));
+        return ResultPage.of(
+                result.getContent().stream().map(ProductJpaEntity::toDomain).toList(), page, result.getTotalElements());
+    }
+
+    /** Que {@code %} y {@code _} escritos por el usuario se busquen tal cual y no como comodines. */
+    static String escapeLike(String text) {
+        return text.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
     @Override

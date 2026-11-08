@@ -3,6 +3,7 @@ package com.kardexa.catalog.infrastructure.adapter.out.persistence;
 import com.kardexa.catalog.application.port.out.CategoryRepository;
 import com.kardexa.catalog.domain.exception.DuplicateCategoryNameException;
 import com.kardexa.catalog.domain.model.Category;
+import java.util.Collection;
 import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations.violates;
 
 import java.util.List;
@@ -44,6 +45,11 @@ class CategoryPersistenceAdapter implements CategoryRepository {
     @Override
     public List<Category> findAllOrderedByName() {
         return jpa.findAllOrderedByName().stream().map(CategoryJpaEntity::toDomain).toList();
+    }
+
+    @Override
+    public List<Category> findAllById(Collection<UUID> ids) {
+        return jpa.findAllById(ids).stream().map(CategoryJpaEntity::toDomain).toList();
     }
 
     @Override
