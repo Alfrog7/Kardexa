@@ -128,15 +128,6 @@ a {
 
 .logo {
   display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.logo__text {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
 }
 
 .visually-hidden {

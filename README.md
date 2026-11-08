@@ -101,7 +101,7 @@ El avance se sigue en los [milestones](https://github.com/Alfrog7/Kardexa/milest
 
 ```text
 Kardexa/
-├── assets/branding/   # logo, isotipo y banner (SVG)
+├── assets/branding/   # logo, isotipo, banner, redes, papelería y guía
 ├── docs/              # problemática, requisitos, arquitectura, ADRs y bitácora
 ├── backend/           # API Spring Boot · hexagonal por módulo (ADR 0002)
 ├── frontend/          # panel React · por funcionalidades (ADR 0005)

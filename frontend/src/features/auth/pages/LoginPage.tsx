@@ -9,7 +9,7 @@ export function LoginPage() {
   return (
     <main className="login">
       <div className="login__card card">
-        <Logo size={40} />
+        <Logo height={40} />
         <div>
           <h1 className="login__title">Ingresa a tu negocio</h1>
           <p className="muted">Controla tu inventario y tus ventas en un solo lugar.</p>

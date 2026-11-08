@@ -9,22 +9,22 @@
   --color-primary: #0f766e;
   --color-primary-hover: #115e59;
   --color-primary-contrast: #ffffff;
-  --color-accent: #f59e0b;
+  --color-accent: #d97706;
 
   /* Texto */
   --color-text: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
+  --color-text-secondary: #475569;
+  --color-text-muted: #5b6a7f;
 
   /* Superficies */
   --color-bg: #f8fafc;
   --color-surface: #ffffff;
-  --color-surface-soft: #f0fdfa;
+  --color-surface-soft: #f1f5f9;
   --color-border: #e2e8f0;
 
   /* Estados */
   --color-danger: #b91c1c;
-  --color-warning-bg: #fffbeb;
+  --color-warning-bg: #fef3c7;
   --color-warning-text: #92400e;
 
   /* Tipografía */
@@ -56,18 +56,18 @@
     --color-primary-contrast: #042f2e;
     --color-accent: #fbbf24;
 
-    --color-text: #f8fafc;
+    --color-text: #f1f5f9;
     --color-text-secondary: #cbd5e1;
     --color-text-muted: #94a3b8;
 
     --color-bg: #0b1220;
-    --color-surface: #111827;
-    --color-surface-soft: #042f2e;
-    --color-border: #1e293b;
+    --color-surface: #111a2b;
+    --color-surface-soft: #1a2438;
+    --color-border: #2a364c;
 
     --color-danger: #f87171;
-    --color-warning-bg: #422006;
-    --color-warning-text: #fde68a;
+    --color-warning-bg: #3a2306;
+    --color-warning-text: #fcd34d;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   }
