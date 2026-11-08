@@ -21,13 +21,19 @@ describe('rutas del panel', () => {
 
   it.each([
     ['/ventas', 'Ventas', 'Fase 6'],
-    ['/inventario', 'Inventario', 'Fase 4'],
     ['/compras', 'Compras', 'Fase 5'],
   ])('%s muestra su pantalla y la fase en que se implementa', (path, title, phase) => {
     renderAt(path)
 
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(screen.getByText(phase)).toBeInTheDocument()
+  })
+
+  it('/inventario muestra la pantalla de inventario', () => {
+    renderAt('/inventario')
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Inventario' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Producto')).toBeInTheDocument()
   })
 
   it('/productos muestra la pantalla de productos', async () => {

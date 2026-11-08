@@ -202,17 +202,17 @@ export function ProductsPage() {
       ) : null}
 
       {found && found.content.length > 0 ? (
-        <div className="card products__table-card">
-          <table className="products__table">
+        <div className="card data-table-card">
+          <table className="data-table">
             <thead>
               <tr>
                 <th scope="col">Código</th>
                 <th scope="col">Nombre</th>
                 <th scope="col">Categoría</th>
-                <th scope="col" className="products__number">
+                <th scope="col" className="data-table__number">
                   Precio
                 </th>
-                <th scope="col" className="products__number">
+                <th scope="col" className="data-table__number">
                   Stock
                 </th>
                 <th scope="col">Estado</th>
@@ -232,10 +232,10 @@ export function ProductsPage() {
                     </button>
                   </td>
                   <td data-label="Categoría">{product.categoryName}</td>
-                  <td data-label="Precio" className="products__number">
+                  <td data-label="Precio" className="data-table__number">
                     {formatMoney(product.salePrice)}
                   </td>
-                  <td data-label="Stock" className="products__number">
+                  <td data-label="Stock" className="data-table__number">
                     {formatQuantity(product.stock)}
                   </td>
                   <td data-label="Estado">

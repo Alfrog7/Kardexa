@@ -5,35 +5,6 @@
   gap: var(--space-4);
 }
 
-.products__table-card {
-  padding: 0;
-  overflow: hidden;
-}
-
-.products__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-}
-
-.products__table th,
-.products__table td {
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-  border-top: 1px solid var(--color-border);
-}
-
-.products__table thead th {
-  border-top: 0;
-  color: var(--color-text-secondary);
-  background: var(--color-surface-soft);
-}
-
-.products__table .products__number {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 /* Además de la etiqueta con texto, una franja ámbar marca la fila. */
 .products__row--critical td:first-child {
   box-shadow: inset 4px 0 0 var(--color-accent);
@@ -57,47 +28,13 @@
   background: var(--color-surface-soft);
 }
 
-/* En móvil, cada fila pasa a ser una ficha con la etiqueta de cada dato. */
+/* En móvil, la franja pasa de la celda a la ficha completa. */
 @media (max-width: 48rem) {
-  .products__table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .products__table tr {
-    display: block;
-    padding: var(--space-2) 0;
-    border-top: 1px solid var(--color-border);
-  }
-
-  .products__table tbody tr:first-child {
-    border-top: 0;
-  }
-
-  .products__table td {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-1) var(--space-4);
-    border-top: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .products__table td[data-label]::before {
-    content: attr(data-label);
-    flex: none;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-  }
-
   .products__row--critical td:first-child {
     box-shadow: none;
   }
 
-  .products__table tr.products__row--critical {
+  .data-table tr.products__row--critical {
     box-shadow: inset 4px 0 0 var(--color-accent);
   }
 }
