@@ -15,10 +15,12 @@ Kardexa es un proyecto personal, pero se trabaja con el mismo flujo que un equip
 
 | Rama | Contenido |
 |---|---|
-| `main` | Solo versiones cerradas: cada commit corresponde a una fase terminada y etiquetada. |
-| `develop` | Rama de integración y rama por defecto del repositorio. Siempre compila y pasa la CI. |
+| `main` | Rama por defecto del repositorio. Solo versiones cerradas: cada commit corresponde a una fase terminada y etiquetada. |
+| `develop` | Rama de integración. Siempre compila y pasa la CI. |
 
 Las ramas de trabajo se borran solas al fusionar el PR.
+
+GitHub solo aplica `Closes #N` al fusionar en la rama por defecto: tras fusionar en `develop`, el issue se cierra a mano.
 
 ## Qué hace aceptable a un PR
 

@@ -6,8 +6,16 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+## [v0.4-fase4] - 2026-11-08
+
 ### Agregado
 
+- **Panel · Categorías:** `/categorias` para listar, crear, renombrar, desactivar y reactivar (HU-05).
+- **Panel · Productos:** `/productos` con búsqueda, filtros, paginación, marca de stock crítico, alta y edición (HU-06, HU-07, HU-10).
+- **Panel · Inventario:** `/inventario` con kárdex por producto y rango de fechas, y registro de ajustes de stock (HU-08, HU-09).
+- **Componentes compartidos:** `Dialog` (modal y drawer sobre `<dialog>` nativo), `Toast` y tabla de datos adaptable a móvil.
+- **Productos inhabilitados:** `GET /api/v1/products` acepta `includeInactive`; el panel los mantiene visibles y permite reactivarlos.
+- **Identidad visual v1.0:** logo según el tema, favicons, manifiesto web, recursos de redes y papelería, y guía de marca.
 - **HU-05 · Gestionar categorías (API):** `GET`, `POST` y `PUT /api/v1/categories`, con nombre único sin distinguir mayúsculas y desactivación sin borrado. Es la primera funcionalidad de punta a punta del backend.
 - **HU-06 · Gestionar productos (API):** `POST`, `GET` y `PUT /api/v1/products/{id}`, con código único (RN-10), stock 0 al crear, stock crítico (RN-09) y desactivación sin borrado (RF-09). Primer cruce entre módulos: el catálogo consulta el stock a `inventory` por su puerto de entrada.
 - **HU-07 · Buscar productos (API):** `GET /api/v1/products` con búsqueda por parte del código o del nombre (sin distinguir mayúsculas), filtro por categoría y paginación. Solo productos activos, en orden por nombre. El stock y las categorías de cada página se obtienen con una consulta cada uno, sin N+1.
@@ -38,6 +46,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Cambiado
 
+- Paleta de la guía de marca v1.0: acento claro `#D97706`, texto atenuado `#5B6A7F` y fondos oscuros nuevos, para cumplir los contrastes de WCAG.
+- La rama por defecto del repositorio pasa a ser `main`.
 - El stack pasa de Spring Boot 3 a **Spring Boot 4.1**, porque la rama 3.x ya no tiene soporte gratuito (ADR 0001).
 - Las rutas de la API pasan a inglés (`/api/v1/products`) según el ADR 0003.
 - Flujo de ramas `main` + `develop`: el trabajo se integra en `develop` y `main` solo recibe fases cerradas. La plantilla de PR se centra en el comportamiento que se puede probar.
