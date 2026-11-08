@@ -47,10 +47,10 @@ class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
-    public ResultPage<Product> searchActive(String text, UUID categoryId, boolean criticalOnly, PageQuery page) {
+    public ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, PageQuery page) {
         String needle = text == null ? null : text.toLowerCase(Locale.ROOT);
         List<Product> matches = rows.values().stream()
-                .filter(Product::isActive)
+                .filter(p -> includeInactive || p.isActive())
                 .filter(p -> categoryId == null || p.categoryId().equals(categoryId))
                 .filter(p -> !criticalOnly || p.isCritical(stock.apply(p.id())))
                 .filter(p -> needle == null

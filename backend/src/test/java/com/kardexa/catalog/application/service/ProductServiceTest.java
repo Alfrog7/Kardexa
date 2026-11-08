@@ -58,11 +58,11 @@ class ProductServiceTest {
     }
 
     private ResultPage<ProductView> search(String text, UUID categoryId, int page, int size) {
-        return service.search(new ProductSearch(text, categoryId, false, new PageQuery(page, size)));
+        return service.search(new ProductSearch(text, categoryId, false, false, new PageQuery(page, size)));
     }
 
     private ResultPage<ProductView> critical(String text) {
-        return service.search(new ProductSearch(text, null, true, new PageQuery(0, 20)));
+        return service.search(new ProductSearch(text, null, true, false, new PageQuery(0, 20)));
     }
 
     private static List<String> codes(ResultPage<ProductView> page) {

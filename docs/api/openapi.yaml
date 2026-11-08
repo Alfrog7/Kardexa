@@ -229,7 +229,7 @@ paths:
       operationId: searchProducts
       summary: Busca productos por nombre o código (RF-08)
       description: >-
-        Solo productos activos, ordenados por nombre. `q` se busca sin distinguir mayúsculas
+        Productos activos (o todos con `includeInactive`), ordenados por nombre. `q` se busca sin distinguir mayúsculas
         dentro del código o del nombre; `%` y `_` se toman como texto, no como comodines.
       parameters:
         - name: q
@@ -242,6 +242,10 @@ paths:
         - name: criticalOnly
           in: query
           description: Solo productos con stock actual ≤ stock mínimo (RF-14, RN-09). Sin movimientos, el stock es 0.
+          schema: { type: boolean, default: false }
+        - name: includeInactive
+          in: query
+          description: Incluye también los productos desactivados, para gestionarlos y reactivarlos.
           schema: { type: boolean, default: false }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'

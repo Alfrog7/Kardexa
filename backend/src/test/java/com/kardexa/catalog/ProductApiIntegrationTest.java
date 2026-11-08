@@ -202,6 +202,20 @@ class ProductApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("includeInactive: también devuelve los desactivados, marcados como inactivos")
+    void includesInactiveOnRequest() throws Exception {
+        String id = idOf(create(product("AB-001", "Gaseosa 500 ml", drinks)));
+        create(product("AB-002", "Gaseosa 1 l", drinks));
+        mvc.perform(put(URL + "/" + id).contentType(MediaType.APPLICATION_JSON)
+                .content(product("AB-001", "Gaseosa 500 ml", drinks).replace("}", ", \"active\": false}")));
+
+        mvc.perform(get(URL).param("includeInactive", "true"))
+                .andExpect(jsonPath("$.content[*].code", contains("AB-002", "AB-001")))
+                .andExpect(jsonPath("$.content[1].active").value(false))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
     @DisplayName("HU-07: pagina en orden estable por nombre, con el total")
     void paginates() throws Exception {
         for (int i = 5; i >= 1; i--) {
@@ -297,7 +311,7 @@ class ProductApiIntegrationTest {
         mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(parameters + "[*].name",
-                        containsInAnyOrder("q", "categoryId", "criticalOnly", "page", "size")))
+                        containsInAnyOrder("q", "categoryId", "criticalOnly", "includeInactive", "page", "size")))
                 .andExpect(jsonPath(parameters + "[?(@.required == true)]").isEmpty());
     }
 

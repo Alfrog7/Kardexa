@@ -23,17 +23,18 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
      */
     @Query(nativeQuery = true, value = "SELECT p.* " + SEARCH_FROM + " ORDER BY lower(p.name), p.id",
             countQuery = "SELECT count(*) " + SEARCH_FROM)
-    Page<ProductJpaEntity> searchActive(
+    Page<ProductJpaEntity> search(
             @Param("pattern") String pattern,
             @Param("anyCategory") boolean anyCategory,
             @Param("categoryId") UUID categoryId,
             @Param("criticalOnly") boolean criticalOnly,
+            @Param("includeInactive") boolean includeInactive,
             Pageable pageable);
 
     String SEARCH_FROM = """
             FROM product p
             LEFT JOIN product_stock s ON s.product_id = p.id
-            WHERE p.active
+            WHERE (:includeInactive OR p.active)
               AND (:anyCategory OR p.category_id = :categoryId)
               AND (lower(p.code) LIKE :pattern ESCAPE '!' OR lower(p.name) LIKE :pattern ESCAPE '!')
               AND (NOT :criticalOnly OR coalesce(s.quantity, 0) <= p.min_stock)
