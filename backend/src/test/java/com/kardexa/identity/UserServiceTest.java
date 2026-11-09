@@ -13,6 +13,8 @@ import com.kardexa.identity.domain.exception.InvalidCredentialsException;
 import com.kardexa.identity.domain.exception.SetupAlreadyDoneException;
 import com.kardexa.identity.domain.model.Role;
 import com.kardexa.identity.domain.model.User;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +46,21 @@ class UserServiceTest {
         @Override
         public Optional<User> findByEmail(String email) {
             return stored.stream().filter(u -> u.email().equalsIgnoreCase(email)).findFirst();
+        }
+
+        @Override
+        public boolean existsByEmail(String email) {
+            return findByEmail(email).isPresent();
+        }
+
+        @Override
+        public long countActiveAdmins() {
+            return stored.stream().filter(User::isActiveAdmin).count();
+        }
+
+        @Override
+        public ResultPage<User> findAll(PageQuery page) {
+            return ResultPage.of(List.copyOf(stored), page, stored.size());
         }
     };
     private final PasswordHasher hasher = new PasswordHasher() {

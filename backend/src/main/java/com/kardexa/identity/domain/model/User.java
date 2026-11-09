@@ -13,11 +13,11 @@ public final class User {
     public static final int EMAIL_MAX_LENGTH = 254;
 
     private final UUID id;
-    private final String fullName;
+    private String fullName;
     private final String email;
     private final String passwordHash;
-    private final Role role;
-    private final boolean active;
+    private Role role;
+    private boolean active;
 
     private User(UUID id, String fullName, String email, String passwordHash, Role role, boolean active) {
         this.id = Objects.requireNonNull(id, "id");
@@ -39,6 +39,15 @@ public final class User {
         return new User(id, fullName, email, passwordHash, role, active);
     }
 
+    /** Normaliza un correo (sin espacios en los extremos y en minúsculas) para compararlo o guardarlo. */
+    public static String normalizeEmail(String email) {
+        String normalized = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
+        if (normalized.length() > EMAIL_MAX_LENGTH || !normalized.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            throw new InvalidUserException("El correo no es válido.");
+        }
+        return normalized;
+    }
+
     private static String normalizeName(String name) {
         String normalized = name == null ? "" : name.strip().replaceAll("\\s+", " ");
         if (normalized.length() < NAME_MIN_LENGTH || normalized.length() > NAME_MAX_LENGTH) {
@@ -48,12 +57,25 @@ public final class User {
         return normalized;
     }
 
-    private static String normalizeEmail(String email) {
-        String normalized = email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
-        if (normalized.length() > EMAIL_MAX_LENGTH || !normalized.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
-            throw new InvalidUserException("El correo no es válido.");
-        }
-        return normalized;
+    public void rename(String newName) {
+        this.fullName = normalizeName(newName);
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = Objects.requireNonNull(newRole, "role");
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    /** {@code true} si hoy cuenta como administrador activo (RN-11). */
+    public boolean isActiveAdmin() {
+        return active && role == Role.ADMIN;
     }
 
     public UUID id() {
