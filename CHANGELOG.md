@@ -6,6 +6,29 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+## [v0.4-fase4] - 2026-11-09
+
+### Agregado
+
+- **ADR 0008 · Autenticación con JWT propio:** HS256 emitido por la API con Spring Security, 60 min configurables, sin *refresh tokens*, token en memoria en el panel y BCrypt.
+- **HU-01 · Registrar al primer administrador (API):** `POST /api/v1/auth/setup`, solo mientras no exista ningún usuario (403 después). Tabla `app_user` (migración V6).
+- **HU-02 · Iniciar sesión (API):** `POST /api/v1/auth/login` y `GET /api/v1/auth/me`. Credenciales incorrectas o usuario desactivado devuelven el mismo 401 genérico; un token ausente, inválido o vencido devuelve 401 en Problem Details.
+- **HU-03 · Gestionar usuarios (API):** `GET`, `POST` y `PATCH /api/v1/users`, solo `ADMIN`. Correo único sin distinguir mayúsculas y RN-11: el último administrador activo no puede desactivarse ni cambiar de rol.
+- **HU-04 · Cambiar la contraseña propia (API):** `PUT /api/v1/auth/me/password`, con la contraseña actual.
+- **Permisos por rol (RN-05, RNF-03):** toda la API exige sesión. Crear y editar categorías y productos, y registrar ajustes, son solo de `ADMIN`; un `EMPLOYEE` puede consultar.
+- **Usuario real en el kárdex:** los ajustes guardan quién los hizo (clave foránea, migración V7) y el kárdex muestra su nombre. Los movimientos anteriores siguen como «Sistema».
+- **Panel · Ingreso y sesión:** `/ingresar` conectado a la API, rutas protegidas, aviso de sesión vencida, cierre de sesión y acciones de administración ocultas para el empleado.
+- **Panel · Registro inicial:** `/registro-inicial` para crear al primer administrador.
+- **Panel · Usuarios:** `/usuarios` (solo `ADMIN`) con alta, edición, activar y desactivar, y cambio de la contraseña propia desde el menú del usuario.
+
+### Cambiado
+
+- `JWT_SECRET` y `JWT_EXPIRATION_MINUTES` son nuevas variables de entorno (ver `.env.example`). Sin `JWT_SECRET` se usa una clave de desarrollo: hay que definir la propia fuera de local.
+
+### Pendiente de decisión
+
+- Si el empleado debe poder corregir el stock (hoy RN-05 lo reserva al administrador). Se revisa con el uso real en la Fase 6.
+
 ## [v0.3-fase3] - 2026-11-08
 
 ### Agregado
