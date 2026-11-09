@@ -39,7 +39,7 @@ class AuthSetupApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.execute("TRUNCATE app_user");
+        jdbc.execute("TRUNCATE app_user CASCADE");
     }
 
     @Test

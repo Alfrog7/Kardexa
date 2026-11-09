@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Corrección manual del stock por merma, conteo físico o corrección (RF-11). Es inmutable (RN-03).
  *
- * @param userId quién la registró; nulo hasta que exista la autenticación (Fase 4)
+ * @param userId quién la registró; nulo en los registros anteriores a la autenticación
  */
 public record StockAdjustment(
         UUID id,
@@ -44,6 +44,11 @@ public record StockAdjustment(
 
     public static StockAdjustment create(
             UUID productId, Direction direction, Quantity quantity, AdjustmentReason reason, String note, Instant now) {
-        return new StockAdjustment(UUID.randomUUID(), productId, direction, quantity, reason, note, null, now);
+        return create(productId, direction, quantity, reason, note, null, now);
+    }
+
+    public static StockAdjustment create(UUID productId, Direction direction, Quantity quantity,
+            AdjustmentReason reason, String note, UUID userId, Instant now) {
+        return new StockAdjustment(UUID.randomUUID(), productId, direction, quantity, reason, note, userId, now);
     }
 }

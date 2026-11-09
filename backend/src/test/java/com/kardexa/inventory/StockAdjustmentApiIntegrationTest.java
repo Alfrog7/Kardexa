@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase.AdjustStockCommand;
@@ -40,7 +41,7 @@ import org.springframework.test.web.servlet.ResultActions;
 /** HU-09 de punta a punta: HTTP → caso de uso con transacción → PostgreSQL real (Testcontainers). */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurity.class})
 @DisplayName("API de ajustes de stock contra PostgreSQL (HU-09)")
 class StockAdjustmentApiIntegrationTest {
 
@@ -62,6 +63,7 @@ class StockAdjustmentApiIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         jdbc.execute("TRUNCATE stock_movement, stock_adjustment, product_stock, product, category");
+        TestSecurity.insertAdmin(jdbc);
         categoryId = idOf(send(post("/api/v1/categories"), "{\"name\": \"Abarrotes\"}"));
         productId = idOf(send(post(PRODUCTS), productJson()));
     }
@@ -78,7 +80,7 @@ class StockAdjustmentApiIntegrationTest {
                 .andExpect(jsonPath("$.quantity").value("3.000"))
                 .andExpect(jsonPath("$.balanceAfter").value("17.000"))
                 .andExpect(jsonPath("$.sourceLabel").value("Ajuste"))
-                .andExpect(jsonPath("$.user").value("Sistema"));
+                .andExpect(jsonPath("$.user").value("Administrador de pruebas"));
 
         assertThat(currentStock()).isEqualByComparingTo("17");
         assertThat(count("stock_movement")).isEqualTo(2);

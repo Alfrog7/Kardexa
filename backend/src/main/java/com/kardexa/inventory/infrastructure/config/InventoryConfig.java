@@ -5,9 +5,11 @@ import com.kardexa.inventory.application.port.out.ProductStockRepository;
 import com.kardexa.inventory.application.port.out.StockMovementQueries;
 import com.kardexa.inventory.application.port.out.StockProducts;
 import com.kardexa.inventory.application.port.out.StockRecords;
+import com.kardexa.inventory.application.port.out.UserNames;
 import com.kardexa.inventory.application.service.AdjustStockService;
 import com.kardexa.inventory.application.service.KardexService;
 import com.kardexa.inventory.application.service.StockQueryService;
+import com.kardexa.inventory.application.service.UserNamesService;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,11 @@ class InventoryConfig {
     @Bean
     StockQueryService stockQueryService(ProductStockRepository productStockRepository) {
         return new StockQueryService(productStockRepository);
+    }
+
+    @Bean
+    UserNamesService userNamesService(UserNames userNames) {
+        return new UserNamesService(userNames);
     }
 
     @Bean
