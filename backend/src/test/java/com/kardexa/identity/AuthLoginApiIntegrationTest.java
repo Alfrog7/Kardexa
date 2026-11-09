@@ -45,7 +45,7 @@ class AuthLoginApiIntegrationTest {
 
     @BeforeEach
     void createAdmin() throws Exception {
-        jdbc.execute("TRUNCATE app_user");
+        jdbc.execute("TRUNCATE app_user CASCADE");
         String body = """
                 {"fullName": "Ana Pérez", "email": "ana@correo.com", "password": "secreta123"}""";
         mvc.perform(post(BASE + "/setup").contentType(MediaType.APPLICATION_JSON).content(body))

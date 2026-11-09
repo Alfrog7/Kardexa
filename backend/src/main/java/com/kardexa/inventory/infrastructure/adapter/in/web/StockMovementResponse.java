@@ -4,6 +4,7 @@ import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.MovementType;
 import com.kardexa.inventory.domain.model.StockMovement;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 /** Esquema {@code StockMovement}. Las cantidades viajan como texto para no perder precisión. */
@@ -18,13 +19,17 @@ record StockMovementResponse(
         String sourceLabel,
         String user) {
 
-    /** Hasta que exista la autenticación (Fase 4), los movimientos no tienen un usuario real. */
+    /** Los movimientos anteriores a la autenticación no tienen usuario. */
     static final String SYSTEM_USER = "Sistema";
 
-    static StockMovementResponse from(StockMovement movement) {
+    static StockMovementResponse from(StockMovement movement, Map<UUID, String> userNames) {
         return new StockMovementResponse(movement.id(), movement.occurredAt(), movement.type(), movement.direction(),
                 movement.quantity().toString(), movement.balanceAfter().toString(), movement.sourceId(),
-                label(movement), SYSTEM_USER);
+                label(movement), userName(movement, userNames));
+    }
+
+    private static String userName(StockMovement movement, Map<UUID, String> userNames) {
+        return movement.userId() == null ? SYSTEM_USER : userNames.getOrDefault(movement.userId(), SYSTEM_USER);
     }
 
     /** Las compras y ventas mostrarán su número de documento cuando existan (fases 5 y 6). */

@@ -1,6 +1,11 @@
 package com.kardexa.inventory.infrastructure.adapter.in.web;
 
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
+import com.kardexa.inventory.application.port.in.ResolveUserNamesUseCase;
+import com.kardexa.inventory.domain.model.StockMovement;
+import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase.AdjustStockCommand;
 import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
@@ -24,15 +29,19 @@ import org.springframework.web.bind.annotation.RestController;
 class StockAdjustmentController {
 
     private final AdjustStockUseCase adjustStock;
+    private final ResolveUserNamesUseCase userNames;
 
-    StockAdjustmentController(AdjustStockUseCase adjustStock) {
+    StockAdjustmentController(AdjustStockUseCase adjustStock, ResolveUserNamesUseCase userNames) {
         this.adjustStock = adjustStock;
+        this.userNames = userNames;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    StockMovementResponse adjust(@Valid @RequestBody StockAdjustmentRequest request) {
-        return StockMovementResponse.from(adjustStock.adjust(request.toCommand()));
+    StockMovementResponse adjust(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StockAdjustmentRequest request) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        StockMovement movement = adjustStock.adjust(request.toCommand(userId));
+        return StockMovementResponse.from(movement, userNames.namesOf(List.of(userId)));
     }
 
     /** Esquema {@code StockAdjustmentRequest}. La cantidad viaja como texto para no perder precisión. */
@@ -52,9 +61,9 @@ class StockAdjustmentController {
             @Size(max = StockAdjustment.NOTE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
             String note) {
 
-        AdjustStockCommand toCommand() {
+        AdjustStockCommand toCommand(UUID userId) {
             return new AdjustStockCommand(productId, Direction.valueOf(direction), Quantity.of(quantity),
-                    AdjustmentReason.valueOf(reason), note);
+                    AdjustmentReason.valueOf(reason), note, userId);
         }
     }
 }

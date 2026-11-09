@@ -37,7 +37,7 @@ class ChangePasswordApiIntegrationTest {
 
     @BeforeEach
     void createAdminAndLogin() throws Exception {
-        jdbc.execute("TRUNCATE app_user");
+        jdbc.execute("TRUNCATE app_user CASCADE");
         post("setup", "{\"fullName\": \"Ana Pérez\", \"email\": \"ana@correo.com\", \"password\": \"secreta123\"}", null)
                 .andExpect(status().isCreated());
         token = login("secreta123").andExpect(status().isOk()).andReturn().getResponse().getContentAsString();

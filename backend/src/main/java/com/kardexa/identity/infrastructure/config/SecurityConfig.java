@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,13 +71,21 @@ class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll()
-                        .requestMatchers(API + "/auth/me", API + "/auth/me/**").authenticated()
-                        // Solo ADMIN gestiona usuarios (RNF-03).
-                        .requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN")
-                        // Las rutas del catálogo y el inventario se protegen en la issue de permisos.
-                        .anyRequest().permitAll())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll();
+                    auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
+                    // Solo ADMIN gestiona usuarios (RNF-03).
+                    auth.requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN");
+                    // RN-05: crear, editar y ajustar el stock es solo de ADMIN; consultar, de cualquiera con sesión.
+                    for (HttpMethod method : List.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE)) {
+                        auth.requestMatchers(method,
+                                API + "/categories", API + "/categories/**",
+                                API + "/products", API + "/products/**",
+                                API + "/stock-adjustments", API + "/stock-adjustments/**").hasRole("ADMIN");
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(roleConverter()))
                         .authenticationEntryPoint(unauthorizedEntryPoint()))

@@ -1,6 +1,9 @@
 package com.kardexa.inventory.infrastructure.adapter.in.web;
 
 import com.kardexa.inventory.application.port.in.GetKardexUseCase;
+import com.kardexa.inventory.application.port.in.ResolveUserNamesUseCase;
+import com.kardexa.inventory.domain.model.StockMovement;
+import java.util.Map;
 import com.kardexa.inventory.domain.model.Kardex;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
@@ -18,14 +21,18 @@ import org.springframework.web.bind.annotation.RestController;
 class KardexController {
 
     private final GetKardexUseCase getKardex;
+    private final ResolveUserNamesUseCase userNames;
 
-    KardexController(GetKardexUseCase getKardex) {
+    KardexController(GetKardexUseCase getKardex, ResolveUserNamesUseCase userNames) {
         this.getKardex = getKardex;
+        this.userNames = userNames;
     }
 
     @GetMapping("/products/{id}/kardex")
     KardexResponse get(@PathVariable UUID id, @Valid @ParameterObject KardexParams params) {
-        return KardexResponse.from(getKardex.get(id, params.from(), params.to()));
+        Kardex kardex = getKardex.get(id, params.from(), params.to());
+        Map<UUID, String> names = userNames.namesOf(kardex.movements().stream().map(StockMovement::userId).toList());
+        return KardexResponse.from(kardex, names);
     }
 
     /** Fechas inclusivas en hora de Lima; las dos son opcionales. */
@@ -47,10 +54,10 @@ class KardexController {
             String closingBalance,
             List<StockMovementResponse> movements) {
 
-        static KardexResponse from(Kardex kardex) {
+        static KardexResponse from(Kardex kardex, Map<UUID, String> userNames) {
             return new KardexResponse(kardex.productId(), kardex.productName(), kardex.openingBalance().toString(),
                     kardex.closingBalance().toString(),
-                    kardex.movements().stream().map(StockMovementResponse::from).toList());
+                    kardex.movements().stream().map(m -> StockMovementResponse.from(m, userNames)).toList());
         }
     }
 }

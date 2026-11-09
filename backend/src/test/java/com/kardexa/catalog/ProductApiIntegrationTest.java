@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import com.kardexa.catalog.application.port.out.ProductRepository;
 import com.kardexa.catalog.domain.exception.DuplicateProductCodeException;
@@ -36,7 +37,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 /** HU-06 de punta a punta: HTTP → caso de uso → JPA e inventario → PostgreSQL real (Testcontainers). */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurity.class})
 @DisplayName("API de productos contra PostgreSQL (HU-06)")
 class ProductApiIntegrationTest {
 

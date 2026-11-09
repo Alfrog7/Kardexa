@@ -40,7 +40,7 @@ class UserApiIntegrationTest {
 
     @BeforeEach
     void createAdmin() throws Exception {
-        jdbc.execute("TRUNCATE app_user");
+        jdbc.execute("TRUNCATE app_user CASCADE");
         String setup = """
                 {"fullName": "Ana Pérez", "email": "ana@correo.com", "password": "secreta123"}""";
         ResultActions created = json(post(BASE + "/auth/setup"), setup, null).andExpect(status().isCreated());

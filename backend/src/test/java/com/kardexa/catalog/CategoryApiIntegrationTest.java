@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import com.kardexa.catalog.application.port.out.CategoryRepository;
 import com.kardexa.catalog.domain.exception.DuplicateCategoryNameException;
@@ -30,7 +31,7 @@ import org.springframework.test.web.servlet.ResultActions;
 /** HU-05 de punta a punta: HTTP → caso de uso → JPA → PostgreSQL real (Testcontainers). */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurity.class})
 @DisplayName("API de categorías contra PostgreSQL (HU-05)")
 class CategoryApiIntegrationTest {
 

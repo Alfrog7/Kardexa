@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -27,7 +28,7 @@ import org.springframework.test.web.servlet.ResultActions;
 /** HU-08 de punta a punta: HTTP → caso de uso → PostgreSQL real (Testcontainers). */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurity.class})
 @DisplayName("API del kárdex contra PostgreSQL (HU-08)")
 class KardexApiIntegrationTest {
 
@@ -43,6 +44,7 @@ class KardexApiIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         jdbc.execute("TRUNCATE stock_movement, stock_adjustment, product_stock, product, category");
+        TestSecurity.insertAdmin(jdbc);
         String categoryId = idOf(postJson("/api/v1/categories", "{\"name\": \"Abarrotes\"}"));
         productId = idOf(postJson("/api/v1/products", """
                 {"code": "AR-001", "name": "Arroz 5 kg", "categoryId": "%s", "unit": "UNIT",
@@ -70,7 +72,7 @@ class KardexApiIntegrationTest {
                 .andExpect(jsonPath("$.movements[1].sourceLabel").value("Ajuste"))
                 .andExpect(jsonPath("$.movements[1].sourceId").isNotEmpty())
                 .andExpect(jsonPath("$.movements[1].occurredAt").isNotEmpty())
-                .andExpect(jsonPath("$.movements[1].user").value("Sistema"));
+                .andExpect(jsonPath("$.movements[1].user").value("Administrador de pruebas"));
     }
 
     @Test
