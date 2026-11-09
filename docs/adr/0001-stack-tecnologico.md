@@ -28,7 +28,7 @@ El brief propone Java + Spring Boot 3, PostgreSQL, React + TypeScript y Astro. A
 | Lenguaje backend | Java (Temurin) | 21 LTS |
 | Framework backend | Spring Boot | 4.1.x |
 | Build backend | Maven (vía Maven Wrapper) | 3.9.x |
-| Seguridad | Spring Security + JWT propio | fase 3 |
+| Seguridad | Spring Security + JWT propio | fase 4 |
 | Persistencia | Spring Data JPA + Hibernate | la de Spring Boot |
 | Base de datos | PostgreSQL | 18 |
 | Migraciones | Flyway | la de Spring Boot |
