@@ -31,10 +31,14 @@ GitHub solo aplica `Closes #N` al fusionar en la rama por defecto: tras fusionar
 
 ## Ramas
 
+**Una rama por issue.** Al tomar una issue se crea una rama nueva desde `develop` y todo su trabajo va ahí; no se reutilizan ramas ni se mezclan issues. El nombre es `prefijo/descripcion-corta`, en minúsculas y con guiones; el PR enlaza la issue con `Closes #N`. La única excepción es `hotfix/`, que sale de `main`.
+
 | Prefijo | Uso | Ejemplo |
 |---|---|---|
 | `feat/` | Nueva funcionalidad | `feat/registro-de-ventas` |
 | `fix/` | Corrección de errores | `fix/stock-negativo` |
+| `hotfix/` | Corrección urgente de algo ya publicado en `main`. Sale de `main`, vuelve a `main` y luego se lleva a `develop` | `hotfix/token-vencido` |
+| `perf/` | Mejora de rendimiento sin cambiar el comportamiento | `perf/consulta-de-kardex` |
 | `docs/` | Documentación | `docs/fase-0-requisitos` |
 | `chore/` | Configuración y mantenimiento | `chore/configuracion-repositorio` |
 | `refactor/` | Cambio interno sin alterar el comportamiento | `refactor/puerto-inventario` |
