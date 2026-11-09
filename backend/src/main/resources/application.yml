@@ -29,6 +29,14 @@ spring:
     problemdetails:
       enabled: true
 
+kardexa:
+  security:
+    jwt:
+      # Clave de firma HS256 (mínimo 32 bytes). El valor por defecto es solo para desarrollo:
+      # en cualquier otro entorno se define JWT_SECRET.
+      secret: ${JWT_SECRET:desarrollo-solo-local-cambiar-en-produccion-0123456789}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
 server:
   port: ${PORT:8080}
   shutdown: graceful

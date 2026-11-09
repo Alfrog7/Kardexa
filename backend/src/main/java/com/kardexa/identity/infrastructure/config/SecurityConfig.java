@@ -1,24 +1,62 @@
 package com.kardexa.identity.infrastructure.config;
 
+import com.kardexa.shared.infrastructure.config.WebConfig;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Seguridad de la API (ADR 0008): sin sesión ni CSRF, con BCrypt. Por ahora solo se introduce Spring
- * Security: las rutas siguen abiertas hasta que HU-02 y HU-03 agreguen el JWT y los permisos.
+ * Seguridad de la API (ADR 0008): sin sesión ni CSRF, JWT HS256 propio y BCrypt. Por ahora solo
+ * {@code /auth/me} exige token; las rutas del catálogo y el inventario se protegen en HU-03.
  */
 @Configuration(proxyBeanMethods = false)
 class SecurityConfig {
 
+    private static final String API = WebConfig.API_PREFIX;
+    private static final int MIN_SECRET_BYTES = 32;
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    SecretKey jwtSecretKey(@Value("${kardexa.security.jwt.secret}") String secret) {
+        byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT_SECRET debe tener al menos %d bytes.".formatted(MIN_SECRET_BYTES));
+        }
+        return new SecretKeySpec(bytes, "HmacSHA256");
+    }
+
+    @Bean
+    JwtEncoder jwtEncoder(SecretKey jwtSecretKey) {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey));
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(SecretKey jwtSecretKey) {
+        return NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
     @Bean
@@ -28,7 +66,32 @@ class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll()
+                        .requestMatchers(API + "/auth/me").authenticated()
+                        // Las demás rutas se protegen en HU-03.
+                        .anyRequest().permitAll())
+                .oauth2ResourceServer(oauth -> oauth
+                        .jwt(jwt -> { })
+                        .authenticationEntryPoint(unauthorizedEntryPoint()))
+                .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedEntryPoint()))
                 .build();
+    }
+
+    /** Responde 401 en Problem Details, con el mismo formato que el resto de errores. */
+    private static AuthenticationEntryPoint unauthorizedEntryPoint() {
+        return (request, response, ex) -> writeProblem(
+                response, "No autenticado", "Falta el token de acceso, o es inválido o está vencido.");
+    }
+
+    private static void writeProblem(jakarta.servlet.http.HttpServletResponse response, String title, String detail)
+            throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setHeader("WWW-Authenticate", "Bearer");
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write("""
+                {"type":"https://kardexa.dev/problemas/no-autenticado","title":"%s","status":401,"detail":"%s"}"""
+                .formatted(title, detail));
     }
 }

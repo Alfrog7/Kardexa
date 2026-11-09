@@ -4,6 +4,7 @@ import com.kardexa.shared.domain.ConflictException;
 import com.kardexa.shared.domain.DomainException;
 import com.kardexa.shared.domain.ForbiddenException;
 import com.kardexa.shared.domain.NotFoundException;
+import com.kardexa.shared.domain.UnauthorizedException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     ProblemDetail handleNotFound(NotFoundException ex) {
         return domainProblem(HttpStatus.NOT_FOUND, "recurso-no-encontrado", ex);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    ProblemDetail handleUnauthorized(UnauthorizedException ex) {
+        return domainProblem(HttpStatus.UNAUTHORIZED, "no-autenticado", ex);
     }
 
     @ExceptionHandler(ForbiddenException.class)
