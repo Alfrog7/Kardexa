@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { appRoutes } from './router'
 
 function renderAt(path: string) {
@@ -14,21 +14,35 @@ describe('rutas del panel', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Módulos' })
-    for (const label of ['Inicio', 'Ventas', 'Productos', 'Inventario', 'Compras']) {
+    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario', 'Compras']) {
       expect(nav).toHaveTextContent(label)
     }
   })
 
   it.each([
     ['/ventas', 'Ventas', 'Fase 6'],
-    ['/productos', 'Productos', 'Fase 4'],
-    ['/inventario', 'Inventario', 'Fase 4'],
     ['/compras', 'Compras', 'Fase 5'],
   ])('%s muestra su pantalla y la fase en que se implementa', (path, title, phase) => {
     renderAt(path)
 
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(screen.getByText(phase)).toBeInTheDocument()
+  })
+
+  it('/inventario muestra la pantalla de inventario', () => {
+    renderAt('/inventario')
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Inventario' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Producto')).toBeInTheDocument()
+  })
+
+  it('/productos muestra la pantalla de productos', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })))
+    renderAt('/productos')
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
+    expect(await screen.findByText('No hay productos con estos filtros.')).toBeInTheDocument()
+    vi.unstubAllGlobals()
   })
 
   it('marca como activo el módulo actual', () => {

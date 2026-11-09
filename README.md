@@ -6,7 +6,7 @@
 <p align="center">
   <a href="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-0F766E"></a>
-  <img alt="Estado: fase 2" src="https://img.shields.io/badge/estado-fase%202%20%C2%B7%20base%20t%C3%A9cnica-F59E0B">
+  <img alt="Estado: fase 3 cerrada" src="https://img.shields.io/badge/estado-fase%203%20%C2%B7%20cat%C3%A1logo%20e%20inventario-0F766E">
   <img alt="Java 21" src="https://img.shields.io/badge/Java-21-0F172A?logo=openjdk&logoColor=white">
   <img alt="Spring Boot 4" src="https://img.shields.io/badge/Spring%20Boot-4-0F172A?logo=springboot&logoColor=6DB33F">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-0F172A?logo=react&logoColor=61DAFB">
@@ -32,7 +32,7 @@ Este repositorio también documenta **el proceso**: requisitos, diagramas, decis
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 21 · Spring Boot 4.1 · arquitectura hexagonal · Spring Security con JWT propio (fase 3) |
+| Backend | Java 21 · Spring Boot 4.1 · arquitectura hexagonal · Spring Security con JWT propio (fase 4) |
 | Base de datos | PostgreSQL 18 · Flyway |
 | Frontend (panel) | React 19 · TypeScript 7 · Vite 8 · React Router 8 |
 | Documentación de API | OpenAPI / Swagger |
@@ -44,13 +44,16 @@ Este repositorio también documenta **el proceso**: requisitos, diagramas, decis
 
 ## Cómo levantarlo en local
 
-Requisitos: **JDK 21**, **Node.js 22.12+** y **Docker** (solo para PostgreSQL).
+Requisitos: **JDK 21**, **Node.js 22.12+** y **Docker Desktop** encendido (solo para PostgreSQL).
 
 ```bash
-docker compose up -d                       # 1. PostgreSQL en localhost:5432
+cp .env.example .env                       # 0. Configuración local (solo la primera vez)
+docker compose up -d                       # 1. PostgreSQL en localhost:5432 (o el DB_PORT del .env)
 cd backend && ./mvnw spring-boot:run       # 2. API en http://localhost:8080
 cd frontend && npm install && npm run dev  # 3. Panel en http://localhost:5173
 ```
+
+En Windows (PowerShell) se usa `Copy-Item .env.example .env` y `.\mvnw.cmd` en lugar de `./mvnw`. La API lee el mismo `.env` que Docker Compose, así que no hace falta repetir la configuración.
 
 | URL | Qué es |
 |---|---|
@@ -58,7 +61,24 @@ cd frontend && npm install && npm run dev  # 3. Panel en http://localhost:5173
 | http://localhost:8080/swagger-ui.html | Documentación interactiva de la API |
 | http://localhost:8080/actuator/health | Estado de la API |
 
-Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](frontend/README.md). En Windows se usa `mvnw.cmd` en lugar de `./mvnw`.
+### Probar la API en dos minutos
+
+En Swagger UI: `POST /api/v1/categories` con `{"name": "Bebidas"}`, copiar el `id` de la respuesta y usarlo en `POST /api/v1/products`. O con `curl`:
+
+```bash
+curl -s -X POST localhost:8080/api/v1/categories -H "Content-Type: application/json" -d '{"name": "Bebidas"}'
+curl -s -X POST localhost:8080/api/v1/products -H "Content-Type: application/json"   -d '{"code": "AB-001", "name": "Gaseosa 500 ml", "categoryId": "<id>", "unit": "UNIT", "salePrice": "3.50", "minStock": "5"}'
+```
+
+### Problemas frecuentes
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `docker compose up` falla con `bind: ... 5432` | Ya hay un PostgreSQL instalado en el equipo usando ese puerto | En `.env` poner `DB_PORT=5433`, `docker compose down` y `docker compose up -d`. La API toma el puerto del mismo `.env`. |
+| `./mvnw verify` falla con `Could not find a valid Docker environment` | Docker Desktop está apagado | Encender Docker Desktop: los tests levantan su propio PostgreSQL con Testcontainers. |
+| La API no arranca: `Connection refused` | El contenedor de PostgreSQL no está en marcha | `docker compose up -d` y revisar con `docker compose ps`. |
+
+Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](frontend/README.md).
 
 ## Plan por fases
 
@@ -66,9 +86,9 @@ Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](fr
 |---|---|---|
 | 0 · Problemática | Problema, actores, alcance, requisitos e historias de usuario | ✅ Completada |
 | 1 · Diseño | C4, modelo ER, flujos, contrato OpenAPI, ADRs | ✅ Completada |
-| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | 🟡 En curso |
-| 3 · Autenticación | Registro, login, roles, JWT | ⚪ Pendiente |
-| 4 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ⚪ Pendiente |
+| 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | ✅ Completada |
+| 3 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ✅ Completada |
+| 4 · Autenticación | Registro, login, roles, JWT | ⚪ Pendiente |
 | 5 · Proveedores y compras | Una compra suma stock | ⚪ Pendiente |
 | 6 · Ventas | Una venta descuenta stock | ⚪ Pendiente |
 | 7 · Panel y reportes | Dashboard con indicadores | ⚪ Pendiente |
@@ -81,7 +101,7 @@ El avance se sigue en los [milestones](https://github.com/Alfrog7/Kardexa/milest
 
 ```text
 Kardexa/
-├── assets/branding/   # logo, isotipo y banner (SVG)
+├── assets/branding/   # logo, isotipo, banner, redes, papelería y guía
 ├── docs/              # problemática, requisitos, arquitectura, ADRs y bitácora
 ├── backend/           # API Spring Boot · hexagonal por módulo (ADR 0002)
 ├── frontend/          # panel React · por funcionalidades (ADR 0005)

@@ -25,6 +25,8 @@ Dos vendedores pueden vender a la vez la última unidad de un producto. Si ambas
 4. Como defensa en profundidad, `product_stock.quantity` tiene `CHECK (quantity >= 0)`.
 5. Para evitar *deadlocks* en ventas con varios productos, se procesan los ítems **ordenados por `product_id`**.
 
+**Implementación (HU-09):** el bloqueo optimista se aplica en el propio SQL, sin entidad JPA: `UPDATE product_stock … WHERE product_id = ? AND version = ?`. Si no afecta a ninguna fila, o si otro creó antes la primera fila, se lanza `StaleStockException` en lugar de `OptimisticLockException`. La transacción y los reintentos están en un decorador de `infrastructure/config`, para no meter Spring en `application`.
+
 ## Consecuencias
 
 - ✅ RN-01 y RN-02 se cumplen aunque haya ventas simultáneas.

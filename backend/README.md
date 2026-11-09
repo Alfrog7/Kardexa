@@ -5,7 +5,7 @@ API REST de Kardexa: Java 21 · Spring Boot 4.1 · PostgreSQL · arquitectura he
 ## Requisitos
 
 - JDK 21 (no hace falta instalar Maven: se usa el wrapper `mvnw`)
-- PostgreSQL 18 en local, o Docker para levantarlo con `docker-compose.yml` (fase 2)
+- Docker en marcha: los tests de integración levantan PostgreSQL 18 con Testcontainers, y `docker-compose.yml` lo levanta para desarrollo
 
 ## Comandos
 
@@ -24,12 +24,18 @@ En Windows (PowerShell o CMD) se usa `mvnw.cmd` en lugar de `./mvnw`.
 
 ## Configuración
 
+En local, la API lee el archivo `.env` de la raíz del repo (el mismo que usa `docker-compose.yml`) si existe. Las variables de entorno del sistema tienen prioridad sobre el archivo. Fuera de local no hay `.env`: todo se define con variables de entorno.
+
 | Variable | Por defecto (solo local) | Descripción |
 |---|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/kardexa` | URL JDBC |
+| `DB_PORT` | `5432` | Puerto de PostgreSQL en el equipo (cámbialo si ya tienes otro PostgreSQL instalado) |
+| `DB_NAME` | `kardexa` | Nombre de la base |
+| `DB_URL` | `jdbc:postgresql://localhost:${DB_PORT}/${DB_NAME}` | URL JDBC completa; si se define, reemplaza a `DB_PORT` y `DB_NAME` |
 | `DB_USER` | `kardexa` | Usuario de la base |
 | `DB_PASSWORD` | `kardexa` | Contraseña de la base |
 | `PORT` | `8080` | Puerto HTTP |
+
+Los tests no usan esta configuración: Testcontainers levanta un PostgreSQL desechable y Spring se conecta a él con `@ServiceConnection`.
 
 ## Estructura
 

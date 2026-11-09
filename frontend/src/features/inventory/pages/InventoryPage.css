@@ -1,0 +1,52 @@
+.product-picker {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 32rem;
+}
+
+.product-picker__results {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  list-style: none;
+}
+
+.inventory__selected {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.inventory__range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.inventory__range .field {
+  flex: 1 1 10rem;
+  max-width: 14rem;
+}
+
+.inventory__balances {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 14rem));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.inventory__balances .card {
+  padding: var(--space-4);
+}
+
+.inventory__balances dt {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.inventory__balances dd {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

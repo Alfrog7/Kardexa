@@ -197,6 +197,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Category' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '409': { $ref: '#/components/responses/Conflict' }
 
   /categories/{id}:
@@ -218,13 +219,18 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Category' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /products:
     get:
       tags: [catalog]
       operationId: searchProducts
       summary: Busca productos por nombre o código (RF-08)
+      description: >-
+        Productos activos (o todos con `includeInactive`), ordenados por nombre. `q` se busca sin distinguir mayúsculas
+        dentro del código o del nombre; `%` y `_` se toman como texto, no como comodines.
       parameters:
         - name: q
           in: query
@@ -235,7 +241,11 @@ paths:
           schema: { type: string, format: uuid }
         - name: criticalOnly
           in: query
-          description: Solo productos con stock ≤ mínimo (RF-14)
+          description: Solo productos con stock actual ≤ stock mínimo (RF-14, RN-09). Sin movimientos, el stock es 0.
+          schema: { type: boolean, default: false }
+        - name: includeInactive
+          in: query
+          description: Incluye también los productos desactivados, para gestionarlos y reactivarlos.
           schema: { type: boolean, default: false }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
@@ -245,6 +255,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProductPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [catalog]
@@ -264,6 +275,8 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /products/{id}:
     parameters:
@@ -295,8 +308,10 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Product' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /products/{id}/kardex:
     parameters:
@@ -305,6 +320,9 @@ paths:
       tags: [inventory]
       operationId: getKardex
       summary: Kárdex del producto en un rango de fechas (RF-12)
+      description: >-
+        Las dos fechas son opcionales. Sin `from`, el saldo inicial es 0 y empieza en el primer movimiento.
+        Sin `to`, llega hasta el último. Los movimientos van en orden cronológico.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
@@ -314,6 +332,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Kardex' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /stock-adjustments:
@@ -332,7 +351,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/StockMovement' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/ConcurrentModification' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 

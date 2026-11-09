@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { LoginPage } from '@features/auth'
-import { ProductsPage } from '@features/catalog'
+import { CategoriesPage, ProductsPage } from '@features/catalog'
 import { DashboardPage } from '@features/dashboard'
 import { InventoryPage } from '@features/inventory'
 import { PurchasesPage } from '@features/purchasing'
@@ -19,6 +19,7 @@ export const appRoutes: RouteObject[] = [
       { index: true, element: <DashboardPage /> },
       { path: routes.sales, element: <SalesPage /> },
       { path: routes.products, element: <ProductsPage /> },
+      { path: routes.categories, element: <CategoriesPage /> },
       { path: routes.inventory, element: <InventoryPage /> },
       { path: routes.purchases, element: <PurchasesPage /> },
       { path: '*', element: <NotFoundPage /> },

@@ -1,0 +1,40 @@
+.products__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: end;
+  gap: var(--space-4);
+}
+
+/* Además de la etiqueta con texto, una franja ámbar marca la fila. */
+.products__row--critical td:first-child {
+  box-shadow: inset 4px 0 0 var(--color-accent);
+}
+
+.products__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.product-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4);
+}
+
+.products__row--inactive {
+  background: var(--color-surface-soft);
+}
+
+/* En móvil, la franja pasa de la celda a la ficha completa. */
+@media (max-width: 48rem) {
+  .products__row--critical td:first-child {
+    box-shadow: none;
+  }
+
+  .data-table tr.products__row--critical {
+    box-shadow: inset 4px 0 0 var(--color-accent);
+  }
+}
