@@ -17,3 +17,11 @@ export async function login(email: string, password: string): Promise<Session> {
   })
   return { token: response.accessToken, user: response.user }
 }
+
+/** `POST /auth/setup` (HU-01): crea al primer administrador; con usuarios existentes la API responde 403. */
+export async function registerFirstAdmin(fullName: string, email: string, password: string): Promise<SessionUser> {
+  return apiRequest<SessionUser>('/auth/setup', {
+    method: 'POST',
+    body: JSON.stringify({ fullName, email, password }),
+  })
+}
