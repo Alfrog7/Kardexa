@@ -36,9 +36,9 @@ src/
 │   ├── layout/             # PanelLayout: barra lateral + contenido
 │   └── NotFoundPage.tsx
 ├── features/               # una carpeta por módulo del backend
-│   ├── auth/               # inicio de sesión            (fase 3)
-│   ├── catalog/            # productos y categorías      (fase 4)
-│   ├── inventory/          # kárdex, ajustes, alertas    (fase 4)
+│   ├── auth/               # inicio de sesión            (fase 4)
+│   ├── catalog/            # productos y categorías      (fase 3)
+│   ├── inventory/          # kárdex, ajustes, alertas    (fase 3)
 │   ├── purchasing/         # proveedores y compras       (fase 5)
 │   ├── sales/              # ventas y comprobantes       (fase 6)
 │   └── dashboard/          # indicadores                 (fase 7)

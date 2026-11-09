@@ -18,7 +18,7 @@ record StockMovementResponse(
         String sourceLabel,
         String user) {
 
-    /** Hasta que exista la autenticación (Fase 3), los movimientos no tienen un usuario real. */
+    /** Hasta que exista la autenticación (Fase 4), los movimientos no tienen un usuario real. */
     static final String SYSTEM_USER = "Sistema";
 
     static StockMovementResponse from(StockMovement movement) {

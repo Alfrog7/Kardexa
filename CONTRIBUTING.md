@@ -76,7 +76,7 @@ Cada sub-issue sigue el mismo formato:
 - **Notas**: dependencias, decisiones abiertas y lo que queda fuera.
 - **Criterios de aceptación**: comportamiento verificable, uno por casilla `- [ ]`, cada uno con su test.
 
-Ejemplo: la épica de la Fase 4 (#27).
+Ejemplo: la épica de la Fase 3 (#27).
 
 ## Idioma
 

@@ -3,7 +3,7 @@ import './LoginPage.css'
 
 /**
  * Inicio de sesión (HU-02). Por ahora solo la interfaz: el envío se conecta a
- * `POST /api/v1/auth/login` en la fase 3.
+ * `POST /api/v1/auth/login` en la fase 4.
  */
 export function LoginPage() {
   return (
@@ -27,7 +27,7 @@ export function LoginPage() {
             Ingresar
           </button>
           <p id="login-estado" className="badge">
-            El inicio de sesión se habilita en la fase 3
+            El inicio de sesión se habilita en la fase 4
           </p>
         </form>
       </div>

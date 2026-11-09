@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Corrección manual del stock por merma, conteo físico o corrección (RF-11). Es inmutable (RN-03).
  *
- * @param userId quién la registró; nulo hasta que exista la autenticación (Fase 3)
+ * @param userId quién la registró; nulo hasta que exista la autenticación (Fase 4)
  */
 public record StockAdjustment(
         UUID id,
