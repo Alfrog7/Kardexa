@@ -1,5 +1,9 @@
 package com.kardexa.identity.infrastructure.adapter.in.web;
 
+import com.kardexa.identity.application.port.in.GetCurrentUserUseCase;
+import com.kardexa.identity.application.port.in.LoginUseCase;
+import com.kardexa.identity.application.port.in.LoginUseCase.LoginCommand;
+import com.kardexa.identity.application.port.in.LoginUseCase.LoginResult;
 import com.kardexa.identity.application.port.in.RegisterFirstAdminUseCase;
 import com.kardexa.identity.application.port.in.RegisterFirstAdminUseCase.RegisterFirstAdminCommand;
 import com.kardexa.identity.domain.model.User;
@@ -8,6 +12,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,9 +28,26 @@ import org.springframework.web.bind.annotation.RestController;
 class AuthController {
 
     private final RegisterFirstAdminUseCase registerFirstAdmin;
+    private final LoginUseCase loginUseCase;
+    private final GetCurrentUserUseCase getCurrentUser;
 
-    AuthController(RegisterFirstAdminUseCase registerFirstAdmin) {
+    AuthController(
+            RegisterFirstAdminUseCase registerFirstAdmin,
+            LoginUseCase loginUseCase,
+            GetCurrentUserUseCase getCurrentUser) {
         this.registerFirstAdmin = registerFirstAdmin;
+        this.loginUseCase = loginUseCase;
+        this.getCurrentUser = getCurrentUser;
+    }
+
+    @PostMapping("/login")
+    TokenResponse login(@Valid @RequestBody LoginRequest request) {
+        return TokenResponse.from(loginUseCase.login(new LoginCommand(request.email(), request.password())));
+    }
+
+    @GetMapping("/me")
+    UserResponse me(@AuthenticationPrincipal Jwt jwt) {
+        return UserResponse.from(getCurrentUser.getCurrent(UUID.fromString(jwt.getSubject())));
     }
 
     @PostMapping("/setup")
@@ -45,6 +69,18 @@ class AuthController {
             @NotBlank(message = "La contraseña es obligatoria.")
             @Size(min = 8, max = 72, message = "Debe tener entre {min} y {max} caracteres.")
             String password) {}
+
+    record LoginRequest(
+            @NotBlank(message = "El correo es obligatorio.") String email,
+            @NotBlank(message = "La contraseña es obligatoria.") String password) {}
+
+    record TokenResponse(String accessToken, String tokenType, long expiresIn, UserResponse user) {
+
+        static TokenResponse from(LoginResult result) {
+            return new TokenResponse(
+                    result.token().value(), "Bearer", result.token().expiresInSeconds(), UserResponse.from(result.user()));
+        }
+    }
 
     record UserResponse(UUID id, String fullName, String email, String role, boolean active) {
 
