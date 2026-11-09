@@ -9,7 +9,7 @@ import java.util.UUID;
  * Una línea del kárdex: entrada o salida con el saldo que dejó (RN-02) y su documento de origen
  * (RN-04). Es inmutable (RN-03): un error se corrige con un movimiento inverso.
  *
- * @param userId quién lo generó; nulo hasta que exista la autenticación (Fase 4)
+ * @param userId quién lo generó; nulo en los registros anteriores a la autenticación
  */
 public record StockMovement(
         UUID id,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import { useCanManage } from '@shared/auth/session'
 import { formatMoney, formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
@@ -47,6 +48,7 @@ export function ProductsPage() {
   const [result, setResult] = useState<SearchResult>()
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesError, setCategoriesError] = useState<string>()
+  const canManage = useCanManage()
   const [form, setForm] = useState<FormMode>({ kind: 'closed' })
   const [notice, setNotice] = useState<string>()
   const dismissNotice = useCallback(() => setNotice(undefined), [])
@@ -113,9 +115,11 @@ export function ProductsPage() {
     <section className="page">
       <header className="page__header page__header--spread">
         <h1>Productos</h1>
-        <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
-          Nuevo producto
-        </button>
+        {canManage ? (
+          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+            Nuevo producto
+          </button>
+        ) : null}
       </header>
 
       {form.kind !== 'closed' ? (
@@ -223,13 +227,17 @@ export function ProductsPage() {
                 <tr key={product.id} className={rowClass(product)}>
                   <td data-label="Código">{product.code}</td>
                   <td data-label="Nombre">
-                    <button
-                      className="link-button"
-                      type="button"
-                      onClick={() => setForm({ kind: 'edit', product })}
-                    >
-                      {product.name}
-                    </button>
+                    {canManage ? (
+                      <button
+                        className="link-button"
+                        type="button"
+                        onClick={() => setForm({ kind: 'edit', product })}
+                      >
+                        {product.name}
+                      </button>
+                    ) : (
+                      product.name
+                    )}
                   </td>
                   <td data-label="Categoría">{product.categoryName}</td>
                   <td data-label="Precio" className="data-table__number">

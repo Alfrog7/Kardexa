@@ -88,7 +88,7 @@ Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](fr
 | 1 · Diseño | C4, modelo ER, flujos, contrato OpenAPI, ADRs | ✅ Completada |
 | 2 · Base técnica | Monorepo, Docker Compose, esqueletos, CI | ✅ Completada |
 | 3 · Catálogo e inventario | Productos, categorías, movimientos, stock mínimo | ✅ Completada |
-| 4 · Autenticación | Registro, login, roles, JWT | ⚪ Pendiente |
+| 4 · Autenticación | Registro, login, roles, JWT | ✅ Completada |
 | 5 · Proveedores y compras | Una compra suma stock | ⚪ Pendiente |
 | 6 · Ventas | Una venta descuenta stock | ⚪ Pendiente |
 | 7 · Panel y reportes | Dashboard con indicadores | ⚪ Pendiente |

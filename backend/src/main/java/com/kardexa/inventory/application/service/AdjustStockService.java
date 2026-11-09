@@ -47,7 +47,7 @@ public class AdjustStockService implements AdjustStockUseCase {
         // La hora se toma con la fila bloqueada, para que las fechas sigan el orden de los saldos.
         // Microsegundos: la precisión de timestamptz, para que lo devuelto sea igual a lo guardado.
         StockAdjustment adjustment = StockAdjustment.create(command.productId(), command.direction(),
-                command.quantity(), command.reason(), command.note(), clock.instant().truncatedTo(ChronoUnit.MICROS));
+                command.quantity(), command.reason(), command.note(), command.userId(), clock.instant().truncatedTo(ChronoUnit.MICROS));
         StockMovement movement = StockMovement.fromAdjustment(adjustment, updated.quantity());
         records.add(adjustment);
         records.add(movement);
