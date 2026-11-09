@@ -3,6 +3,7 @@ package com.kardexa.identity.infrastructure.config;
 import com.kardexa.identity.application.port.out.PasswordHasher;
 import com.kardexa.identity.application.port.out.TokenIssuer;
 import com.kardexa.identity.application.port.out.UserRepository;
+import com.kardexa.identity.application.service.UserManagementService;
 import com.kardexa.identity.application.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,5 +15,10 @@ class IdentityConfig {
     @Bean
     UserService userService(UserRepository users, PasswordHasher hasher, TokenIssuer tokens) {
         return new UserService(users, hasher, tokens);
+    }
+
+    @Bean
+    UserManagementService userManagementService(UserRepository users, PasswordHasher hasher) {
+        return new UserManagementService(users, hasher);
     }
 }

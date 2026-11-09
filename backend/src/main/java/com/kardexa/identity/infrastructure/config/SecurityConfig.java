@@ -2,6 +2,7 @@ package com.kardexa.identity.infrastructure.config;
 
 import com.kardexa.shared.infrastructure.config.WebConfig;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
@@ -22,7 +23,10 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -69,29 +73,52 @@ class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll()
                         .requestMatchers(API + "/auth/me").authenticated()
-                        // Las demás rutas se protegen en HU-03.
+                        // Solo ADMIN gestiona usuarios (RNF-03).
+                        .requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN")
+                        // Las rutas del catálogo y el inventario se protegen en la issue de permisos.
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth -> oauth
-                        .jwt(jwt -> { })
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(roleConverter()))
                         .authenticationEntryPoint(unauthorizedEntryPoint()))
-                .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedEntryPoint()))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(unauthorizedEntryPoint())
+                        .accessDeniedHandler(forbiddenHandler()))
                 .build();
+    }
+
+    /** Convierte el claim {@code role} del token en la autoridad {@code ROLE_<rol>}. */
+    private static JwtAuthenticationConverter roleConverter() {
+        JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
+        authorities.setAuthoritiesClaimName("role");
+        authorities.setAuthorityPrefix("ROLE_");
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authorities);
+        return converter;
     }
 
     /** Responde 401 en Problem Details, con el mismo formato que el resto de errores. */
     private static AuthenticationEntryPoint unauthorizedEntryPoint() {
-        return (request, response, ex) -> writeProblem(
-                response, "No autenticado", "Falta el token de acceso, o es inválido o está vencido.");
+        return (request, response, ex) -> writeProblem(response, HttpStatus.UNAUTHORIZED, "no-autenticado",
+                "No autenticado", "Falta el token de acceso, o es inválido o está vencido.");
     }
 
-    private static void writeProblem(jakarta.servlet.http.HttpServletResponse response, String title, String detail)
+    /** Responde 403 en Problem Details cuando el rol no alcanza. */
+    private static AccessDeniedHandler forbiddenHandler() {
+        return (request, response, ex) -> writeProblem(response, HttpStatus.FORBIDDEN, "operacion-no-permitida",
+                "Acceso denegado", "Tu rol no permite esta operación.");
+    }
+
+    private static void writeProblem(
+            HttpServletResponse response, HttpStatus status, String type, String title, String detail)
             throws IOException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setHeader("WWW-Authenticate", "Bearer");
+        response.setStatus(status.value());
+        if (status == HttpStatus.UNAUTHORIZED) {
+            response.setHeader("WWW-Authenticate", "Bearer");
+        }
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.getWriter().write("""
-                {"type":"https://kardexa.dev/problemas/no-autenticado","title":"%s","status":401,"detail":"%s"}"""
-                .formatted(title, detail));
+                {"type":"https://kardexa.dev/problemas/%s","title":"%s","status":%d,"detail":"%s"}"""
+                .formatted(type, title, status.value(), detail));
     }
 }
