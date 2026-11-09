@@ -1,5 +1,7 @@
 package com.kardexa.identity.infrastructure.adapter.in.web;
 
+import com.kardexa.identity.application.port.in.ChangePasswordUseCase;
+import com.kardexa.identity.application.port.in.ChangePasswordUseCase.ChangePasswordCommand;
 import com.kardexa.identity.application.port.in.GetCurrentUserUseCase;
 import com.kardexa.identity.application.port.in.LoginUseCase;
 import com.kardexa.identity.application.port.in.LoginUseCase.LoginCommand;
@@ -17,6 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,14 +33,17 @@ class AuthController {
     private final RegisterFirstAdminUseCase registerFirstAdmin;
     private final LoginUseCase loginUseCase;
     private final GetCurrentUserUseCase getCurrentUser;
+    private final ChangePasswordUseCase changePassword;
 
     AuthController(
             RegisterFirstAdminUseCase registerFirstAdmin,
             LoginUseCase loginUseCase,
-            GetCurrentUserUseCase getCurrentUser) {
+            GetCurrentUserUseCase getCurrentUser,
+            ChangePasswordUseCase changePassword) {
         this.registerFirstAdmin = registerFirstAdmin;
         this.loginUseCase = loginUseCase;
         this.getCurrentUser = getCurrentUser;
+        this.changePassword = changePassword;
     }
 
     @PostMapping("/login")
@@ -69,6 +75,19 @@ class AuthController {
             @NotBlank(message = "La contraseña es obligatoria.")
             @Size(min = 8, max = 72, message = "Debe tener entre {min} y {max} caracteres.")
             String password) {}
+
+    @PutMapping("/me/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void changeOwnPassword(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ChangePasswordRequest request) {
+        changePassword.changePassword(new ChangePasswordCommand(
+                UUID.fromString(jwt.getSubject()), request.currentPassword(), request.newPassword()));
+    }
+
+    record ChangePasswordRequest(
+            @NotBlank(message = "La contraseña actual es obligatoria.") String currentPassword,
+            @NotBlank(message = "La contraseña nueva es obligatoria.")
+            @Size(min = 8, max = 72, message = "Debe tener entre {min} y {max} caracteres.")
+            String newPassword) {}
 
     record LoginRequest(
             @NotBlank(message = "El correo es obligatorio.") String email,

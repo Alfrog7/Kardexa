@@ -15,7 +15,7 @@ public final class User {
     private final UUID id;
     private String fullName;
     private final String email;
-    private final String passwordHash;
+    private String passwordHash;
     private Role role;
     private boolean active;
 
@@ -63,6 +63,10 @@ public final class User {
 
     public void changeRole(Role newRole) {
         this.role = Objects.requireNonNull(newRole, "role");
+    }
+
+    public void changePasswordHash(String newPasswordHash) {
+        this.passwordHash = Objects.requireNonNull(newPasswordHash, "passwordHash");
     }
 
     public void activate() {

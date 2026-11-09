@@ -109,6 +109,7 @@ paths:
         '204': { description: Contraseña actualizada }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /users:
     get:
