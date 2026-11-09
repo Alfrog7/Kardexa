@@ -25,3 +25,11 @@ export async function registerFirstAdmin(fullName: string, email: string, passwo
     body: JSON.stringify({ fullName, email, password }),
   })
 }
+
+/** `PUT /auth/me/password` (HU-04): con la actual incorrecta la API responde 422 con `rule: RF-05`. */
+export function changeOwnPassword(currentPassword: string, newPassword: string): Promise<void> {
+  return apiRequest<void>('/auth/me/password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+}
