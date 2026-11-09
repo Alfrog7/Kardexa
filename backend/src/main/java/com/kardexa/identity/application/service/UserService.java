@@ -1,11 +1,13 @@
 package com.kardexa.identity.application.service;
 
+import com.kardexa.identity.application.port.in.ChangePasswordUseCase;
 import com.kardexa.identity.application.port.in.GetCurrentUserUseCase;
 import com.kardexa.identity.application.port.in.LoginUseCase;
 import com.kardexa.identity.application.port.in.RegisterFirstAdminUseCase;
 import com.kardexa.identity.application.port.out.PasswordHasher;
 import com.kardexa.identity.application.port.out.TokenIssuer;
 import com.kardexa.identity.application.port.out.UserRepository;
+import com.kardexa.identity.domain.exception.IncorrectCurrentPasswordException;
 import com.kardexa.identity.domain.exception.InvalidCredentialsException;
 import com.kardexa.identity.domain.exception.SetupAlreadyDoneException;
 import com.kardexa.identity.domain.model.Role;
@@ -14,7 +16,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Casos de uso de HU-01 y HU-02. Java puro: se registra como bean en {@code IdentityConfig}. */
-public class UserService implements RegisterFirstAdminUseCase, LoginUseCase, GetCurrentUserUseCase {
+public class UserService implements RegisterFirstAdminUseCase, LoginUseCase, GetCurrentUserUseCase, ChangePasswordUseCase {
 
     private final UserRepository users;
     private final PasswordHasher hasher;
@@ -44,6 +46,16 @@ public class UserService implements RegisterFirstAdminUseCase, LoginUseCase, Get
                 .filter(found -> command.password() != null && hasher.matches(command.password(), found.passwordHash()))
                 .orElseThrow(InvalidCredentialsException::new);
         return new LoginResult(tokens.issue(user), user);
+    }
+
+    @Override
+    public void changePassword(ChangePasswordCommand command) {
+        User user = users.findById(command.userId()).orElseThrow(InvalidCredentialsException::new);
+        if (command.currentPassword() == null || !hasher.matches(command.currentPassword(), user.passwordHash())) {
+            throw new IncorrectCurrentPasswordException();
+        }
+        user.changePasswordHash(hasher.hash(command.newPassword()));
+        users.save(user);
     }
 
     @Override

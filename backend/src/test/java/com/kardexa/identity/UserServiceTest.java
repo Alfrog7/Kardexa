@@ -3,12 +3,14 @@ package com.kardexa.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.kardexa.identity.application.port.in.ChangePasswordUseCase;
 import com.kardexa.identity.application.port.in.LoginUseCase.LoginCommand;
 import com.kardexa.identity.application.port.in.RegisterFirstAdminUseCase.RegisterFirstAdminCommand;
 import com.kardexa.identity.application.port.out.PasswordHasher;
 import com.kardexa.identity.application.port.out.TokenIssuer;
 import com.kardexa.identity.application.port.out.UserRepository;
 import com.kardexa.identity.application.service.UserService;
+import com.kardexa.identity.domain.exception.IncorrectCurrentPasswordException;
 import com.kardexa.identity.domain.exception.InvalidCredentialsException;
 import com.kardexa.identity.domain.exception.SetupAlreadyDoneException;
 import com.kardexa.identity.domain.model.Role;
@@ -132,5 +134,26 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> service.login(new LoginCommand("ana@correo.com", "secreta123")))
                 .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
+    @DisplayName("cambia la contraseña con la actual correcta y la nueva se guarda hasheada")
+    void changesPassword() {
+        User admin = service.register(command());
+
+        service.changePassword(new ChangePasswordUseCase.ChangePasswordCommand(admin.id(), "secreta123", "nuevaclave99"));
+
+        assertThat(stored.get(0).passwordHash()).isEqualTo("hash:nuevaclave99");
+    }
+
+    @Test
+    @DisplayName("rechaza el cambio si la contraseña actual es incorrecta")
+    void rejectsWrongCurrentPassword() {
+        User admin = service.register(command());
+
+        assertThatThrownBy(() -> service.changePassword(
+                        new ChangePasswordUseCase.ChangePasswordCommand(admin.id(), "equivocada", "nuevaclave99")))
+                .isInstanceOf(IncorrectCurrentPasswordException.class);
+        assertThat(stored.get(0).passwordHash()).isEqualTo("hash:secreta123");
     }
 }

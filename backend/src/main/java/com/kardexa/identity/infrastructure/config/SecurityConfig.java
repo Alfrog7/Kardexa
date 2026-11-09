@@ -72,7 +72,7 @@ class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll()
-                        .requestMatchers(API + "/auth/me").authenticated()
+                        .requestMatchers(API + "/auth/me", API + "/auth/me/**").authenticated()
                         // Solo ADMIN gestiona usuarios (RNF-03).
                         .requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN")
                         // Las rutas del catálogo y el inventario se protegen en la issue de permisos.
