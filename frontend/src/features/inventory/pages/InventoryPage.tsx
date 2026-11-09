@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import { useCanManage } from '@shared/auth/session'
 import { businessDate, formatDateTime, formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
@@ -48,6 +49,7 @@ export function InventoryPage() {
   const [to, setTo] = useState(() => daysAgo(0))
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<KardexResult>()
+  const canManage = useCanManage()
   const [adjusting, setAdjusting] = useState(false)
   const [notice, setNotice] = useState<string>()
   const dismissNotice = useCallback(() => setNotice(undefined), [])
@@ -86,7 +88,7 @@ export function InventoryPage() {
     <section className="page">
       <header className="page__header page__header--spread">
         <h1>Inventario</h1>
-        {product ? (
+        {product && canManage ? (
           <button className="button" type="button" onClick={() => setAdjusting(true)}>
             Registrar ajuste
           </button>

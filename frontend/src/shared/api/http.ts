@@ -43,6 +43,19 @@ export class ApiError extends Error {
   }
 }
 
+let accessToken: string | undefined
+let onUnauthorized: (() => void) | undefined
+
+/** Token de acceso en memoria (ADR 0008): nunca se guarda en localStorage ni en sessionStorage. */
+export function setAccessToken(token: string | undefined): void {
+  accessToken = token
+}
+
+/** Se llama cuando la API responde 401 con la sesión abierta (token vencido o inválido). */
+export function setUnauthorizedHandler(handler: (() => void) | undefined): void {
+  onUnauthorized = handler
+}
+
 export const API_BASE_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1'
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -50,6 +63,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   headers.set('Accept', 'application/json, application/problem+json')
   if (init.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  if (accessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
   }
 
   let response: Response
@@ -64,6 +81,9 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (!response.ok) {
+    if (response.status === 401 && accessToken) {
+      onUnauthorized?.()
+    }
     throw new ApiError(await readProblem(response))
   }
   if (response.status === 204) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import { useCanManage } from '@shared/auth/session'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
@@ -19,6 +20,7 @@ function messageOf(error: unknown): string {
 
 /** Gestión de categorías (HU-05): listar, crear, renombrar, desactivar y reactivar. */
 export function CategoriesPage() {
+  const canManage = useCanManage()
   const [categories, setCategories] = useState<Category[]>()
   const [loadError, setLoadError] = useState<string>()
   const [actionError, setActionError] = useState<string>()
@@ -78,9 +80,11 @@ export function CategoriesPage() {
     <section className="page">
       <header className="page__header page__header--spread">
         <h1>Categorías</h1>
-        <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
-          Nueva categoría
-        </button>
+        {canManage ? (
+          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+            Nueva categoría
+          </button>
+        ) : null}
       </header>
 
       {form.kind !== 'closed' ? (
@@ -117,20 +121,24 @@ export function CategoriesPage() {
         <ul className="category-list card" aria-label="Categorías">
           {categories.map((category) => (
             <li key={category.id} className="category-list__item">
-              <button
-                className="link-button category-list__name"
-                type="button"
-                onClick={() => setForm({ kind: 'edit', category })}
-              >
-                {category.name}
-              </button>
+              {canManage ? (
+                <button
+                  className="link-button category-list__name"
+                  type="button"
+                  onClick={() => setForm({ kind: 'edit', category })}
+                >
+                  {category.name}
+                </button>
+              ) : (
+                <span className="category-list__name">{category.name}</span>
+              )}
               <label className="switch">
                 <input
                   type="checkbox"
                   role="switch"
                   aria-label={`${category.name} activa`}
                   checked={category.active}
-                  disabled={togglingId === category.id}
+                  disabled={!canManage || togglingId === category.id}
                   onChange={() => void handleToggle(category)}
                 />
                 <span aria-hidden="true">{category.active ? 'Activa' : 'Desactivada'}</span>
