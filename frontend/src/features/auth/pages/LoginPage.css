@@ -22,3 +22,17 @@
   display: grid;
   gap: var(--space-4);
 }
+
+.login__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.login__notice {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}

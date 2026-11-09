@@ -50,6 +50,24 @@
 }
 
 /* Móvil (RNF-11): la barra lateral pasa arriba y la navegación se desplaza en horizontal. */
+.panel__user {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.panel__user-name,
+.panel__user-role {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel__user-name {
+  font-weight: 600;
+}
+
 @media (max-width: 48rem) {
   .panel {
     grid-template-columns: 1fr;
@@ -70,6 +88,11 @@
   .panel__nav {
     display: flex;
     overflow-x: auto;
+  }
+
+  .panel__user {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
   }
 
   .panel__link {
