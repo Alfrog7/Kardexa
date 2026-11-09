@@ -8,7 +8,7 @@
 |---|---|
 | Base | `/api/v1` |
 | Rutas | Inglés, plural, `kebab-case` ([ADR 0003](../adr/0003-criterio-de-nombres.md)) |
-| Autenticación | `Authorization: Bearer <JWT>`; públicas solo `/auth/setup` y `/auth/login` |
+| Autenticación | `Authorization: Bearer <JWT>` ([ADR 0008](../adr/0008-autenticacion-con-jwt.md)); públicas solo `/auth/setup`, `/auth/login`, Swagger y *health* |
 | Errores | `application/problem+json` (RFC 9457) con `title` y `detail` en español y `rule` con la regla violada |
 | Montos y cantidades | Strings decimales (`"12.50"`, `"1.250"`) para no perder precisión en JavaScript |
 | Fechas | ISO 8601; los filtros por día usan la zona `America/Lima` |
