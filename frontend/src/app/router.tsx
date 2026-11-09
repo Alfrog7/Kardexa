@@ -4,9 +4,11 @@ import { CategoriesPage, ProductsPage } from '@features/catalog'
 import { DashboardPage } from '@features/dashboard'
 import { InventoryPage } from '@features/inventory'
 import { PurchasesPage } from '@features/purchasing'
+import { UsersPage } from '@features/users'
 import { SalesPage } from '@features/sales'
 import { PanelLayout } from './layout/PanelLayout'
 import { NotFoundPage } from './NotFoundPage'
+import { RequireAdmin } from './RequireAdmin'
 import { RequireSession } from './RequireSession'
 import { routes } from './navigation'
 
@@ -27,6 +29,10 @@ export const appRoutes: RouteObject[] = [
           { path: routes.categories, element: <CategoriesPage /> },
           { path: routes.inventory, element: <InventoryPage /> },
           { path: routes.purchases, element: <PurchasesPage /> },
+          {
+            element: <RequireAdmin />,
+            children: [{ path: routes.users, element: <UsersPage /> }],
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
