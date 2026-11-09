@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router'
-import { LoginPage } from '@features/auth'
+import { LoginPage, SetupPage } from '@features/auth'
 import { CategoriesPage, ProductsPage } from '@features/catalog'
 import { DashboardPage } from '@features/dashboard'
 import { InventoryPage } from '@features/inventory'
@@ -13,6 +13,7 @@ import { routes } from './navigation'
 /** Árbol de rutas. `app` compone las funcionalidades; ninguna funcionalidad conoce a otra (ADR 0005). */
 export const appRoutes: RouteObject[] = [
   { path: routes.login, element: <LoginPage /> },
+  { path: routes.setup, element: <SetupPage /> },
   {
     element: <RequireSession />,
     children: [

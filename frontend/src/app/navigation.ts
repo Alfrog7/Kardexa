@@ -1,6 +1,7 @@
 /** Rutas del panel. Las URL van en español porque las ve el usuario (ADR 0003). */
 export const routes = {
   login: '/ingresar',
+  setup: '/registro-inicial',
   dashboard: '/',
   sales: '/ventas',
   products: '/productos',

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Link, Navigate, useLocation } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
 import { Logo } from '@shared/ui/Logo'
@@ -79,6 +79,9 @@ export function LoginPage() {
             {sending ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
+        <p className="muted">
+          ¿Primera vez? <Link to="/registro-inicial">Crea al primer administrador</Link>
+        </p>
       </div>
     </main>
   )
