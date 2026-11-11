@@ -48,7 +48,7 @@ class CategoryApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.execute("TRUNCATE stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
     }
 
     @Test

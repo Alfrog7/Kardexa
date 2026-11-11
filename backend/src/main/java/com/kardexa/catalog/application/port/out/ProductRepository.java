@@ -3,6 +3,7 @@ package com.kardexa.catalog.application.port.out;
 import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.shared.domain.Money;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +18,12 @@ public interface ProductRepository {
     Product save(Product product);
 
     Optional<Product> findById(UUID id);
+
+    /**
+     * RN-08: cambia solo el costo referencial. {@link #save} nunca lo escribe, para que editar un
+     * producto mientras se registra una compra no lo pise. Devuelve {@code false} si no existe.
+     */
+    boolean updateReferenceCost(UUID productId, Money cost);
 
     boolean existsByCode(String code);
 
