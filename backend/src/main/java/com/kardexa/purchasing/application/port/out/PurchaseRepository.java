@@ -13,6 +13,16 @@ public interface PurchaseRepository {
 
     void add(Purchase purchase);
 
+    /** La compra con sus ítems, para anularla. */
+    Optional<Purchase> findById(UUID id);
+
+    /**
+     * Guarda la anulación solo si la compra seguía registrada.
+     *
+     * @throws com.kardexa.purchasing.domain.exception.PurchaseAlreadyVoidedException si otro la anuló antes
+     */
+    void saveVoiding(Purchase purchase);
+
     Optional<PurchaseView> findView(UUID id);
 
     /** Ordenadas por fecha de compra y luego por registro, de la más reciente a la más antigua. */

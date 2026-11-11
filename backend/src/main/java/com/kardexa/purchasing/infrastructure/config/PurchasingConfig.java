@@ -1,6 +1,7 @@
 package com.kardexa.purchasing.infrastructure.config;
 
 import com.kardexa.purchasing.application.port.in.RegisterPurchaseUseCase;
+import com.kardexa.purchasing.application.port.in.VoidPurchaseUseCase;
 import com.kardexa.purchasing.application.port.out.PurchaseRepository;
 import com.kardexa.purchasing.application.port.out.PurchasedProducts;
 import com.kardexa.purchasing.application.port.out.StockLedger;
@@ -8,6 +9,7 @@ import com.kardexa.purchasing.application.port.out.SupplierRepository;
 import com.kardexa.purchasing.application.service.PurchaseQueryService;
 import com.kardexa.purchasing.application.service.RegisterPurchaseService;
 import com.kardexa.purchasing.application.service.SupplierService;
+import com.kardexa.purchasing.application.service.VoidPurchaseService;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +39,14 @@ class PurchasingConfig {
             TransactionTemplate transactionTemplate) {
         return new RetryingRegisterPurchase(
                 new RegisterPurchaseService(suppliers, purchases, stockLedger, products, Clock.systemUTC()),
-                transactionTemplate);
+                new RetryingTransaction(transactionTemplate));
+    }
+
+    /** Igual que el registro: solo existe la versión con transacción y reintentos. */
+    @Bean
+    VoidPurchaseUseCase voidPurchaseUseCase(
+            PurchaseRepository purchases, StockLedger stockLedger, TransactionTemplate transactionTemplate) {
+        return new RetryingVoidPurchase(new VoidPurchaseService(purchases, stockLedger, Clock.systemUTC()),
+                new RetryingTransaction(transactionTemplate));
     }
 }

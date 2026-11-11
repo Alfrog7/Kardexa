@@ -15,6 +15,7 @@ public record PurchaseView(
         String supplierDocument,
         LocalDate purchaseDate,
         PurchaseStatus status,
+        String voidReason,
         Money total,
         List<Item> items) {
 

@@ -194,6 +194,79 @@ class PurchaseApiIntegrationTest {
         assertThat(count("stock_movement")).isZero();
     }
 
+    @Test
+    @DisplayName("HU-13 criterio 1: anular crea las salidas inversas y la compra queda anulada")
+    void voidsPurchase() throws Exception {
+        String id = idOf(register(supplierId, item(rice, "10", "18.50"), item(oil, "4", "9.90")));
+
+        voidPurchase(id, "{\"reason\": \"Factura duplicada\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("VOIDED"))
+                .andExpect(jsonPath("$.voidReason").value("Factura duplicada"))
+                .andExpect(jsonPath("$.items.length()").value(2));
+
+        assertThat(stock(rice)).isEqualByComparingTo("0");
+        assertThat(stock(oil)).isEqualByComparingTo("0");
+        mvc.perform(get("/api/v1/products/" + rice + "/kardex"))
+                .andExpect(jsonPath("$.movements.length()").value(2))
+                .andExpect(jsonPath("$.movements[0].type").value("PURCHASE"))
+                .andExpect(jsonPath("$.movements[1].type").value("PURCHASE_VOID"))
+                .andExpect(jsonPath("$.movements[1].direction").value("OUT"))
+                .andExpect(jsonPath("$.movements[1].sourceId").value(id))
+                .andExpect(jsonPath("$.movements[1].balanceAfter").value("0.000"));
+        mvc.perform(get(URL)).andExpect(jsonPath("$.content[0].status").value("VOIDED"));
+        // El costo referencial no se revierte (ADR 0009).
+        mvc.perform(get("/api/v1/products/" + rice)).andExpect(jsonPath("$.referenceCost").value("18.50"));
+    }
+
+    @Test
+    @DisplayName("HU-13 criterio 2: si anular dejaría stock negativo, 422 y no cambia nada (RN-01)")
+    void rejectsVoidWithoutStock() throws Exception {
+        String id = idOf(register(supplierId, item(rice, "10", "18.50"), item(oil, "4", "9.90")));
+        mvc.perform(post("/api/v1/stock-adjustments").contentType(MediaType.APPLICATION_JSON).content("""
+                {"productId": "%s", "direction": "OUT", "quantity": "1", "reason": "SHRINKAGE"}""".formatted(oil)))
+                .andExpect(status().isCreated());
+
+        voidPurchase(id, "{\"reason\": \"Factura duplicada\"}")
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.rule").value("RN-01"));
+
+        assertThat(stock(rice)).isEqualByComparingTo("10");
+        assertThat(stock(oil)).isEqualByComparingTo("3");
+        assertThat(count("stock_movement")).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT status FROM purchase WHERE id = ?::uuid", String.class, id))
+                .isEqualTo("REGISTERED");
+    }
+
+    @Test
+    @DisplayName("HU-13: no se anula dos veces, sin motivo, una compra inexistente ni como EMPLOYEE")
+    void voidErrors() throws Exception {
+        String id = idOf(register(supplierId, item(rice, "10", "18.50")));
+
+        voidPurchase(id, "{}").andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("reason"));
+        voidPurchase(id, "{\"reason\": \"ab\"}").andExpect(status().isBadRequest());
+        voidPurchase(UUID.randomUUID().toString(), "{\"reason\": \"Motivo\"}").andExpect(status().isNotFound());
+        mvc.perform(post(URL + "/" + id + "/void")
+                        .header("Authorization", "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\": \"Motivo\"}"))
+                .andExpect(status().isForbidden());
+
+        voidPurchase(id, "{\"reason\": \"Factura duplicada\"}").andExpect(status().isOk());
+        voidPurchase(id, "{\"reason\": \"Otra vez\"}")
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.title").value("Compra ya anulada"));
+        assertThat(count("stock_movement")).isEqualTo(2);
+    }
+
+    private ResultActions voidPurchase(String id, String body) throws Exception {
+        return mvc.perform(post(URL + "/" + id + "/void").contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private static String idOf(ResultActions result) throws Exception {
+        return JsonPath.read(result.andReturn().getResponse().getContentAsString(), "$.id");
+    }
+
     private UUID product(UUID category, String code, String name) {
         UUID id = UUID.randomUUID();
         jdbc.update("""

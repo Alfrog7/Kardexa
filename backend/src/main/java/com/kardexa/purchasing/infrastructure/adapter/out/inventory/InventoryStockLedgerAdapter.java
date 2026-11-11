@@ -20,8 +20,17 @@ class InventoryStockLedgerAdapter implements StockLedger {
 
     @Override
     public void receive(Purchase purchase) {
-        recordStockMovements.record(new RecordStockMovementsCommand(DocumentMovement.PURCHASE, purchase.id(),
-                purchase.userId(),
+        record(DocumentMovement.PURCHASE, purchase, purchase.userId());
+    }
+
+    /** Las salidas inversas llevan el mismo id de compra como origen y el usuario que anula. */
+    @Override
+    public void reverse(Purchase purchase) {
+        record(DocumentMovement.PURCHASE_VOID, purchase, purchase.voiding().userId());
+    }
+
+    private void record(DocumentMovement movement, Purchase purchase, java.util.UUID userId) {
+        recordStockMovements.record(new RecordStockMovementsCommand(movement, purchase.id(), userId,
                 purchase.items().stream().map(i -> new Line(i.productId(), i.quantity())).toList()));
     }
 }
