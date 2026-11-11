@@ -82,3 +82,17 @@
 .purchase-detail dd {
   margin: 0;
 }
+
+.purchases__reason {
+  display: block;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.purchase-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}

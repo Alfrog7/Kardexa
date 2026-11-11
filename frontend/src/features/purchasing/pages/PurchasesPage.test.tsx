@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, listPurchases, registerPurchase, type Purchase } from '../api/purchases'
+import { findProducts, listPurchases, registerPurchase, voidPurchase, type Purchase } from '../api/purchases'
 import { listSuppliers, type Supplier } from '../api/suppliers'
 import { PurchasesPage } from './PurchasesPage'
 
@@ -9,6 +9,7 @@ vi.mock('../api/purchases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/purchases')>()),
   listPurchases: vi.fn(),
   registerPurchase: vi.fn(),
+  voidPurchase: vi.fn(),
   findProducts: vi.fn(),
 }))
 vi.mock('../api/suppliers', async (importOriginal) => ({
@@ -187,5 +188,64 @@ describe('PurchasesPage', () => {
     fireEvent.click(form.getByRole('button', { name: 'Registrar compra' }))
 
     expect(await form.findByRole('alert')).toHaveTextContent('El stock cambió')
+  })
+
+  describe('anular una compra (HU-13)', () => {
+    async function openVoidForm() {
+      render(<PurchasesPage />)
+      fireEvent.click(await screen.findByRole('button', { name: /Ver compra del 10\/11\/2026/ }))
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Anular compra' }))
+      return within(screen.getByRole('dialog'))
+    }
+
+    it('anula con un motivo y la marca como anulada en el detalle y la lista', async () => {
+      vi.mocked(voidPurchase).mockResolvedValue({ ...purchase, status: 'VOIDED', voidReason: 'Factura duplicada' })
+      const form = await openVoidForm()
+
+      fireEvent.change(form.getByLabelText('Motivo de la anulación'), { target: { value: '  Factura duplicada ' } })
+      fireEvent.click(form.getByRole('button', { name: 'Anular compra' }))
+
+      expect(await screen.findByText('Compra a Distribuidora Andina anulada.')).toBeInTheDocument()
+      expect(voidPurchase).toHaveBeenCalledWith('p1', 'Factura duplicada')
+      const dialog = within(screen.getByRole('dialog'))
+      expect(dialog.getByText('Anulada')).toBeInTheDocument()
+      expect(dialog.getByText('Factura duplicada')).toBeInTheDocument()
+      expect(dialog.queryByRole('button', { name: 'Anular compra' })).not.toBeInTheDocument()
+      const table = screen.getByRole('table', { name: 'Compras' })
+      expect(within(table).getByText('Anulada')).toBeInTheDocument()
+      expect(within(table).getByText('Factura duplicada')).toBeInTheDocument()
+    })
+
+    it('pide un motivo antes de llamar a la API', async () => {
+      const form = await openVoidForm()
+
+      fireEvent.click(form.getByRole('button', { name: 'Anular compra' }))
+
+      expect(form.getByLabelText('Motivo de la anulación')).toHaveAttribute('aria-invalid', 'true')
+      expect(voidPurchase).not.toHaveBeenCalled()
+    })
+
+    it('si la API la rechaza por RN-01, muestra el mensaje y nada cambia', async () => {
+      vi.mocked(voidPurchase).mockRejectedValue(
+        new ApiError({ title: 'Regla de negocio', status: 422, rule: 'RN-01', detail: 'Stock insuficiente de Arroz: hay 3 y se pide 10.' }),
+      )
+      const form = await openVoidForm()
+
+      fireEvent.change(form.getByLabelText('Motivo de la anulación'), { target: { value: 'Error de digitación' } })
+      fireEvent.click(form.getByRole('button', { name: 'Anular compra' }))
+
+      expect(await form.findByRole('alert')).toHaveTextContent('Stock insuficiente de Arroz')
+      expect(form.getByRole('button', { name: 'Anular compra' })).toBeEnabled()
+      expect(within(screen.getByRole('table', { name: 'Compras' })).getByText('Registrada')).toBeInTheDocument()
+    })
+
+    it('una compra anulada no ofrece la acción', async () => {
+      vi.mocked(listPurchases).mockResolvedValue(page([{ ...purchase, status: 'VOIDED', voidReason: 'Duplicada' }]))
+      render(<PurchasesPage />)
+
+      fireEvent.click(await screen.findByRole('button', { name: /Ver compra del 10\/11\/2026/ }))
+
+      expect(within(screen.getByRole('dialog')).queryByRole('button', { name: 'Anular compra' })).not.toBeInTheDocument()
+    })
   })
 })
