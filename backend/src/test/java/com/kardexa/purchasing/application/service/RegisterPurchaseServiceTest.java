@@ -3,27 +3,21 @@ package com.kardexa.purchasing.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.kardexa.purchasing.application.port.in.PurchaseView;
 import com.kardexa.purchasing.application.port.in.RegisterPurchaseUseCase.ItemCommand;
 import com.kardexa.purchasing.application.port.in.RegisterPurchaseUseCase.RegisterPurchaseCommand;
-import com.kardexa.purchasing.application.port.out.PurchaseRepository;
 import com.kardexa.purchasing.domain.exception.InactiveSupplierException;
 import com.kardexa.purchasing.domain.exception.SupplierNotFoundException;
 import com.kardexa.purchasing.domain.model.Purchase;
 import com.kardexa.purchasing.domain.model.Supplier;
-import com.kardexa.shared.application.PageQuery;
-import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,10 +32,9 @@ class RegisterPurchaseServiceTest {
     private static final UUID OIL = UUID.randomUUID();
 
     private InMemorySupplierRepository suppliers;
-    private final List<Purchase> saved = new ArrayList<>();
-    private final List<Purchase> received = new ArrayList<>();
+    private final InMemoryPurchaseRepository purchases = new InMemoryPurchaseRepository();
+    private final FakeStockLedger ledger = new FakeStockLedger();
     private final Map<UUID, Money> costs = new HashMap<>();
-    private RuntimeException inventoryFailure;
     private RegisterPurchaseService service;
     private Supplier supplier;
 
@@ -49,28 +42,8 @@ class RegisterPurchaseServiceTest {
     void setUp() {
         suppliers = new InMemorySupplierRepository();
         supplier = suppliers.save(Supplier.create(new Supplier.Details("20123456789", "Distribuidora", null, null)));
-        PurchaseRepository purchases = new PurchaseRepository() {
-            @Override
-            public void add(Purchase purchase) {
-                saved.add(purchase);
-            }
-
-            @Override
-            public Optional<PurchaseView> findView(UUID id) {
-                return Optional.empty();
-            }
-
-            @Override
-            public ResultPage<PurchaseView> findViews(LocalDate from, LocalDate to, PageQuery page) {
-                return ResultPage.of(List.of(), page, 0);
-            }
-        };
-        service = new RegisterPurchaseService(suppliers, purchases, purchase -> {
-            if (inventoryFailure != null) {
-                throw inventoryFailure;
-            }
-            received.add(purchase);
-        }, costs::putAll, Clock.fixed(NOW, ZoneOffset.UTC));
+        service = new RegisterPurchaseService(suppliers, purchases, ledger, costs::putAll,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private RegisterPurchaseCommand command(UUID supplierId) {
@@ -84,9 +57,9 @@ class RegisterPurchaseServiceTest {
     void registersPurchase() {
         Purchase purchase = service.register(command(supplier.id()));
 
-        assertThat(received).containsExactly(purchase);
+        assertThat(ledger.received).containsExactly(purchase);
         assertThat(costs).containsEntry(RICE, Money.of("18.50")).containsEntry(OIL, Money.of("9.90"));
-        assertThat(saved).containsExactly(purchase);
+        assertThat(purchases.rows).containsOnlyKeys(purchase.id());
         assertThat(purchase.total()).isEqualTo(Money.of("224.60"));
         assertThat(purchase.userId()).isEqualTo(USER);
         assertThat(purchase.createdAt()).isEqualTo(NOW);
@@ -95,11 +68,11 @@ class RegisterPurchaseServiceTest {
     @Test
     @DisplayName("criterio 3: si el inventario rechaza un producto, no fija costos ni guarda la compra")
     void stopsWhenInventoryFails() {
-        inventoryFailure = new IllegalStateException("producto desactivado");
+        ledger.failure = new IllegalStateException("producto desactivado");
 
-        assertThatThrownBy(() -> service.register(command(supplier.id()))).isSameAs(inventoryFailure);
+        assertThatThrownBy(() -> service.register(command(supplier.id()))).isSameAs(ledger.failure);
         assertThat(costs).isEmpty();
-        assertThat(saved).isEmpty();
+        assertThat(purchases.rows).isEmpty();
     }
 
     @Test
@@ -112,6 +85,6 @@ class RegisterPurchaseServiceTest {
         suppliers.save(supplier);
         assertThatThrownBy(() -> service.register(command(supplier.id())))
                 .isInstanceOf(InactiveSupplierException.class);
-        assertThat(received).isEmpty();
+        assertThat(ledger.received).isEmpty();
     }
 }

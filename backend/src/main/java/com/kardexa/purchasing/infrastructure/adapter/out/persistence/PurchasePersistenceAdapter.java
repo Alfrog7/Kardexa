@@ -2,6 +2,7 @@ package com.kardexa.purchasing.infrastructure.adapter.out.persistence;
 
 import com.kardexa.purchasing.application.port.in.PurchaseView;
 import com.kardexa.purchasing.application.port.out.PurchaseRepository;
+import com.kardexa.purchasing.domain.exception.PurchaseAlreadyVoidedException;
 import com.kardexa.purchasing.domain.model.Purchase;
 import com.kardexa.purchasing.domain.model.PurchaseItem;
 import com.kardexa.purchasing.domain.model.PurchaseStatus;
@@ -38,7 +39,7 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
     private static final LocalDate MAX_DATE = LocalDate.of(9999, 12, 31);
 
     private static final String HEADER_SELECT = """
-            SELECT p.id, p.supplier_document, p.purchase_date, p.status, p.total,
+            SELECT p.id, p.supplier_document, p.purchase_date, p.status, p.void_reason, p.total,
                    s.id AS supplier_id, s.ruc, s.business_name, s.phone, s.email, s.active
             FROM purchase p
             JOIN supplier s ON s.id = p.supplier_id
@@ -77,6 +78,48 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
                     .param("unitCost", item.unitCost().amount())
                     .param("subtotal", item.subtotal().amount())
                     .update();
+        }
+    }
+
+    @Override
+    public Optional<Purchase> findById(UUID id) {
+        List<PurchaseItem> items = jdbc.sql("""
+                SELECT product_id, quantity, unit_cost FROM purchase_item
+                WHERE purchase_id = :id ORDER BY line_no""")
+                .param("id", id)
+                .query((rs, n) -> new PurchaseItem(rs.getObject("product_id", UUID.class),
+                        new Quantity(rs.getBigDecimal("quantity")), Money.of(rs.getBigDecimal("unit_cost"))))
+                .list();
+        return jdbc.sql("""
+                SELECT id, supplier_id, supplier_document, purchase_date, status, user_id, created_at,
+                       void_reason, voided_by, voided_at
+                FROM purchase WHERE id = :id""")
+                .param("id", id)
+                .query((rs, n) -> Purchase.restore(rs.getObject("id", UUID.class),
+                        rs.getObject("supplier_id", UUID.class), rs.getString("supplier_document"),
+                        rs.getObject("purchase_date", LocalDate.class), items,
+                        PurchaseStatus.valueOf(rs.getString("status")), rs.getObject("user_id", UUID.class),
+                        rs.getTimestamp("created_at").toInstant(),
+                        rs.getString("void_reason") == null ? null : new Purchase.Voiding(rs.getString("void_reason"),
+                                rs.getObject("voided_by", UUID.class), rs.getTimestamp("voided_at").toInstant())))
+                .optional();
+    }
+
+    /** La condición sobre el estado impide anular dos veces aunque dos anulaciones lleguen juntas. */
+    @Override
+    public void saveVoiding(Purchase purchase) {
+        Purchase.Voiding voiding = purchase.voiding();
+        int updated = jdbc.sql("""
+                UPDATE purchase
+                SET status = 'VOIDED', void_reason = :reason, voided_by = :userId, voided_at = :at
+                WHERE id = :id AND status = 'REGISTERED'""")
+                .param("reason", voiding.reason())
+                .param("userId", voiding.userId(), Types.OTHER)
+                .param("at", Timestamp.from(voiding.at()))
+                .param("id", purchase.id())
+                .update();
+        if (updated == 0) {
+            throw new PurchaseAlreadyVoidedException(purchase.id());
         }
     }
 
@@ -129,7 +172,7 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
                     items.get(rs.getObject("purchase_id", UUID.class)).add(new PurchaseView.Item(
                             rs.getObject("product_id", UUID.class),
                             rs.getString("name"),
-                            Quantity.of(rs.getBigDecimal("quantity").toPlainString()),
+                            new Quantity(rs.getBigDecimal("quantity")),
                             Money.of(rs.getBigDecimal("unit_cost")),
                             Money.of(rs.getBigDecimal("subtotal"))));
                     return null;
@@ -137,7 +180,7 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
                 .list();
         return headers.stream()
                 .map(h -> new PurchaseView(h.id(), h.supplier(), h.supplierDocument(), h.purchaseDate(), h.status(),
-                        h.total(), items.get(h.id())))
+                        h.voidReason(), h.total(), items.get(h.id())))
                 .toList();
     }
 
@@ -148,9 +191,9 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
                 rs.getBoolean("active"));
         return new Header(rs.getObject("id", UUID.class), supplier, rs.getString("supplier_document"),
                 rs.getObject("purchase_date", LocalDate.class), PurchaseStatus.valueOf(rs.getString("status")),
-                Money.of(rs.getBigDecimal("total")));
+                rs.getString("void_reason"), Money.of(rs.getBigDecimal("total")));
     }
 
     private record Header(UUID id, Supplier supplier, String supplierDocument, LocalDate purchaseDate,
-            PurchaseStatus status, Money total) {}
+            PurchaseStatus status, String voidReason, Money total) {}
 }

@@ -67,4 +67,21 @@ class PurchaseTest {
                 .isInstanceOf(InvalidPurchaseException.class)
                 .hasMessageContaining("repetirse");
     }
+
+    @Test
+    @DisplayName("HU-13: se anula una sola vez y guarda quién, cuándo y por qué")
+    void voidsOnce() {
+        Purchase purchase = purchase(null, List.of(item(UUID.randomUUID(), "1", "1")));
+        UUID admin = UUID.randomUUID();
+        Instant at = Instant.parse("2026-11-11T18:00:00Z");
+
+        purchase.voidWith(new Purchase.Voiding(" Factura  duplicada ", admin, at));
+
+        assertThat(purchase.status()).isEqualTo(PurchaseStatus.VOIDED);
+        assertThat(purchase.voiding()).isEqualTo(new Purchase.Voiding("Factura duplicada", admin, at));
+        assertThatThrownBy(() -> purchase.voidWith(new Purchase.Voiding("Otra vez", admin, at)))
+                .isInstanceOf(com.kardexa.purchasing.domain.exception.PurchaseAlreadyVoidedException.class)
+                .hasFieldOrPropertyWithValue("rule", "RF-17");
+        assertThatThrownBy(() -> new Purchase.Voiding("no", admin, at)).isInstanceOf(InvalidPurchaseException.class);
+    }
 }

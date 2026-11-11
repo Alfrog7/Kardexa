@@ -462,7 +462,7 @@ paths:
     post:
       tags: [purchasing]
       operationId: voidPurchase
-      summary: Anula una compra (RF-17, solo ADMIN)
+      summary: Anula una compra con salidas inversas; no revierte el costo referencial (RF-17, solo ADMIN)
       requestBody:
         required: true
         content:
@@ -474,6 +474,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Purchase' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /sales:
