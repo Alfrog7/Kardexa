@@ -66,6 +66,12 @@ class BusinessSecurityIntegrationTest {
         mvc.perform(post(API + "/stock-adjustments").header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isForbidden());
+        mvc.perform(post(API + "/suppliers").header("Authorization", employee)
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(put(API + "/suppliers/" + ANY_ID).header("Authorization", employee)
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -75,6 +81,7 @@ class BusinessSecurityIntegrationTest {
 
         mvc.perform(get(API + "/categories").header("Authorization", employee)).andExpect(status().isOk());
         mvc.perform(get(API + "/products").header("Authorization", employee)).andExpect(status().isOk());
+        mvc.perform(get(API + "/suppliers").header("Authorization", employee)).andExpect(status().isOk());
         mvc.perform(get(API + "/products/" + ANY_ID + "/kardex").header("Authorization", employee))
                 .andExpect(status().isNotFound());
     }
