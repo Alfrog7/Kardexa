@@ -4,6 +4,7 @@ import com.kardexa.catalog.application.port.out.ProductRepository;
 import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -29,6 +30,16 @@ class InMemoryProductRepository implements ProductRepository {
     public Product save(Product product) {
         rows.put(product.id(), copy(product));
         return product;
+    }
+
+    @Override
+    public boolean updateReferenceCost(UUID productId, Money cost) {
+        Product current = rows.get(productId);
+        if (current == null) {
+            return false;
+        }
+        rows.put(productId, Product.restore(productId, current.details(), cost, current.isActive()));
+        return true;
     }
 
     @Override

@@ -10,6 +10,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 - **ADR 0009 · Compras entre módulos:** `purchasing` coordina una sola transacción con `inventory` y `catalog`, con reintentos ante conflictos de stock.
 - **HU-11 · Gestionar proveedores (API):** `GET /api/v1/suppliers?q=`, `POST` y `PUT /api/v1/suppliers/{id}`. RUC único de 11 dígitos (RN-10); crear y editar son solo de `ADMIN`. Tabla `supplier` (migración V8).
+- **HU-12 · Registrar una compra (API):** `POST /api/v1/purchases` suma el stock con una entrada `PURCHASE` por producto y fija el costo referencial con el último costo comprado (RN-08), todo en una transacción con reintentos (RNF-04, ADR 0009). `GET /api/v1/purchases` lista por fecha de compra y pagina. Solo `ADMIN`. Tablas `purchase` y `purchase_item` (migración V9).
 
 ## [v0.4-fase4] - 2026-11-09
 

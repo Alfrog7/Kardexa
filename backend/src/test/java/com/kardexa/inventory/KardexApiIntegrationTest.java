@@ -43,7 +43,7 @@ class KardexApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
         TestSecurity.insertAdmin(jdbc);
         String categoryId = idOf(postJson("/api/v1/categories", "{\"name\": \"Abarrotes\"}"));
         productId = idOf(postJson("/api/v1/products", """

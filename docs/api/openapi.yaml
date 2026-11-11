@@ -421,7 +421,7 @@ paths:
     get:
       tags: [purchasing]
       operationId: listPurchases
-      summary: Lista compras
+      summary: Lista compras por fecha de compra, de la más reciente a la más antigua (solo ADMIN)
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
@@ -433,6 +433,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PurchasePage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [purchasing]
       operationId: registerPurchase
@@ -450,7 +452,9 @@ paths:
               schema: { $ref: '#/components/schemas/Purchase' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/ConcurrentModification' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /purchases/{id}/void:
     parameters:

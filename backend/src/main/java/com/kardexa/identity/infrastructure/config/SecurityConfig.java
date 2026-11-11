@@ -77,6 +77,8 @@ class SecurityConfig {
                     auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
                     // Solo ADMIN gestiona usuarios (RNF-03).
                     auth.requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN");
+                    // Las compras muestran costos: consultarlas también es solo de ADMIN (RN-05, ADR 0009).
+                    auth.requestMatchers(API + "/purchases", API + "/purchases/**").hasRole("ADMIN");
                     // RN-05: crear, editar y ajustar el stock es solo de ADMIN; consultar, de cualquiera con sesión.
                     for (HttpMethod method : List.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE)) {
                         auth.requestMatchers(method,
