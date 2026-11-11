@@ -1,0 +1,84 @@
+.purchases__filters,
+.purchase-form__grid,
+.purchase-form__item-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.purchases__filters {
+  max-width: 32rem;
+}
+
+.purchases__row--voided td {
+  color: var(--color-text-muted);
+}
+
+.purchases__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.purchase-form__search {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.purchase-form__results,
+.purchase-form__items {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.purchase-form__results {
+  padding: var(--space-4);
+}
+
+.purchase-form__item {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.purchase-form__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.purchase-form__subtotal {
+  margin: 0;
+  text-align: right;
+}
+
+.purchase-form__total {
+  margin: 0;
+  font-size: 1.125rem;
+  text-align: right;
+}
+
+.purchase-detail {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0 0 var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.purchase-detail dt {
+  color: var(--color-text-muted);
+}
+
+.purchase-detail dd {
+  margin: 0;
+}
