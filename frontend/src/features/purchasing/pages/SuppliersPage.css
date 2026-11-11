@@ -1,0 +1,8 @@
+.suppliers__filters {
+  display: grid;
+  grid-template-columns: minmax(0, 28rem);
+}
+
+.suppliers__email {
+  overflow-wrap: anywhere;
+}
