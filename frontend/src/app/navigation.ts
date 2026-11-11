@@ -18,7 +18,7 @@ export const navigation = [
   { to: routes.products, label: 'Productos' },
   { to: routes.categories, label: 'Categorías' },
   { to: routes.inventory, label: 'Inventario' },
-  { to: routes.purchases, label: 'Compras' },
+  { to: routes.purchases, label: 'Compras', adminOnly: true },
   { to: routes.suppliers, label: 'Proveedores' },
   { to: routes.users, label: 'Usuarios', adminOnly: true },
 ] as const

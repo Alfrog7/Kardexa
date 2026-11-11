@@ -13,6 +13,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **HU-12 · Registrar una compra (API):** `POST /api/v1/purchases` suma el stock con una entrada `PURCHASE` por producto y fija el costo referencial con el último costo comprado (RN-08), todo en una transacción con reintentos (RNF-04, ADR 0009). `GET /api/v1/purchases` lista por fecha de compra y pagina. Solo `ADMIN`. Tablas `purchase` y `purchase_item` (migración V9).
 - **Panel · Proveedores:** `/proveedores` para buscar por RUC o razón social, registrar, editar, activar y desactivar (HU-11). El RUC inválido o repetido se marca en su campo; el empleado solo consulta.
 - **HU-13 · Anular una compra (API):** `POST /api/v1/purchases/{id}/void` con motivo: una salida `PURCHASE_VOID` por producto y la compra queda `VOIDED`, sin tocar los movimientos originales (RN-03). Si dejaría stock negativo responde 422 (RN-01); una compra ya anulada, también. El costo referencial no se revierte. Columnas de anulación en `purchase` (migración V10).
+- **Panel · Compras:** `/compras` (solo `ADMIN`) lista las compras del mes con filtro de fechas y paginación, muestra el detalle con sus productos y registra una compra de varios productos en un panel lateral, con subtotales y total en vivo (HU-12).
 
 ## [v0.4-fase4] - 2026-11-09
 

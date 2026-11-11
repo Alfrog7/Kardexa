@@ -28,11 +28,13 @@ export const appRoutes: RouteObject[] = [
           { path: routes.products, element: <ProductsPage /> },
           { path: routes.categories, element: <CategoriesPage /> },
           { path: routes.inventory, element: <InventoryPage /> },
-          { path: routes.purchases, element: <PurchasesPage /> },
           { path: routes.suppliers, element: <SuppliersPage /> },
           {
             element: <RequireAdmin />,
-            children: [{ path: routes.users, element: <UsersPage /> }],
+            children: [
+              { path: routes.purchases, element: <PurchasesPage /> },
+              { path: routes.users, element: <UsersPage /> },
+            ],
           },
           { path: '*', element: <NotFoundPage /> },
         ],
