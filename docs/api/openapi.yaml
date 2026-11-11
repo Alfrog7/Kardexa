@@ -391,6 +391,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Supplier' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
 
   /suppliers/{id}:
@@ -399,7 +400,7 @@ paths:
     put:
       tags: [purchasing]
       operationId: updateSupplier
-      summary: Edita un proveedor (RF-15)
+      summary: Edita, desactiva o reactiva un proveedor (RF-15, solo ADMIN)
       requestBody:
         required: true
         content:
@@ -411,7 +412,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Supplier' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /purchases:
     get:

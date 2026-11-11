@@ -82,7 +82,8 @@ class SecurityConfig {
                         auth.requestMatchers(method,
                                 API + "/categories", API + "/categories/**",
                                 API + "/products", API + "/products/**",
-                                API + "/stock-adjustments", API + "/stock-adjustments/**").hasRole("ADMIN");
+                                API + "/stock-adjustments", API + "/stock-adjustments/**",
+                                API + "/suppliers", API + "/suppliers/**").hasRole("ADMIN");
                     }
                     auth.anyRequest().authenticated();
                 })
