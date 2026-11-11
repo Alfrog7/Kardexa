@@ -4,6 +4,7 @@ import { useCanManage } from '@shared/auth/session'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
+import { Icon } from '@shared/ui/Icon'
 import { CategoryForm } from '../components/CategoryForm'
 import './CategoriesPage.css'
 
@@ -81,8 +82,8 @@ export function CategoriesPage() {
       <header className="page__header page__header--spread">
         <h1>Categorías</h1>
         {canManage ? (
-          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
-            Nueva categoría
+          <button className="button button--icon" type="button" aria-label="Nueva categoría" title="Nueva categoría" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" />
           </button>
         ) : null}
       </header>

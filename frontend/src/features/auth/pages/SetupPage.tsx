@@ -2,9 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
-import { Logo } from '@shared/ui/Logo'
 import { login, registerFirstAdmin } from '../api/auth'
-import './LoginPage.css'
+import { AuthLayout } from '../components/AuthLayout'
 
 type FieldName = 'fullName' | 'email' | 'password'
 
@@ -61,72 +60,62 @@ export function SetupPage() {
 
   if (closed) {
     return (
-      <main className="login">
-        <div className="login__card card">
-          <Logo height={40} />
-          <div>
-            <h1 className="login__title">El registro inicial ya se hizo</h1>
-            <p className="muted">
-              Ya existe un administrador. Ingresa con tu cuenta o pídele a un administrador que cree la tuya.
-            </p>
-          </div>
-          <Link className="button" to="/ingresar">
-            Ir a ingresar
-          </Link>
-        </div>
-      </main>
+      <AuthLayout
+        title="El registro inicial ya se hizo"
+        description="Ya existe un administrador. Ingresa con tu cuenta o pídele a un administrador que cree la tuya."
+      >
+        <Link className="button" to="/ingresar">
+          Ir a ingresar
+        </Link>
+      </AuthLayout>
     )
   }
 
   return (
-    <main className="login">
-      <div className="login__card card">
-        <Logo height={40} />
-        <div>
-          <h1 className="login__title">Crea al primer administrador</h1>
-          <p className="muted">Solo se puede hacer una vez, cuando el sistema aún no tiene usuarios.</p>
-        </div>
-        <form className="login__form" onSubmit={handleSubmit}>
-          <TextField
-            id="fullName"
-            label="Nombre completo"
-            value={fullName}
-            onChange={setFullName}
-            error={fieldErrors.fullName}
-            autoComplete="name"
-          />
-          <TextField
-            id="email"
-            label="Correo"
-            type="email"
-            value={email}
-            onChange={setEmail}
-            error={fieldErrors.email}
-            autoComplete="username"
-          />
-          <TextField
-            id="password"
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            error={fieldErrors.password}
-            autoComplete="new-password"
-          />
-          {formError ? (
-            <p className="login__error" role="alert">
-              {formError}
-            </p>
-          ) : null}
-          <button className="button" type="submit" disabled={sending}>
-            {sending ? 'Creando…' : 'Crear administrador'}
-          </button>
-        </form>
-        <p className="muted">
-          ¿Ya tienes cuenta? <Link to="/ingresar">Ingresar</Link>
-        </p>
-      </div>
-    </main>
+    <AuthLayout
+      title="Crea al primer administrador"
+      description="Solo se puede hacer una vez, cuando el sistema aún no tiene usuarios."
+    >
+      <form className="auth__form" onSubmit={handleSubmit}>
+        <TextField
+          id="fullName"
+          label="Nombre completo"
+          value={fullName}
+          onChange={setFullName}
+          error={fieldErrors.fullName}
+          autoComplete="name"
+        />
+        <TextField
+          id="email"
+          label="Correo"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          error={fieldErrors.email}
+          autoComplete="username"
+        />
+        <TextField
+          id="password"
+          label="Contraseña"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          error={fieldErrors.password}
+          autoComplete="new-password"
+        />
+        {formError ? (
+          <p className="auth__error" role="alert">
+            {formError}
+          </p>
+        ) : null}
+        <button className="button" type="submit" disabled={sending}>
+          {sending ? 'Creando…' : 'Crear administrador'}
+        </button>
+      </form>
+      <p className="muted auth__alt">
+        ¿Ya tienes cuenta? <Link to="/ingresar">Ingresar</Link>
+      </p>
+    </AuthLayout>
   )
 }
 

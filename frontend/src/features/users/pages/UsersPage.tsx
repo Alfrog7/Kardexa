@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
 import { Dialog } from '@shared/ui/Dialog'
+import { Icon } from '@shared/ui/Icon'
 import { Toast } from '@shared/ui/Toast'
 import { createUser, listUsers, updateUser, type User } from '../api/users'
 import { UserForm, type UserFormValues } from '../components/UserForm'
@@ -80,9 +81,9 @@ export function UsersPage() {
     <section className="page">
       <header className="page__header page__header--spread">
         <h1>Usuarios</h1>
-        <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
-          Nuevo usuario
-        </button>
+        <button className="button button--icon" type="button" aria-label="Nuevo usuario" title="Nuevo usuario" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" />
+          </button>
       </header>
 
       {form.kind !== 'closed' ? (

@@ -13,6 +13,7 @@ import {
   type ProductPage,
   type ProductRequest,
 } from '../api/products'
+import { Icon } from '@shared/ui/Icon'
 import { ProductForm } from '../components/ProductForm'
 import './ProductsPage.css'
 
@@ -116,8 +117,8 @@ export function ProductsPage() {
       <header className="page__header page__header--spread">
         <h1>Productos</h1>
         {canManage ? (
-          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
-            Nuevo producto
+          <button className="button button--icon" type="button" aria-label="Nuevo producto" title="Nuevo producto" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" />
           </button>
         ) : null}
       </header>
@@ -268,23 +269,27 @@ export function ProductsPage() {
       {found && (found.totalPages > 1 || found.page > 0) ? (
         <nav className="products__pagination" aria-label="Páginas de productos">
           <button
-            className="button button--secondary"
+            className="button button--secondary button--icon"
             type="button"
+            aria-label="Anterior"
+            title="Anterior"
             disabled={found.page === 0 || loading}
             onClick={() => setPage(found.page - 1)}
           >
-            Anterior
+            <Icon name="chevronLeft" />
           </button>
           <span>
             Página {found.page + 1} de {Math.max(found.totalPages, found.page + 1)}
           </span>
           <button
-            className="button button--secondary"
+            className="button button--secondary button--icon"
             type="button"
+            aria-label="Siguiente"
+            title="Siguiente"
             disabled={found.page + 1 >= found.totalPages || loading}
             onClick={() => setPage(found.page + 1)}
           >
-            Siguiente
+            <Icon name="chevronRight" />
           </button>
         </nav>
       ) : null}
