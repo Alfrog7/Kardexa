@@ -92,6 +92,7 @@ describe('ingreso y sesión (HU-02)', () => {
   it('al cerrar sesión se descarta el token y se vuelve al ingreso', async () => {
     renderApp('/ventas', employee)
 
+    fireEvent.click(screen.getByRole('button', { name: 'Menú de la cuenta' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ingresa a tu negocio' })).toBeInTheDocument()

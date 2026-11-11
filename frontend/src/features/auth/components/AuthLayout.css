@@ -1,0 +1,327 @@
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ── Escenario de marca ── */
+
+.auth__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-6), 4vh, 2.5rem);
+  padding: clamp(var(--space-6), 4vw, 3.5rem) clamp(var(--space-6), 4vw, 3.5rem) 0;
+  overflow: hidden;
+  color: var(--color-on-brand);
+  background:
+    radial-gradient(48rem 30rem at 85% 8%, var(--color-brand-deep-raised), transparent 70%),
+    var(--color-brand-deep);
+}
+
+.auth__pitch {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 32rem;
+}
+
+.auth__headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.auth__lead {
+  margin: 0;
+  max-width: 28rem;
+  color: var(--color-on-brand-muted);
+  text-wrap: pretty;
+}
+
+/* ── Tarjeta de kárdex: papel con líneas de registro, recortada por el borde inferior ── */
+
+.kardex {
+  position: relative;
+  width: 100%;
+  max-width: 46rem;
+  margin: auto 0 -2.5rem;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--paper-ink);
+  background:
+    linear-gradient(90deg, transparent 1.125rem, rgb(190 60 50 / 0.4) 1.125rem 1.1875rem, transparent 1.1875rem),
+    var(--paper);
+  box-shadow: var(--paper-shadow);
+  font-variant-numeric: tabular-nums;
+}
+
+.kardex__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.kardex__title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-ink-soft);
+}
+
+.kardex__item {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  line-height: 1.1;
+}
+
+.kardex__meta {
+  display: flex;
+  gap: var(--space-6);
+  margin: 0;
+}
+
+.kardex__meta dt {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--paper-ink-soft);
+}
+
+.kardex__meta dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.kardex__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  border-top: 2px solid var(--paper-ink);
+}
+
+.kardex__table th {
+  padding: 0.375rem 0.625rem;
+  border-bottom: 1px solid var(--paper-rule);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--paper-ink-soft);
+}
+
+.kardex__table .kardex__group {
+  text-align: center;
+  border-left: 1px solid var(--paper-rule);
+}
+
+.kardex__table td {
+  height: 2.375rem;
+  padding: 0 0.625rem;
+  border-bottom: 1px solid var(--paper-rule);
+}
+
+.kardex__table th:nth-child(n + 3),
+.kardex__table td:nth-child(n + 3) {
+  border-left: 1px solid var(--paper-rule);
+}
+
+.kardex__table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+.kardex__table thead tr:nth-child(2) th {
+  text-align: right;
+}
+
+.kardex__in {
+  font-weight: 600;
+  color: #0b5f57;
+}
+
+.kardex__balance {
+  font-weight: 700;
+}
+
+.kardex__flag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 1px 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #7c2d12;
+  background: #fcd34d;
+}
+
+.kardex__row--low .kardex__balance {
+  color: #7c2d12;
+  background: linear-gradient(#fde68a, #fde68a) no-repeat left / 100% 100%;
+}
+
+.kardex__note {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-4);
+  font-size: 0.6875rem;
+  color: var(--paper-ink-soft);
+}
+
+@keyframes kardex-write {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+@keyframes kardex-highlight {
+  from {
+    background-size: 0% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kardex {
+    animation: kardex-write 700ms var(--ease-out) backwards;
+  }
+
+  .kardex__row {
+    animation: kardex-write 480ms var(--ease-out) backwards;
+    animation-delay: calc(350ms + var(--i, 0) * 130ms);
+  }
+
+  .kardex__row--low .kardex__balance {
+    animation: kardex-highlight 600ms var(--ease-out) 1.2s backwards;
+  }
+}
+
+/* ── Formulario ── */
+
+.auth__main {
+  display: grid;
+  place-items: center;
+  padding: var(--space-8) var(--space-6);
+  background: var(--color-bg);
+}
+
+.auth__panel {
+  display: grid;
+  gap: var(--space-8);
+  width: 100%;
+  max-width: 25rem;
+}
+
+.auth__title {
+  margin-bottom: var(--space-3);
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.auth__description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  text-wrap: pretty;
+}
+
+.auth__form {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.auth__panel .field {
+  gap: var(--space-2);
+}
+
+.auth__panel .field label {
+  color: var(--color-text);
+}
+
+.auth__panel .field input {
+  min-height: 3rem;
+  border: 1.5px solid var(--color-text-muted);
+  background: var(--color-surface);
+  transition:
+    border-color 140ms var(--ease-out),
+    box-shadow 140ms var(--ease-out);
+}
+
+.auth__panel .field input:hover {
+  border-color: var(--color-text);
+}
+
+.auth__panel .field input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.auth__panel .field input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.auth__form .button {
+  width: 100%;
+  min-height: 3rem;
+  font-size: var(--font-size-md);
+}
+
+.auth__error {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-weight: 500;
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.auth__notice {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.auth__alt {
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* Pantallas angostas: el escenario pasa a ser una banda superior sin la tarjeta. */
+@media (max-width: 64rem) {
+  .auth {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .auth__stage {
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .auth__headline {
+    font-size: var(--font-size-xl);
+  }
+
+  .kardex {
+    display: none;
+  }
+
+  .auth__main {
+    place-items: start center;
+    padding: var(--space-8) var(--space-4);
+  }
+}

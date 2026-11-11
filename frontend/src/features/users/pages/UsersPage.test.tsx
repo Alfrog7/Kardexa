@@ -106,6 +106,7 @@ describe('usuarios (HU-03)', () => {
 
 describe('cambio de contraseña propia (HU-04)', () => {
   function open() {
+    fireEvent.click(screen.getByRole('button', { name: 'Menú de la cuenta' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
     return screen.findByRole('dialog')
   }

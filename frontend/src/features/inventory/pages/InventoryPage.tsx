@@ -12,6 +12,7 @@ import {
   type ProductOption,
   type StockAdjustmentRequest,
 } from '../api/inventory'
+import { Icon } from '@shared/ui/Icon'
 import { AdjustmentForm } from '../components/AdjustmentForm'
 import { ProductPicker } from '../components/ProductPicker'
 import './InventoryPage.css'
@@ -89,8 +90,8 @@ export function InventoryPage() {
       <header className="page__header page__header--spread">
         <h1>Inventario</h1>
         {product && canManage ? (
-          <button className="button" type="button" onClick={() => setAdjusting(true)}>
-            Registrar ajuste
+          <button className="button button--icon" type="button" aria-label="Registrar ajuste" title="Registrar ajuste" onClick={() => setAdjusting(true)}>
+            <Icon name="sliders" />
           </button>
         ) : null}
       </header>

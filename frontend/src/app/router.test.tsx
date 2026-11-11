@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { type Session } from '@shared/auth/session'
@@ -74,6 +74,7 @@ describe('rutas del panel', () => {
     renderAt('/')
 
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Menú de la cuenta' }))
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
   })
 
