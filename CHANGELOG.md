@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+## [v0.5-fase5] - 2026-11-11
+
 ### Agregado
 
 - **ADR 0009 · Compras entre módulos:** `purchasing` coordina una sola transacción con `inventory` y `catalog`, con reintentos ante conflictos de stock.
