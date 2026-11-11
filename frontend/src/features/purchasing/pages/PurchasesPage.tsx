@@ -4,9 +4,10 @@ import { businessDate, formatMoney, formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Icon } from '@shared/ui/Icon'
 import { Toast } from '@shared/ui/Toast'
-import { listPurchases, registerPurchase, type Purchase, type PurchasePage, type PurchaseRequest } from '../api/purchases'
+import { listPurchases, registerPurchase, voidPurchase, type Purchase, type PurchasePage, type PurchaseRequest } from '../api/purchases'
 import { listSuppliers, type Supplier } from '../api/suppliers'
 import { PurchaseForm } from '../components/PurchaseForm'
+import { VoidPurchaseForm } from '../components/VoidPurchaseForm'
 import './PurchasesPage.css'
 
 const STATUS_LABEL = { REGISTERED: 'Registrada', VOIDED: 'Anulada' } as const
@@ -40,6 +41,7 @@ export function PurchasesPage() {
   const [attempt, setAttempt] = useState(0)
   const [loaded, setLoaded] = useState<Loaded>()
   const [detail, setDetail] = useState<Purchase>()
+  const [voiding, setVoiding] = useState(false)
   const [suppliers, setSuppliers] = useState<Supplier[]>()
   const [formOpen, setFormOpen] = useState(false)
   const [formLoadError, setFormLoadError] = useState<string>()
@@ -87,6 +89,24 @@ export function PurchasesPage() {
     setAttempt((value) => value + 1)
   }
 
+  function openDetail(purchase: Purchase) {
+    setDetail(purchase)
+    setVoiding(false)
+  }
+
+  async function handleVoid(reason: string) {
+    if (!detail) return
+    const voided = await voidPurchase(detail.id, reason)
+    setDetail(voided)
+    setVoiding(false)
+    setLoaded((current) =>
+      current?.page
+        ? { ...current, page: { ...current.page, content: current.page.content.map((item) => (item.id === voided.id ? voided : item)) } }
+        : current,
+    )
+    setNotice(`Compra a ${voided.supplier.businessName} anulada.`)
+  }
+
   const found = shown?.page
 
   return (
@@ -117,60 +137,76 @@ export function PurchasesPage() {
       ) : null}
 
       {detail ? (
-        <Dialog title={`Compra del ${formatDate(detail.purchaseDate)}`} onClose={() => setDetail(undefined)}>
-          <dl className="purchase-detail">
-            <dt>Proveedor</dt>
-            <dd>
-              {detail.supplier.businessName} · RUC {detail.supplier.ruc}
-            </dd>
-            <dt>Documento</dt>
-            <dd>{detail.supplierDocument ?? '—'}</dd>
-            <dt>Estado</dt>
-            <dd>{STATUS_LABEL[detail.status]}</dd>
-            {detail.voidReason ? (
-              <>
-                <dt>Motivo de anulación</dt>
-                <dd>{detail.voidReason}</dd>
-              </>
-            ) : null}
-          </dl>
-          <div className="card data-table-card">
-            <table className="data-table" aria-label="Productos de la compra">
-              <thead>
-                <tr>
-                  <th scope="col">Producto</th>
-                  <th scope="col" className="data-table__number">
-                    Cantidad
-                  </th>
-                  <th scope="col" className="data-table__number">
-                    Costo unitario
-                  </th>
-                  <th scope="col" className="data-table__number">
-                    Subtotal
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.items.map((item) => (
-                  <tr key={item.productId}>
-                    <td data-label="Producto">{item.productName}</td>
-                    <td data-label="Cantidad" className="data-table__number">
-                      {formatQuantity(item.quantity)}
-                    </td>
-                    <td data-label="Costo unitario" className="data-table__number">
-                      {formatMoney(item.unitCost)}
-                    </td>
-                    <td data-label="Subtotal" className="data-table__number">
-                      {formatMoney(item.subtotal)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="purchase-form__total">
-            Total: <strong>{formatMoney(detail.total)}</strong>
-          </p>
+        <Dialog
+          title={voiding ? `Anular la compra del ${formatDate(detail.purchaseDate)}` : `Compra del ${formatDate(detail.purchaseDate)}`}
+          onClose={() => setDetail(undefined)}
+        >
+          {voiding ? (
+            <VoidPurchaseForm onSubmit={handleVoid} onCancel={() => setVoiding(false)} />
+          ) : (
+            <>
+              <dl className="purchase-detail">
+                <dt>Proveedor</dt>
+                <dd>
+                  {detail.supplier.businessName} · RUC {detail.supplier.ruc}
+                </dd>
+                <dt>Documento</dt>
+                <dd>{detail.supplierDocument ?? '—'}</dd>
+                <dt>Estado</dt>
+                <dd>{STATUS_LABEL[detail.status]}</dd>
+                {detail.voidReason ? (
+                  <>
+                    <dt>Motivo de anulación</dt>
+                    <dd>{detail.voidReason}</dd>
+                  </>
+                ) : null}
+              </dl>
+              <div className="card data-table-card">
+                <table className="data-table" aria-label="Productos de la compra">
+                  <thead>
+                    <tr>
+                      <th scope="col">Producto</th>
+                      <th scope="col" className="data-table__number">
+                        Cantidad
+                      </th>
+                      <th scope="col" className="data-table__number">
+                        Costo unitario
+                      </th>
+                      <th scope="col" className="data-table__number">
+                        Subtotal
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.items.map((item) => (
+                      <tr key={item.productId}>
+                        <td data-label="Producto">{item.productName}</td>
+                        <td data-label="Cantidad" className="data-table__number">
+                          {formatQuantity(item.quantity)}
+                        </td>
+                        <td data-label="Costo unitario" className="data-table__number">
+                          {formatMoney(item.unitCost)}
+                        </td>
+                        <td data-label="Subtotal" className="data-table__number">
+                          {formatMoney(item.subtotal)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="purchase-form__total">
+                Total: <strong>{formatMoney(detail.total)}</strong>
+              </p>
+              {detail.status === 'REGISTERED' ? (
+                <div className="purchase-detail__actions">
+                  <button className="button button--secondary" type="button" onClick={() => setVoiding(true)}>
+                    Anular compra
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )}
         </Dialog>
       ) : null}
 
@@ -232,7 +268,7 @@ export function PurchasesPage() {
                       className="link-button"
                       type="button"
                       aria-label={`Ver compra del ${formatDate(purchase.purchaseDate)} a ${purchase.supplier.businessName}`}
-                      onClick={() => setDetail(purchase)}
+                      onClick={() => openDetail(purchase)}
                     >
                       {formatDate(purchase.purchaseDate)}
                     </button>
@@ -246,6 +282,7 @@ export function PurchasesPage() {
                     <span className={purchase.status === 'VOIDED' ? 'status status--disabled' : 'status'}>
                       {STATUS_LABEL[purchase.status]}
                     </span>
+                    {purchase.voidReason ? <span className="purchases__reason muted">{purchase.voidReason}</span> : null}
                   </td>
                 </tr>
               ))}

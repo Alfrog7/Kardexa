@@ -64,3 +64,8 @@ export async function findProducts(q: string): Promise<ProductOption[]> {
   const page = await apiRequest<{ content: ProductOption[] }>(`/products?${params}`)
   return page.content
 }
+
+/** Anula una compra registrada (HU-13): el motivo es obligatorio, de 3 a 255 caracteres. */
+export function voidPurchase(id: string, reason: string): Promise<Purchase> {
+  return apiRequest<Purchase>(`/purchases/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) })
+}
