@@ -2,9 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
-import { Logo } from '@shared/ui/Logo'
 import { login } from '../api/auth'
-import './LoginPage.css'
+import { AuthLayout } from '../components/AuthLayout'
 
 /** Inicio de sesión (HU-02): `POST /api/v1/auth/login`. Si ya hay sesión, va al panel. */
 export function LoginPage() {
@@ -33,56 +32,49 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login">
-      <div className="login__card card">
-        <Logo height={40} />
-        <div>
-          <h1 className="login__title">Ingresa a tu negocio</h1>
-          <p className="muted">Controla tu inventario y tus ventas en un solo lugar.</p>
+    <AuthLayout title="Ingresa a tu negocio" description="Controla tu inventario y tus ventas en un solo lugar.">
+      {expired && !error ? (
+        <p className="auth__notice" role="status">
+          Tu sesión venció. Ingresa de nuevo para continuar.
+        </p>
+      ) : null}
+      <form className="auth__form" onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="email">Correo</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </div>
-        {expired && !error ? (
-          <p className="login__notice" role="status">
-            Tu sesión venció. Ingresa de nuevo para continuar.
+        <div className="field">
+          <label htmlFor="password">Contraseña</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </div>
+        {error ? (
+          <p className="auth__error" role="alert">
+            {error}
           </p>
         ) : null}
-        <form className="login__form" onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="email">Correo</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-          {error ? (
-            <p className="login__error" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <button className="button" type="submit" disabled={sending}>
-            {sending ? 'Ingresando…' : 'Ingresar'}
-          </button>
-        </form>
-        <p className="muted">
-          ¿Primera vez? <Link to="/registro-inicial">Crea al primer administrador</Link>
-        </p>
-      </div>
-    </main>
+        <button className="button" type="submit" disabled={sending}>
+          {sending ? 'Ingresando…' : 'Ingresar'}
+        </button>
+      </form>
+      <p className="muted auth__alt">
+        ¿Primera vez? <Link to="/registro-inicial">Crea al primer administrador</Link>
+      </p>
+    </AuthLayout>
   )
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { type Session } from '@shared/auth/session'
@@ -25,15 +25,12 @@ describe('rutas del panel', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Módulos' })
-    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario', 'Compras']) {
+    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario', 'Compras', 'Proveedores']) {
       expect(nav).toHaveTextContent(label)
     }
   })
 
-  it.each([
-    ['/ventas', 'Ventas', 'Fase 6'],
-    ['/compras', 'Compras', 'Fase 5'],
-  ])('%s muestra su pantalla y la fase en que se implementa', (path, title, phase) => {
+  it.each([['/ventas', 'Ventas', 'Fase 6']])('%s muestra su pantalla y la fase en que se implementa', (path, title, phase) => {
     renderAt(path)
 
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
@@ -45,6 +42,21 @@ describe('rutas del panel', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Inventario' })).toBeInTheDocument()
     expect(screen.getByLabelText('Producto')).toBeInTheDocument()
+  })
+
+  it('/compras es solo del administrador', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })))
+    renderAt('/compras')
+    expect(screen.getByRole('heading', { level: 1, name: 'Compras' })).toBeInTheDocument()
+    expect(await screen.findByText('No hay compras en estas fechas.')).toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
+  it('un empleado que entra a /compras vuelve al inicio y no ve el enlace', () => {
+    renderAt('/compras', { ...adminSession, user: { ...adminSession.user, role: 'EMPLOYEE' } })
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).not.toHaveTextContent('Compras')
   })
 
   it('/productos muestra la pantalla de productos', async () => {
@@ -74,6 +86,7 @@ describe('rutas del panel', () => {
     renderAt('/')
 
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Menú de la cuenta' }))
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
   })
 

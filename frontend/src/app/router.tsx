@@ -3,7 +3,7 @@ import { LoginPage, SetupPage } from '@features/auth'
 import { CategoriesPage, ProductsPage } from '@features/catalog'
 import { DashboardPage } from '@features/dashboard'
 import { InventoryPage } from '@features/inventory'
-import { PurchasesPage } from '@features/purchasing'
+import { PurchasesPage, SuppliersPage } from '@features/purchasing'
 import { UsersPage } from '@features/users'
 import { SalesPage } from '@features/sales'
 import { PanelLayout } from './layout/PanelLayout'
@@ -28,10 +28,13 @@ export const appRoutes: RouteObject[] = [
           { path: routes.products, element: <ProductsPage /> },
           { path: routes.categories, element: <CategoriesPage /> },
           { path: routes.inventory, element: <InventoryPage /> },
-          { path: routes.purchases, element: <PurchasesPage /> },
+          { path: routes.suppliers, element: <SuppliersPage /> },
           {
             element: <RequireAdmin />,
-            children: [{ path: routes.users, element: <UsersPage /> }],
+            children: [
+              { path: routes.purchases, element: <PurchasesPage /> },
+              { path: routes.users, element: <UsersPage /> },
+            ],
           },
           { path: '*', element: <NotFoundPage /> },
         ],

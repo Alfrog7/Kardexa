@@ -3,7 +3,9 @@ package com.kardexa.catalog.infrastructure.adapter.out.persistence;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.math.BigDecimal;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,6 +14,11 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
     boolean existsByCodeIgnoreCase(String code);
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, UUID id);
+
+    /** RN-08: solo el costo, sin tocar los datos que edita el administrador. */
+    @Modifying(flushAutomatically = true)
+    @Query("update ProductJpaEntity p set p.referenceCost = :cost where p.id = :id")
+    int updateReferenceCost(@Param("id") UUID id, @Param("cost") BigDecimal cost);
 
     /**
      * Búsqueda de HU-07 y HU-10. SQL nativo porque cruza con {@code product_stock}, tabla del módulo

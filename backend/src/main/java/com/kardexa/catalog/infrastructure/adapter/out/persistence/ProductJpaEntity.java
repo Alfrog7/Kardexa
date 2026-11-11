@@ -38,7 +38,8 @@ class ProductJpaEntity {
     @Column(name = "sale_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
 
-    @Column(name = "reference_cost", nullable = false, precision = 12, scale = 2)
+    /** Solo lo cambia una compra con {@code updateReferenceCost} (RN-08); editar el producto no lo pisa. */
+    @Column(name = "reference_cost", nullable = false, precision = 12, scale = 2, updatable = false)
     private BigDecimal referenceCost;
 
     @Column(name = "min_stock", nullable = false, precision = 12, scale = 3)

@@ -391,6 +391,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Supplier' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
 
   /suppliers/{id}:
@@ -399,7 +400,7 @@ paths:
     put:
       tags: [purchasing]
       operationId: updateSupplier
-      summary: Edita un proveedor (RF-15)
+      summary: Edita, desactiva o reactiva un proveedor (RF-15, solo ADMIN)
       requestBody:
         required: true
         content:
@@ -411,13 +412,16 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Supplier' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /purchases:
     get:
       tags: [purchasing]
       operationId: listPurchases
-      summary: Lista compras
+      summary: Lista compras por fecha de compra, de la más reciente a la más antigua (solo ADMIN)
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
@@ -429,6 +433,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PurchasePage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [purchasing]
       operationId: registerPurchase
@@ -446,7 +452,9 @@ paths:
               schema: { $ref: '#/components/schemas/Purchase' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/ConcurrentModification' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /purchases/{id}/void:
     parameters:
@@ -454,7 +462,7 @@ paths:
     post:
       tags: [purchasing]
       operationId: voidPurchase
-      summary: Anula una compra (RF-17, solo ADMIN)
+      summary: Anula una compra con salidas inversas; no revierte el costo referencial (RF-17, solo ADMIN)
       requestBody:
         required: true
         content:
@@ -466,6 +474,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Purchase' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /sales:

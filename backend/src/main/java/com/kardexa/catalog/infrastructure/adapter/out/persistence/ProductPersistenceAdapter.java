@@ -10,6 +10,7 @@ import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations
 import com.kardexa.catalog.application.port.out.ProductRepository;
 import com.kardexa.catalog.domain.exception.DuplicateProductCodeException;
 import com.kardexa.catalog.domain.model.Product;
+import com.kardexa.shared.domain.Money;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -60,6 +61,11 @@ class ProductPersistenceAdapter implements ProductRepository {
     /** Que {@code %} y {@code _} escritos por el usuario se busquen tal cual y no como comodines. */
     static String escapeLike(String text) {
         return text.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+    }
+
+    @Override
+    public boolean updateReferenceCost(UUID productId, Money cost) {
+        return jpa.updateReferenceCost(productId, cost.amount()) == 1;
     }
 
     @Override
