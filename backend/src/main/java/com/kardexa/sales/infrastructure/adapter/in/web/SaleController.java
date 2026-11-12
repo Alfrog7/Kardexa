@@ -7,6 +7,8 @@ import com.kardexa.sales.application.port.in.RegisterSaleUseCase;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.ItemCommand;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.RegisterSaleCommand;
 import com.kardexa.sales.application.port.in.SaleView;
+import com.kardexa.sales.application.port.in.VoidSaleUseCase;
+import com.kardexa.sales.application.port.in.VoidSaleUseCase.VoidSaleCommand;
 import com.kardexa.sales.domain.model.Sale;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
@@ -15,9 +17,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
@@ -47,10 +51,12 @@ class SaleController {
 
     private final RegisterSaleUseCase registerSale;
     private final ListSalesUseCase listSales;
+    private final VoidSaleUseCase voidSale;
 
-    SaleController(RegisterSaleUseCase registerSale, ListSalesUseCase listSales) {
+    SaleController(RegisterSaleUseCase registerSale, ListSalesUseCase listSales, VoidSaleUseCase voidSale) {
         this.registerSale = registerSale;
         this.listSales = listSales;
+        this.voidSale = voidSale;
     }
 
     /** HU-16: el EMPLEADO solo recibe sus ventas, aunque envíe otro {@code sellerId}. */
@@ -75,6 +81,21 @@ class SaleController {
     SaleResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         return SaleResponse.from(listSales.get(id, viewer(jwt)));
     }
+
+    /** HU-15: solo ADMIN (lo exige {@code SecurityConfig}); devuelve la venta ya anulada. */
+    @PostMapping("/{id}/void")
+    SaleResponse voidSale(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody VoidRequest request) {
+        voidSale.voidSale(new VoidSaleCommand(id, request.reason(), UUID.fromString(jwt.getSubject())));
+        return SaleResponse.from(listSales.get(id, viewer(jwt)));
+    }
+
+    /** Esquema {@code VoidRequest}. */
+    record VoidRequest(
+            @NotBlank(message = "El motivo es obligatorio.")
+            @Size(min = Sale.VOID_REASON_MIN_LENGTH, max = Sale.VOID_REASON_MAX_LENGTH,
+                    message = "Debe tener entre {min} y {max} caracteres.")
+            String reason) {}
 
     private static Viewer viewer(Jwt jwt) {
         return new Viewer(UUID.fromString(jwt.getSubject()), "ADMIN".equals(jwt.getClaimAsString("role")));

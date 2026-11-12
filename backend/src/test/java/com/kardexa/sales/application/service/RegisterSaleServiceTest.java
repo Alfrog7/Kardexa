@@ -7,16 +7,19 @@ import com.kardexa.sales.application.port.in.ListSalesUseCase.SaleFilter;
 import com.kardexa.sales.application.port.in.ListSalesUseCase.Viewer;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.ItemCommand;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.RegisterSaleCommand;
+import com.kardexa.sales.application.port.in.VoidSaleUseCase.VoidSaleCommand;
 import com.kardexa.sales.application.port.in.SaleView;
 import com.kardexa.sales.application.port.out.SaleNumbers;
 import com.kardexa.sales.application.port.out.SaleProducts;
 import com.kardexa.sales.application.port.out.SaleRepository;
 import com.kardexa.sales.application.port.out.StockLedger;
 import com.kardexa.sales.domain.exception.InactiveProductException;
+import com.kardexa.sales.domain.exception.SaleAlreadyVoidedException;
 import com.kardexa.sales.domain.exception.SaleNotFoundException;
 import com.kardexa.sales.domain.exception.SaleProductNotFoundException;
 import com.kardexa.sales.domain.model.Sale;
 import com.kardexa.sales.domain.model.SaleNumber;
+import com.kardexa.sales.domain.model.SaleStatus;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
@@ -44,10 +47,11 @@ class RegisterSaleServiceTest {
     private final InMemorySales sales = new InMemorySales();
     private final Map<UUID, SaleProducts.ProductForSale> catalog = new LinkedHashMap<>();
     private final List<Sale> withdrawn = new ArrayList<>();
+    private final List<Sale> givenBack = new ArrayList<>();
     private long lastNumber;
 
     private final RegisterSaleService service = new RegisterSaleService(sales, this::nextNumber,
-            this::findProducts, withdrawn::add, Clock.fixed(Instant.parse("2026-11-12T15:00:00Z"), ZoneOffset.UTC));
+            this::findProducts, ledger(), Clock.fixed(Instant.parse("2026-11-12T15:00:00Z"), ZoneOffset.UTC));
 
     RegisterSaleServiceTest() {
         catalog.put(RICE, new SaleProducts.ProductForSale(RICE, "AR-001", "Arroz 5 kg", Money.of("25.00"), true));
@@ -87,8 +91,16 @@ class RegisterSaleServiceTest {
     @Test
     @DisplayName("si el inventario rechaza la salida (RN-01), no se reserva número ni se guarda la venta")
     void stockFailureKeepsNumber() {
-        StockLedger failing = sale -> {
-            throw new IllegalStateException("sin stock");
+        StockLedger failing = new StockLedger() {
+            @Override
+            public void withdraw(Sale sale) {
+                throw new IllegalStateException("sin stock");
+            }
+
+            @Override
+            public void giveBack(Sale sale) {
+                throw new UnsupportedOperationException();
+            }
         };
         RegisterSaleService rejecting = new RegisterSaleService(sales, this::nextNumber, this::findProducts, failing,
                 Clock.systemUTC());
@@ -130,6 +142,41 @@ class RegisterSaleServiceTest {
         assertThat(sales.lastTo).isEqualTo(Instant.parse("2026-11-13T05:00:00Z"));
     }
 
+    @Test
+    @DisplayName("HU-15: anular devuelve el stock, conserva el número y no se repite")
+    void voidsSale() {
+        Sale sale = service.register(command(new ItemCommand(RICE, Quantity.of("2"))));
+        VoidSaleService voiding = new VoidSaleService(sales, ledger(), Clock.systemUTC());
+        UUID admin = UUID.randomUUID();
+
+        voiding.voidSale(new VoidSaleCommand(sale.id(), "  Cliente   devolvió ", admin));
+
+        assertThat(sale.status()).isEqualTo(SaleStatus.VOIDED);
+        assertThat(sale.voiding().reason()).isEqualTo("Cliente devolvió");
+        assertThat(sale.voiding().userId()).isEqualTo(admin);
+        assertThat(sale.number()).hasToString("V-000001");
+        assertThat(givenBack).containsExactly(sale);
+        assertThatThrownBy(() -> voiding.voidSale(new VoidSaleCommand(sale.id(), "otra vez", admin)))
+                .isInstanceOf(SaleAlreadyVoidedException.class);
+        assertThatThrownBy(() -> voiding.voidSale(new VoidSaleCommand(UUID.randomUUID(), "motivo", admin)))
+                .isInstanceOf(SaleNotFoundException.class);
+        assertThat(givenBack).hasSize(1);
+    }
+
+    private StockLedger ledger() {
+        return new StockLedger() {
+            @Override
+            public void withdraw(Sale sale) {
+                withdrawn.add(sale);
+            }
+
+            @Override
+            public void giveBack(Sale sale) {
+                givenBack.add(sale);
+            }
+        };
+    }
+
     private SaleNumber nextNumber() {
         return new SaleNumber(++lastNumber);
     }
@@ -153,6 +200,16 @@ class RegisterSaleServiceTest {
         @Override
         public void add(Sale sale) {
             saved.add(sale);
+        }
+
+        @Override
+        public Optional<Sale> findById(UUID id) {
+            return saved.stream().filter(s -> s.id().equals(id)).findFirst();
+        }
+
+        @Override
+        public void saveVoiding(Sale sale) {
+            // La venta guardada es la misma instancia: ya quedó anulada.
         }
 
         @Override

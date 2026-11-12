@@ -12,4 +12,7 @@ import com.kardexa.sales.domain.model.Sale;
 public interface StockLedger {
 
     void withdraw(Sale sale);
+
+    /** HU-15: una entrada por producto con el mismo id de venta como origen y el usuario que anula. */
+    void giveBack(Sale sale);
 }
