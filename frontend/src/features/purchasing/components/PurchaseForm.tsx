@@ -3,7 +3,7 @@ import { ApiError } from '@shared/api/http'
 import { formatMoney } from '@shared/lib/format'
 import type { ProductOption, PurchaseRequest } from '../api/purchases'
 import type { Supplier } from '../api/suppliers'
-import { AMOUNT_PATTERN, QUANTITY_PATTERN, centsToAmount, subtotalCents } from '../lib/amounts'
+import { AMOUNT_PATTERN, QUANTITY_PATTERN, centsToAmount, subtotalCents } from '@shared/lib/amounts'
 import { ProductSearch } from './ProductSearch'
 
 /** Límite de `Purchase.SUPPLIER_DOCUMENT_MAX_LENGTH` en la API. */

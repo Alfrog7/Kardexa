@@ -485,6 +485,7 @@ paths:
       tags: [sales]
       operationId: listSales
       summary: Historial de ventas (RF-21; un EMPLOYEE solo ve las suyas)
+      description: De la más reciente a la más antigua. Fechas inclusivas en hora de Lima. Un EMPLOYEE recibe solo sus ventas aunque envíe otro sellerId.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
@@ -503,6 +504,7 @@ paths:
       tags: [sales]
       operationId: registerSale
       summary: Registra una venta que descuenta stock (RF-18, RF-19)
+      description: El precio de cada ítem lo pone el catálogo (RN-06); el número V-000001 es correlativo sin huecos (RN-07).
       requestBody:
         required: true
         content:
@@ -531,7 +533,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Sale' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '404': # también para la venta de otro vendedor si quien consulta es EMPLOYEE
+          $ref: '#/components/responses/NotFound'
 
   /sales/{id}/void:
     parameters:
@@ -930,16 +933,18 @@ components:
           items: { $ref: '#/components/schemas/SaleItemRequest' }
     SaleItem:
       type: object
-      required: [productId, productName, quantity, unitPrice, subtotal]
+      required: [productId, productCode, productName, quantity, unitPrice, subtotal]
+      description: Código, nombre y precio copiados del producto al vender (RN-06)
       properties:
         productId: { type: string, format: uuid }
+        productCode: { type: string }
         productName: { type: string }
         quantity: { $ref: '#/components/schemas/Decimal3' }
         unitPrice: { $ref: '#/components/schemas/Decimal2' }
         subtotal: { $ref: '#/components/schemas/Decimal2' }
     Sale:
       type: object
-      required: [id, number, soldAt, seller, status, total, items]
+      required: [id, number, soldAt, sellerId, seller, status, total, items]
       properties:
         id: { type: string, format: uuid }
         number:
@@ -947,6 +952,7 @@ components:
           pattern: '^V-\d{6,}$'
           examples: [V-000123]
         soldAt: { type: string, format: date-time }
+        sellerId: { type: string, format: uuid }
         seller: { type: string, description: Nombre del vendedor }
         status: { $ref: '#/components/schemas/DocumentStatus' }
         voidReason: { type: string }

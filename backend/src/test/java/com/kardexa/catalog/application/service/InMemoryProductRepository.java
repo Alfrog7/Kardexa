@@ -6,6 +6,7 @@ import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,11 @@ class InMemoryProductRepository implements ProductRepository {
     @Override
     public Optional<Product> findById(UUID id) {
         return Optional.ofNullable(rows.get(id)).map(InMemoryProductRepository::copy);
+    }
+
+    @Override
+    public List<Product> findAllById(Collection<UUID> ids) {
+        return ids.stream().map(rows::get).filter(java.util.Objects::nonNull).toList();
     }
 
     @Override

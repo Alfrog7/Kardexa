@@ -9,37 +9,34 @@ sequenceDiagram
     participant SPA as Panel web
     participant SC as SaleController
     participant RS as RegisterSaleService
-    participant CAT as catalog<br/>(FindProduct)
-    participant INV as inventory<br/>(RecordStockExit)
+    participant CAT as catalog<br/>(FindProductsForSale)
+    participant INV as inventory<br/>(RecordStockMovements)
     participant DB as PostgreSQL
 
     E->>SPA: Agrega productos y confirma
-    SPA->>SC: POST /api/v1/sales {items}
+    SPA->>SC: POST /api/v1/sales {items: productId, quantity}
     SC->>RS: register(command, sellerId)
-    RS->>CAT: findActiveByIds(productIds)
-    CAT-->>RS: nombres y precios vigentes
-    Note over RS: Copia nombre y precio en cada ítem (RN-06)<br/>Ordena ítems por productId (ADR 0006)
 
     rect rgb(240, 253, 250)
-    Note over RS,DB: Una sola transacción (RNF-04)
-    RS->>DB: nextval('sale_number_seq') → V-000123 (RN-07)
-    loop por cada ítem
-        RS->>INV: recordExit(productId, qty, SALE, saleId)
-        INV->>DB: SELECT product_stock (version)
-        alt stock suficiente
-            INV->>DB: UPDATE product_stock SET quantity, version+1<br/>WHERE version = :v
-            INV->>DB: INSERT stock_movement (balance_after)
-        else stock insuficiente (RN-01)
-            INV-->>RS: InsufficientStockException
-            RS-->>SC: rollback
-            SC-->>SPA: 422 Problem Details "Stock insuficiente para …"
-        end
+    Note over RS,DB: Una sola transacción abierta por RetryingRegisterSale (RNF-04, ADR 0010)
+    RS->>CAT: findForSale(productIds)
+    CAT-->>RS: nombres, códigos y precios vigentes
+    Note over RS: Copia nombre y precio en cada ítem (RN-06)<br/>Subtotales y total half-up (RN-12)
+    RS->>INV: record(líneas OUT, SALE, saleId)
+    Note over INV: Ordena por productId (ADR 0006)
+    INV->>DB: UPDATE product_stock ... WHERE version = :v
+    INV->>DB: INSERT stock_movement (balance_after)
+    alt stock insuficiente (RN-01)
+        INV-->>RS: InsufficientStockException
+        RS-->>SC: rollback
+        SC-->>SPA: 422 Problem Details "Stock insuficiente para …"
     end
-    RS->>DB: INSERT sale + sale_items
+    RS->>DB: UPDATE sale_number_counter ... RETURNING → V-000123 (RN-07)
+    RS->>DB: INSERT sale + sale_item
     end
 
     alt otra transacción cambió la versión
-        Note over RS: OptimisticLockException → reintento (máx. 3)
+        Note over RS: ConcurrentModificationException → reintento (máx. 3)
         RS-->>SC: tras 3 intentos
         SC-->>SPA: 409 Conflict
     end

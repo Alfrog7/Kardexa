@@ -6,6 +6,20 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+## [v0.6-fase6] - 2026-11-12
+
+### Agregado
+
+- **ADR 0010 · Ventas entre módulos:** `sales` coordina la transacción con `inventory`, copia el precio vigente del catálogo (RN-06) y numera los comprobantes sin huecos con una tabla contador (RN-07).
+- **HU-14 · Registrar una venta (API):** `POST /api/v1/sales` descuenta el stock con una salida `SALE` por producto, copia código, nombre y precio vigente del catálogo (RN-06) y asigna el número `V-000001` sin huecos (RN-07), todo en una transacción con reintentos (RNF-04, RNF-05). `GET /api/v1/sales/{id}` devuelve el comprobante; al `EMPLEADO` solo las suyas. Tablas `sale`, `sale_item` y `sale_number_counter` (migración V11).
+- **HU-16 · Historial de ventas (API):** `GET /api/v1/sales` pagina de la más reciente a la más antigua y filtra por fechas en hora de Lima y por vendedor. El `EMPLEADO` solo recibe sus ventas aunque pida otro `sellerId` (RF-21, RNF-03).
+- **HU-15 · Anular una venta (API):** `POST /api/v1/sales/{id}/void` con motivo obligatorio devuelve el stock con una entrada `SALE_VOID` por producto y deja la venta `VOIDED` sin perder su número (RN-03, RN-07). Una venta ya anulada responde 422 y un `UPDATE` condicional evita la doble anulación. Solo `ADMIN` (RN-05). Migración V12.
+- **Panel · Ventas:** pantalla `/ventas` para registrar una venta en pocos pasos: buscador con precio y stock, cantidades editables, subtotales y total en vivo, aviso si una cantidad supera el stock, y el número del comprobante al confirmar. Muestra qué producto no alcanza (RN-01) y el conflicto de concurrencia. Para `ADMIN` y `EMPLEADO`.
+- **Panel · Comprobante de venta:** comprobante interno con número, fecha y hora de Lima, vendedor, ítems con código y precio copiado, subtotales, total y estado (anulada con su motivo). El botón «Imprimir» saca solo el comprobante, sin menú ni botones (RF-19). No es un comprobante electrónico de SUNAT.
+- **Panel · Historial de ventas:** en `/ventas`, lista paginada del mes actual con número, fecha, vendedor, total y estado (con el motivo si está anulada). Filtro por fechas y, solo para el `ADMIN`, por vendedor; el `EMPLEADO` ve únicamente sus ventas. Desde la lista se abre el comprobante (HU-16).
+- **Panel · Anular una venta:** el `ADMIN` anula una venta vigente desde su comprobante con un motivo obligatorio; queda «Anulada» con su motivo en el comprobante y en el historial, sin perder su número, y la acción desaparece. El `EMPLEADO` no ve la acción (HU-15).
+- **Datos de ejemplo:** `scripts/datos-demo.py` carga un catálogo `DEMO-*`, un proveedor, una empleada de prueba y una compra, registra ventas como `ADMIN` y `EMPLEADO`, anula una y comprueba RN-01, RN-05, RN-06, RN-07 y RF-21 contra la API local.
+
 ## [v0.5-fase5] - 2026-11-11
 
 ### Agregado

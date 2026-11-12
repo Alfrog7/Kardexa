@@ -11,6 +11,8 @@ import com.kardexa.catalog.application.port.out.ProductRepository;
 import com.kardexa.catalog.domain.exception.DuplicateProductCodeException;
 import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.shared.domain.Money;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -47,6 +49,11 @@ class ProductPersistenceAdapter implements ProductRepository {
     @Override
     public Optional<Product> findById(UUID id) {
         return jpa.findById(id).map(ProductJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<Product> findAllById(Collection<UUID> ids) {
+        return jpa.findAllById(ids).stream().map(ProductJpaEntity::toDomain).toList();
     }
 
     @Override

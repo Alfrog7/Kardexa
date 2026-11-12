@@ -56,7 +56,7 @@ class ProductApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
         drinks = createCategory("Bebidas");
     }
 
