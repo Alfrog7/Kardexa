@@ -1,5 +1,5 @@
 /**
- * Subtotales y total en vivo del formulario de compra. Solo sirven para mostrarlos mientras se escribe:
+ * Subtotales y total en vivo de los formularios de compra y de venta. Solo sirven para mostrarlos mientras se escribe:
  * el total que vale es el que calcula la API. Se usan enteros (milésimas y céntimos) para no perder precisión.
  */
 
@@ -22,4 +22,10 @@ export function subtotalCents(quantity: string, unitCost: string): bigint | null
 export function centsToAmount(cents: bigint): string {
   const text = cents.toString().padStart(3, '0')
   return `${text.slice(0, -2)}.${text.slice(-2)}`
+}
+
+/** `true` si `quantity` supera `available` (las dos con hasta 3 decimales); `false` si alguna no es válida. */
+export function exceeds(quantity: string, available: string): boolean {
+  if (!QUANTITY_PATTERN.test(quantity) || !QUANTITY_PATTERN.test(available)) return false
+  return scaled(quantity, 3) > scaled(available, 3)
 }
