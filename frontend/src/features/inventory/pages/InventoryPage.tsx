@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
 import { businessDate, formatDateTime, formatQuantity } from '@shared/lib/format'
@@ -6,6 +7,7 @@ import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import {
   getKardex,
+  getProduct,
   registerAdjustment,
   type Kardex,
   type MovementType,
@@ -45,6 +47,8 @@ function daysAgo(days: number): string {
 
 /** Inventario (HU-08, HU-09): kárdex de un producto y ajustes de stock. */
 export function InventoryPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const linkedId = searchParams.get('producto')
   const [product, setProduct] = useState<ProductOption>()
   const [from, setFrom] = useState(() => daysAgo(DEFAULT_RANGE_DAYS))
   const [to, setTo] = useState(() => daysAgo(0))
@@ -54,6 +58,26 @@ export function InventoryPage() {
   const [adjusting, setAdjusting] = useState(false)
   const [notice, setNotice] = useState<string>()
   const dismissNotice = useCallback(() => setNotice(undefined), [])
+
+  // Desde Productos se llega con ?producto=<id>: se carga ese producto y, con &ajustar=1, se abre el ajuste.
+  const openAdjustment = searchParams.get('ajustar') === '1' && canManage
+  useEffect(() => {
+    if (!linkedId) return
+    const request = { active: true }
+    getProduct(linkedId)
+      .then((found) => {
+        if (!request.active || !found) return
+        setProduct(found)
+        setAdjusting(openAdjustment)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (request.active) setSearchParams({}, { replace: true })
+      })
+    return () => {
+      request.active = false
+    }
+  }, [linkedId, openAdjustment, setSearchParams])
 
   const productId = product?.id
   const query = useMemo(() => ({ productId, from, to, attempt }), [productId, from, to, attempt])
@@ -83,6 +107,12 @@ export function InventoryPage() {
     setAdjusting(false)
     setNotice('Ajuste registrado. Ya se actualizó el stock.')
     setAttempt((value) => value + 1)
+    const adjusted = request.productId
+    getProduct(adjusted)
+      .then((found) => {
+        if (found) setProduct((current) => (current?.id === adjusted ? found : current))
+      })
+      .catch(() => undefined)
   }
 
   return (
@@ -90,8 +120,9 @@ export function InventoryPage() {
       <header className="page__header page__header--spread">
         <h1>Inventario</h1>
         {product && canManage ? (
-          <button className="button button--icon" type="button" aria-label="Registrar ajuste" title="Registrar ajuste" onClick={() => setAdjusting(true)}>
+          <button className="button" type="button" onClick={() => setAdjusting(true)}>
             <Icon name="sliders" />
+            Registrar ajuste
           </button>
         ) : null}
       </header>
@@ -104,13 +135,27 @@ export function InventoryPage() {
 
       {notice ? <Toast message={notice} onDismiss={dismissNotice} /> : null}
 
+      <p className="inventory__help muted">
+        El stock sube con las <strong>compras</strong> y baja con las <strong>ventas</strong>. Para una merma, un
+        conteo físico o una corrección, elige el producto y usa «Registrar ajuste».
+      </p>
+
       {product ? (
-        <p className="inventory__selected">
-          <strong>{product.name}</strong> <span className="muted">· {product.code} · </span>
-          <button className="link-button" type="button" onClick={() => setProduct(undefined)}>
-            Cambiar producto
-          </button>
-        </p>
+        <div className="inventory__selected card">
+          <div className="inventory__product">
+            <strong>{product.name}</strong>
+            <span className="muted">{product.code}</span>
+            <button className="link-button" type="button" onClick={() => setProduct(undefined)}>
+              Cambiar producto
+            </button>
+          </div>
+          {product.stock !== undefined ? (
+            <p className="inventory__stock">
+              <span className="muted">Stock actual</span>
+              <strong>{formatQuantity(product.stock)}</strong>
+            </p>
+          ) : null}
+        </div>
       ) : (
         <>
           <ProductPicker onSelect={setProduct} />
@@ -166,7 +211,10 @@ export function InventoryPage() {
           </dl>
 
           {kardex.movements.length === 0 ? (
-            <p className="muted">No hay movimientos en este rango de fechas.</p>
+            <p className="muted">
+              No hay movimientos en este rango de fechas.
+              {Number(kardex.closingBalance) === 0 ? ' Registra una compra o un ajuste de entrada para darle stock.' : null}
+            </p>
           ) : (
             <div className="card data-table-card">
               <table className="data-table">

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router'
+import { routes } from '@app/navigation'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
 import { formatMoney, formatQuantity } from '@shared/lib/format'
@@ -7,6 +9,7 @@ import { Toast } from '@shared/ui/Toast'
 import { listCategories, type Category } from '../api/categories'
 import {
   createProduct,
+  registerInitialStock,
   searchProducts,
   updateProduct,
   type Product,
@@ -101,13 +104,23 @@ export function ProductsPage() {
   const loading = result?.query !== query
   const found = result?.page
 
-  async function handleSubmit(request: ProductRequest) {
+  async function handleSubmit(request: ProductRequest, initialStock?: string) {
+    let message = `Producto ${request.name} guardado.`
     if (form.kind === 'edit') {
       await updateProduct(form.product.id, request)
     } else {
-      await createProduct(request)
+      const created = await createProduct(request)
+      message = `Producto ${created.name} creado con el código ${created.code}.`
+      if (initialStock) {
+        try {
+          await registerInitialStock(created.id, initialStock)
+          message += ` Stock inicial: ${formatQuantity(initialStock)}.`
+        } catch (error) {
+          message += ` No se registró el stock inicial: ${messageOf(error)} Agrégalo desde Inventario.`
+        }
+      }
     }
-    setNotice(`Producto ${request.name} guardado.`)
+    setNotice(message)
     setAttempt((value) => value + 1)
     setForm({ kind: 'closed' })
   }
@@ -246,6 +259,15 @@ export function ProductsPage() {
                   </td>
                   <td data-label="Stock" className="data-table__number">
                     {formatQuantity(product.stock)}
+                    {canManage && product.active ? (
+                      <Link
+                        className="products__adjust"
+                        to={`${routes.inventory}?producto=${product.id}&ajustar=1`}
+                        aria-label={`Ajustar stock de ${product.name}`}
+                      >
+                        Ajustar
+                      </Link>
+                    ) : null}
                   </td>
                   <td data-label="Estado">
                     {!product.active ? (

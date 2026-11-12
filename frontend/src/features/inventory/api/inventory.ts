@@ -5,6 +5,8 @@ export interface ProductOption {
   id: string
   code: string
   name: string
+  /** Stock actual; el kárdex lo explica movimiento a movimiento. */
+  stock: string
 }
 
 export type Direction = 'IN' | 'OUT'
@@ -47,6 +49,10 @@ export async function findProducts(q: string): Promise<ProductOption[]> {
   const params = new URLSearchParams({ q, size: String(PICKER_SIZE) })
   const page = await apiRequest<{ content: ProductOption[] }>(`/products?${params}`)
   return page.content
+}
+
+export function getProduct(id: string): Promise<ProductOption> {
+  return apiRequest<ProductOption>(`/products/${id}`)
 }
 
 export function getKardex(productId: string, from: string, to: string): Promise<Kardex> {
