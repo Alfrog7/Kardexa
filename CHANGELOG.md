@@ -6,6 +6,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+### Agregado
+
+- **ADR 0010 · Ventas entre módulos:** `sales` coordina la transacción con `inventory`, copia el precio vigente del catálogo (RN-06) y numera los comprobantes sin huecos con una tabla contador (RN-07).
+
 ## [v0.5-fase5] - 2026-11-11
 
 ### Agregado

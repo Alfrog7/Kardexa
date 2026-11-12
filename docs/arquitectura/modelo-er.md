@@ -142,7 +142,7 @@ erDiagram
 | `stock_movement`, `stock_adjustment` | Un *trigger* rechaza `UPDATE` y `DELETE` | RN-03 |
 | `product` | `UNIQUE (code)`; índice `lower(name)` para búsqueda | RN-10, RF-08 |
 | `supplier` | `UNIQUE (ruc)`; `CHECK (ruc ~ '^[0-9]{11}$')` | RN-10 |
-| `sale` | `number` generado con la secuencia `sale_number_seq`; `UNIQUE (number)` | RN-07 |
+| `sale` | `number` tomado de la tabla `sale_number_counter` dentro de la transacción (ADR 0010); `UNIQUE (number)` | RN-07 |
 | `app_user` | `UNIQUE (lower(email))` | RF-03 |
 
 ## Por qué existe `product_stock` separado de `product`
