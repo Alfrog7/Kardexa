@@ -6,6 +6,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+### Cambiado
+
+- **Código de producto automático:** al crear un producto el código es opcional; vacío, la API asigna el siguiente libre de la secuencia `P-0001` y se salta los que se escribieron a mano (#122).
+
 ## [v0.6-fase6] - 2026-11-12
 
 ### Agregado

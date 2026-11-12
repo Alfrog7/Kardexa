@@ -81,6 +81,11 @@ class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
+    public long maxGeneratedCodeNumber() {
+        return jpa.maxGeneratedCodeNumber();
+    }
+
+    @Override
     public boolean existsByCodeExcluding(String code, UUID excludedId) {
         return jpa.existsByCodeIgnoreCaseAndIdNot(code, excludedId);
     }

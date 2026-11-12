@@ -90,7 +90,7 @@ class ProductController {
 
     /** Esquema {@code ProductRequest}. Montos y cantidades viajan como texto para no perder precisión. */
     record ProductRequest(
-            @NotBlank(message = "El código es obligatorio.")
+            // Opcional al crear: vacío, la API asigna el siguiente de la secuencia P-0001.
             @Size(max = Product.CODE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
             String code,
             @NotBlank(message = "El nombre es obligatorio.")

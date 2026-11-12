@@ -20,9 +20,10 @@ type FieldErrors = Partial<Record<FieldName, string>>
 /** Reglas de negocio que la API rechaza sin indicar campo: RN-10 (código repetido) y RF-06 (categoría). */
 const FIELD_BY_RULE: Record<string, FieldName> = { 'RN-10': 'code', 'RF-06': 'categoryId' }
 
-function validate(values: ProductRequest): FieldErrors {
+function validate(values: ProductRequest, editing: boolean): FieldErrors {
   const errors: FieldErrors = {}
-  if (!values.code) errors.code = 'El código es obligatorio.'
+  // Al crear, un código vacío lo asigna la API (P-0001, P-0002…).
+  if (editing && !values.code) errors.code = 'El código es obligatorio.'
   if (values.name.length < 2) errors.name = 'Debe tener entre 2 y 120 caracteres.'
   if (!values.categoryId) errors.categoryId = 'La categoría es obligatoria.'
   if (!MONEY_PATTERN.test(values.salePrice)) errors.salePrice = 'Monto con hasta 2 decimales, por ejemplo 3.50.'
@@ -64,7 +65,7 @@ export function ProductForm({ product, categories, onSubmit }: ProductFormProps)
       minStock: minStock.trim(),
       ...(product ? { active } : {}),
     }
-    const invalid = validate(request)
+    const invalid = validate(request, Boolean(product))
     setErrors(invalid)
     setFormError(undefined)
     if (Object.keys(invalid).length > 0) return
@@ -114,18 +115,26 @@ export function ProductForm({ product, categories, onSubmit }: ProductFormProps)
         <div className="field">
           <label htmlFor="product-code">Código</label>
           <input
-            data-autofocus
+            data-autofocus={product ? true : undefined}
             id="product-code"
             value={code}
             maxLength={40}
+            placeholder={product ? undefined : 'Automático'}
+            aria-describedby={errors.code ? 'product-code-error' : product ? undefined : 'product-code-hint'}
+            aria-invalid={errors.code ? true : undefined}
             onChange={(event) => setCode(event.target.value)}
-            {...describe('code')}
           />
+          {product ? null : (
+            <p id="product-code-hint" className="muted">
+              Opcional: déjalo vacío y se asigna el siguiente (P-0001, P-0002…).
+            </p>
+          )}
           {errorOf('code')}
         </div>
         <div className="field">
           <label htmlFor="product-name">Nombre</label>
           <input
+            data-autofocus={product ? undefined : true}
             id="product-name"
             value={name}
             maxLength={120}

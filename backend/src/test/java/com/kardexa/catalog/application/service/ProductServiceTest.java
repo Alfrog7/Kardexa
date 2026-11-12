@@ -95,6 +95,15 @@ class ProductServiceTest {
     }
 
     @Test
+    @DisplayName("sin código asigna el siguiente P-NNNN y se salta los escritos a mano")
+    void generatesCodeWhenBlank() {
+        assertThat(service.create(details("", drinks.id())).product().code()).isEqualTo("P-0001");
+        service.create(details("p-0003", drinks.id()));
+        assertThat(service.create(details(null, drinks.id())).product().code()).isEqualTo("P-0004");
+        assertThat(service.create(details("  ", drinks.id())).product().code()).isEqualTo("P-0005");
+    }
+
+    @Test
     @DisplayName("rechaza una categoría inexistente")
     void rejectsUnknownCategory() {
         assertThatThrownBy(() -> service.create(details("AB-001", UUID.randomUUID())))
