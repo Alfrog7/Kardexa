@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, listSales, listSellers, registerSale, type Sale } from '../api/sales'
+import { SessionContext } from '@shared/auth/session'
+import { findProducts, listSales, listSellers, registerSale, voidSale, type Sale } from '../api/sales'
 import { SalesPage } from './SalesPage'
 
 vi.mock('../api/sales', async (importOriginal) => ({
@@ -10,6 +11,7 @@ vi.mock('../api/sales', async (importOriginal) => ({
   findProducts: vi.fn(),
   listSales: vi.fn(),
   listSellers: vi.fn(),
+  voidSale: vi.fn(),
 }))
 
 const products = [
@@ -163,5 +165,59 @@ describe('SalesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Registrar venta' }))
 
     await waitFor(() => expect(vi.mocked(listSales).mock.calls.length).toBeGreaterThan(calls))
+  })
+
+  it('el ADMIN anula una venta con motivo desde su comprobante y queda anulada con su número', async () => {
+    vi.mocked(listSales).mockResolvedValue(page([sale]))
+    vi.mocked(voidSale).mockResolvedValue({ ...sale, status: 'VOIDED', voidReason: 'Cliente devolvió todo' })
+    render(<SalesPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comprobante V-000001' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Anular venta' }))
+    const form = within(screen.getByRole('dialog', { name: 'Anular la venta V-000001' }))
+
+    fireEvent.click(form.getByRole('button', { name: 'Anular venta' }))
+    expect(await form.findByText(/al menos 3 caracteres/)).toBeTruthy()
+    expect(voidSale).not.toHaveBeenCalled()
+
+    fireEvent.change(form.getByLabelText('Motivo de la anulación'), { target: { value: '  Cliente devolvió todo ' } })
+    fireEvent.click(form.getByRole('button', { name: 'Anular venta' }))
+
+    await waitFor(() => expect(voidSale).toHaveBeenCalledWith('v1', 'Cliente devolvió todo'))
+    const receipt = within(await screen.findByRole('dialog', { name: 'Comprobante V-000001' }))
+    expect(receipt.getByText('Anulada')).toBeTruthy()
+    expect(receipt.queryByRole('button', { name: 'Anular venta' })).toBeNull()
+    expect(screen.getByText(/V-000001 anulada/)).toBeTruthy()
+  })
+
+  it('muestra el error de la API si rechaza la anulación', async () => {
+    vi.mocked(listSales).mockResolvedValue(page([sale]))
+    vi.mocked(voidSale).mockRejectedValue(new ApiError({ status: 422, title: 'Venta ya anulada', detail: 'La venta V-000001 ya está anulada.' }))
+    render(<SalesPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comprobante V-000001' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Anular venta' }))
+    const form = within(screen.getByRole('dialog'))
+    fireEvent.change(form.getByLabelText('Motivo de la anulación'), { target: { value: 'Error de cobro' } })
+    fireEvent.click(form.getByRole('button', { name: 'Anular venta' }))
+
+    expect((await form.findByRole('alert')).textContent).toContain('ya está anulada')
+  })
+
+  it('un EMPLEADO no ve la acción de anular ni el filtro por vendedor', async () => {
+    vi.mocked(listSales).mockResolvedValue(page([sale]))
+    const session = {
+      user: { id: 'u1', fullName: 'Ana Pérez', email: 'ana@bodega.pe', role: 'EMPLOYEE' as const },
+    } as unknown as React.ContextType<typeof SessionContext>
+    render(
+      <SessionContext.Provider value={session}>
+        <SalesPage />
+      </SessionContext.Provider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comprobante V-000001' }))
+    expect(within(screen.getByRole('dialog')).queryByRole('button', { name: 'Anular venta' })).toBeNull()
+    expect(screen.queryByLabelText('Vendedor')).toBeNull()
+    expect(listSellers).not.toHaveBeenCalled()
   })
 })

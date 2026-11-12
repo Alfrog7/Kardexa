@@ -78,3 +78,8 @@ export async function listSellers(): Promise<Seller[]> {
   const page = await apiRequest<{ content: Seller[] }>('/users?size=100')
   return page.content
 }
+
+/** HU-15: anula una venta registrada (solo `ADMIN`); el motivo es obligatorio, de 3 a 255 caracteres. */
+export function voidSale(id: string, reason: string): Promise<Sale> {
+  return apiRequest<Sale>(`/sales/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) })
+}
