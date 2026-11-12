@@ -13,6 +13,16 @@ public interface SaleRepository {
 
     void add(Sale sale);
 
+    /** La venta con sus ítems, para anularla. */
+    Optional<Sale> findById(UUID id);
+
+    /**
+     * Guarda la anulación solo si la venta seguía registrada.
+     *
+     * @throws com.kardexa.sales.domain.exception.SaleAlreadyVoidedException si otro la anuló antes
+     */
+    void saveVoiding(Sale sale);
+
     Optional<SaleView> findView(UUID id);
 
     /** Vendidas en {@code [from, to)}; los filtros nulos no se aplican. De la más reciente a la más antigua. */

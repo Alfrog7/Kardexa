@@ -54,6 +54,14 @@ class SaleTest {
         assertThatThrownBy(() -> SaleNumber.parse("V-12")).isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    @DisplayName("HU-15: el motivo de la anulación se exige entre 3 y 255 caracteres")
+    void voidReason() {
+        assertThatThrownBy(() -> new Sale.Voiding("  a ", SELLER, Instant.now())).isInstanceOf(InvalidSaleException.class);
+        assertThatThrownBy(() -> new Sale.Voiding("x".repeat(256), SELLER, Instant.now()))
+                .isInstanceOf(InvalidSaleException.class);
+    }
+
     private static SaleItem item(UUID productId, String quantity, String price) {
         return new SaleItem(productId, "P-1", "Producto", Quantity.of(quantity), Money.of(price));
     }

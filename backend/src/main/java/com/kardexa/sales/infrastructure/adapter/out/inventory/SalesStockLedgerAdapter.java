@@ -20,7 +20,16 @@ class SalesStockLedgerAdapter implements StockLedger {
 
     @Override
     public void withdraw(Sale sale) {
-        recordStockMovements.record(new RecordStockMovementsCommand(DocumentMovement.SALE, sale.id(),
-                sale.sellerId(), sale.items().stream().map(i -> new Line(i.productId(), i.quantity())).toList()));
+        record(DocumentMovement.SALE, sale, sale.sellerId());
+    }
+
+    @Override
+    public void giveBack(Sale sale) {
+        record(DocumentMovement.SALE_VOID, sale, sale.voiding().userId());
+    }
+
+    private void record(DocumentMovement movement, Sale sale, java.util.UUID userId) {
+        recordStockMovements.record(new RecordStockMovementsCommand(movement, sale.id(), userId,
+                sale.items().stream().map(i -> new Line(i.productId(), i.quantity())).toList()));
     }
 }

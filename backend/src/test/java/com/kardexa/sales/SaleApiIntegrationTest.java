@@ -224,6 +224,53 @@ class SaleApiIntegrationTest {
                 .andExpect(jsonPath("$.content[0].id").value(own));
     }
 
+    @Test
+    @DisplayName("HU-15: anular devuelve el stock con entradas SALE_VOID y la venta conserva su número")
+    void voidsSale() throws Exception {
+        String id = idOf(sell(null, item(rice, "3"), item(oil, "1")));
+
+        voidSale(id, """
+                {"reason": "Cliente devolvió todo"}""")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("VOIDED"))
+                .andExpect(jsonPath("$.number").value("V-000001"))
+                .andExpect(jsonPath("$.voidReason").value("Cliente devolvió todo"));
+
+        assertThat(stock(rice)).isEqualByComparingTo("10");
+        assertThat(stock(oil)).isEqualByComparingTo("4");
+        mvc.perform(get("/api/v1/products/" + rice + "/kardex"))
+                .andExpect(jsonPath("$.movements.length()").value(2))
+                .andExpect(jsonPath("$.movements[?(@.type == 'SALE_VOID')].direction").value("IN"))
+                .andExpect(jsonPath("$.movements[?(@.type == 'SALE_VOID')].sourceId").value(id));
+        mvc.perform(get(URL)).andExpect(jsonPath("$.content[0].status").value("VOIDED"));
+        sell(null, item(rice, "1")).andExpect(jsonPath("$.number").value("V-000002"));
+    }
+
+    @Test
+    @DisplayName("HU-15: una venta anulada no se anula otra vez; sin motivo 400; inexistente 404; EMPLEADO 403")
+    void voidErrors() throws Exception {
+        String id = idOf(sell(null, item(rice, "1")));
+
+        voidSale(id, "{}").andExpect(status().isBadRequest());
+        voidSale(UUID.randomUUID().toString(), """
+                {"reason": "no existe"}""").andExpect(status().isNotFound());
+        mvc.perform(post(URL + "/" + id + "/void").header("Authorization", employeeToken())
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"reason": "intento"}"""))
+                .andExpect(status().isForbidden());
+        voidSale(id, """
+                {"reason": "error de cobro"}""").andExpect(status().isOk());
+        voidSale(id, """
+                {"reason": "de nuevo"}""")
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.title").value("Venta ya anulada"));
+        assertThat(stock(rice)).isEqualByComparingTo("10");
+    }
+
+    private ResultActions voidSale(String id, String body) throws Exception {
+        return mvc.perform(post(URL + "/" + id + "/void").contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
     private String employeeToken() {
         User user = User.restore(EMPLOYEE_ID, "Empleada de pruebas", "empleada@pruebas.test", "x", Role.EMPLOYEE, true);
         return "Bearer " + tokens.issue(user).value();
