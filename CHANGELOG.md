@@ -9,6 +9,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 ### Agregado
 
 - **ADR 0010 · Ventas entre módulos:** `sales` coordina la transacción con `inventory`, copia el precio vigente del catálogo (RN-06) y numera los comprobantes sin huecos con una tabla contador (RN-07).
+- **HU-14 · Registrar una venta (API):** `POST /api/v1/sales` descuenta el stock con una salida `SALE` por producto, copia código, nombre y precio vigente del catálogo (RN-06) y asigna el número `V-000001` sin huecos (RN-07), todo en una transacción con reintentos (RNF-04, RNF-05). `GET /api/v1/sales/{id}` devuelve el comprobante; al `EMPLEADO` solo las suyas. Tablas `sale`, `sale_item` y `sale_number_counter` (migración V11).
 
 ## [v0.5-fase5] - 2026-11-11
 
