@@ -1,84 +1,152 @@
-.sale-receipt {
+/* Comprobante con forma de ticket: angosto, centrado, separadores punteados y total destacado. */
+.sale-receipt-wrap {
   display: grid;
   gap: var(--space-4);
+}
+
+.sale-receipt {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+
+.sale-receipt p {
+  margin: 0;
 }
 
 .sale-receipt__header {
   display: grid;
+  justify-items: center;
   gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed #9ca3af;
   text-align: center;
 }
 
-.sale-receipt__header p {
-  margin: 0;
+.sale-receipt__logo {
+  height: 2rem;
+  width: auto;
 }
 
 .sale-receipt__kind {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+  color: #4b5563;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .sale-receipt__number {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .sale-receipt__voided {
-  justify-self: center;
   padding: 0 var(--space-2);
-  border: 2px solid currentColor;
+  border: 2px solid #b42318;
   border-radius: 4px;
-  color: var(--color-danger, #b42318);
+  color: #b42318;
   font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .sale-receipt__meta {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-1);
   margin: 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed #9ca3af;
+}
+
+.sale-receipt__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .sale-receipt__meta dt {
-  color: var(--color-text-muted);
+  color: #4b5563;
 }
 
 .sale-receipt__meta dd {
   margin: 0;
+  text-align: right;
 }
 
 .sale-receipt__items {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
 }
 
 .sale-receipt__items th,
 .sale-receipt__items td {
-  padding: var(--space-2) var(--space-1);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-1) 0;
   text-align: right;
   vertical-align: top;
 }
 
 .sale-receipt__items th:first-child,
 .sale-receipt__items td:first-child {
+  padding-right: var(--space-2);
   text-align: left;
+}
+
+.sale-receipt__items td:nth-child(2) {
+  padding-right: var(--space-2);
+  white-space: nowrap;
+}
+
+.sale-receipt__items thead th {
+  border-bottom: 1px solid #d1d5db;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.sale-receipt__product,
+.sale-receipt__detail {
+  display: block;
+}
+
+.sale-receipt__detail {
+  color: #6b7280;
+  font-size: 0.75rem;
 }
 
 .sale-receipt__items tfoot th,
 .sale-receipt__items tfoot td {
-  border-bottom: 0;
-  font-size: 1.0625rem;
+  padding-top: var(--space-2);
+  border-top: 1px dashed #9ca3af;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
-.sale-receipt__code {
-  display: block;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
+.sale-receipt__footer {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px dashed #9ca3af;
+  color: #4b5563;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.sale-receipt--voided .sale-receipt__items tbody {
+  text-decoration: line-through;
+  text-decoration-color: #b42318;
 }
 
 .sale-receipt__actions {
@@ -88,8 +156,12 @@
   gap: var(--space-3);
 }
 
-/* Al imprimir solo se ve el comprobante: sin menú, encabezado del diálogo ni botones. */
+/* Al imprimir solo sale el ticket, de 80 mm de ancho y arriba de la hoja. */
 @media print {
+  @page {
+    margin: 6mm;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -107,8 +179,12 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    color: #000;
+    width: 80mm;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 9.5pt;
   }
 
   .sale-receipt__actions {
