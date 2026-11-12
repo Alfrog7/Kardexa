@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { formatMoney, formatQuantity } from '@shared/lib/format'
+import { formatMoney } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { registerSale, type Sale, type SaleRequest } from '../api/sales'
 import { SaleForm } from '../components/SaleForm'
+import { SaleReceipt } from '../components/SaleReceipt'
 import './SalesPage.css'
 
 /** Ventas (HU-14): registrar una venta en pocos pasos. Para `ADMIN` y `EMPLEADO`. */
@@ -32,20 +33,8 @@ export function SalesPage() {
       </div>
 
       {registered ? (
-        <Dialog title={`Venta ${registered.number}`} onClose={() => setRegistered(undefined)}>
-          <ul className="sale-summary" aria-label="Productos vendidos">
-            {registered.items.map((item) => (
-              <li key={item.productId}>
-                <span>
-                  {formatQuantity(item.quantity)} × {item.productName}
-                </span>
-                <span>{formatMoney(item.subtotal)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="sale-form__total">
-            Total: <strong>{formatMoney(registered.total)}</strong>
-          </p>
+        <Dialog title={`Comprobante ${registered.number}`} onClose={() => setRegistered(undefined)}>
+          <SaleReceipt sale={registered} />
         </Dialog>
       ) : null}
 
