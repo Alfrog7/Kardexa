@@ -15,6 +15,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Panel · Ventas:** pantalla `/ventas` para registrar una venta en pocos pasos: buscador con precio y stock, cantidades editables, subtotales y total en vivo, aviso si una cantidad supera el stock, y el número del comprobante al confirmar. Muestra qué producto no alcanza (RN-01) y el conflicto de concurrencia. Para `ADMIN` y `EMPLEADO`.
 - **Panel · Comprobante de venta:** comprobante interno con número, fecha y hora de Lima, vendedor, ítems con código y precio copiado, subtotales, total y estado (anulada con su motivo). El botón «Imprimir» saca solo el comprobante, sin menú ni botones (RF-19). No es un comprobante electrónico de SUNAT.
 - **Panel · Historial de ventas:** en `/ventas`, lista paginada del mes actual con número, fecha, vendedor, total y estado (con el motivo si está anulada). Filtro por fechas y, solo para el `ADMIN`, por vendedor; el `EMPLEADO` ve únicamente sus ventas. Desde la lista se abre el comprobante (HU-16).
+- **Panel · Anular una venta:** el `ADMIN` anula una venta vigente desde su comprobante con un motivo obligatorio; queda «Anulada» con su motivo en el comprobante y en el historial, sin perder su número, y la acción desaparece. El `EMPLEADO` no ve la acción (HU-15).
 
 ## [v0.5-fase5] - 2026-11-11
 
