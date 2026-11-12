@@ -73,9 +73,8 @@ export function ProductSearch({ excludedIds, onSelect }: ProductSearchProps) {
                 <button className="link-button" type="button" disabled={empty} onClick={() => choose(option)}>
                   {option.name}
                 </button>
-                <span className="muted">
-                  {' '}
-                  · {option.code} · {formatMoney(option.salePrice)} · {empty ? 'sin stock' : `stock ${formatQuantity(option.stock)}`}
+                <span className="sale-form__option-meta">
+                  {option.code} · {formatMoney(option.salePrice)} · {empty ? 'sin stock' : `stock ${formatQuantity(option.stock)}`}
                 </span>
               </li>
             )
