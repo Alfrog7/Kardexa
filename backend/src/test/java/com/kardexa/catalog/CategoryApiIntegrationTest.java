@@ -63,6 +63,24 @@ class CategoryApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("el listado indica cuántos productos tiene cada categoría")
+    void listsProductCounts() throws Exception {
+        String drinks = idOf(create("Bebidas"));
+        create("Limpieza");
+        for (String code : new String[] {"B-1", "B-2"}) {
+            mvc.perform(post("/api/v1/products").contentType(MediaType.APPLICATION_JSON).content("""
+                    {"code": "%s", "name": "Gaseosa %s", "categoryId": "%s", "unit": "UNIT", "salePrice": "3.50", "minStock": "1"}
+                    """.formatted(code, code, drinks))).andExpect(status().isCreated());
+        }
+
+        mvc.perform(get(URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Bebidas"))
+                .andExpect(jsonPath("$[0].productCount").value(2))
+                .andExpect(jsonPath("$[1].productCount").value(0));
+    }
+
+    @Test
     @DisplayName("criterio 2: nombre repetido sin distinguir mayúsculas devuelve 409")
     void rejectsDuplicateName() throws Exception {
         create("Bebidas").andExpect(status().isCreated());

@@ -8,6 +8,8 @@ import com.kardexa.catalog.domain.exception.CategoryNotFoundException;
 import com.kardexa.catalog.domain.exception.DuplicateCategoryNameException;
 import com.kardexa.catalog.domain.model.Category;
 import java.util.List;
+import java.util.UUID;
+import java.util.Map;
 import java.util.Objects;
 
 /** Casos de uso de HU-05. Java puro: se registra como bean en {@code CatalogConfig}. */
@@ -48,5 +50,10 @@ public class CategoryService implements CreateCategoryUseCase, UpdateCategoryUse
     @Override
     public List<Category> listAll() {
         return categories.findAllOrderedByName();
+    }
+
+    @Override
+    public Map<UUID, Long> productCounts() {
+        return categories.countProductsByCategory();
     }
 }
