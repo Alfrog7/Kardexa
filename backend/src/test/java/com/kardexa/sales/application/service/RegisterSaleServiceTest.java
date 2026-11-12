@@ -3,6 +3,7 @@ package com.kardexa.sales.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.kardexa.sales.application.port.in.ListSalesUseCase.SaleFilter;
 import com.kardexa.sales.application.port.in.ListSalesUseCase.Viewer;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.ItemCommand;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.RegisterSaleCommand;
@@ -16,6 +17,8 @@ import com.kardexa.sales.domain.exception.SaleNotFoundException;
 import com.kardexa.sales.domain.exception.SaleProductNotFoundException;
 import com.kardexa.sales.domain.model.Sale;
 import com.kardexa.sales.domain.model.SaleNumber;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
@@ -108,6 +111,25 @@ class RegisterSaleServiceTest {
                 .isInstanceOf(SaleNotFoundException.class);
     }
 
+    @Test
+    @DisplayName("HU-16: al EMPLEADO se le aplica su propio vendedor; las fechas se cortan en hora de Lima")
+    void listForcesOwnSeller() {
+        SaleQueryService query = new SaleQueryService(sales);
+        UUID other = UUID.randomUUID();
+        UUID employee = UUID.randomUUID();
+
+        query.list(new SaleFilter(java.time.LocalDate.parse("2026-11-12"), null, other), new Viewer(employee, false),
+                PageQuery.of(0, 20));
+        assertThat(sales.lastSeller).isEqualTo(employee);
+        assertThat(sales.lastFrom).isEqualTo(Instant.parse("2026-11-12T05:00:00Z"));
+        assertThat(sales.lastTo).isNull();
+
+        query.list(new SaleFilter(null, java.time.LocalDate.parse("2026-11-12"), other), new Viewer(employee, true),
+                PageQuery.of(0, 20));
+        assertThat(sales.lastSeller).isEqualTo(other);
+        assertThat(sales.lastTo).isEqualTo(Instant.parse("2026-11-13T05:00:00Z"));
+    }
+
     private SaleNumber nextNumber() {
         return new SaleNumber(++lastNumber);
     }
@@ -124,6 +146,9 @@ class RegisterSaleServiceTest {
     private static final class InMemorySales implements SaleRepository {
 
         private final List<Sale> saved = new ArrayList<>();
+        private Instant lastFrom;
+        private Instant lastTo;
+        private UUID lastSeller;
 
         @Override
         public void add(Sale sale) {
@@ -135,6 +160,14 @@ class RegisterSaleServiceTest {
             return saved.stream().filter(s -> s.id().equals(id)).findFirst()
                     .map(s -> new SaleView(s.id(), s.number().toString(), s.soldAt(), s.sellerId(), "Vendedor",
                             s.status(), null, s.total(), List.of()));
+        }
+
+        @Override
+        public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, PageQuery page) {
+            lastFrom = from;
+            lastTo = to;
+            lastSeller = sellerId;
+            return ResultPage.of(List.of(), page, 0);
         }
     }
 }
