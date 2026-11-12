@@ -757,6 +757,10 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         active: { type: boolean }
+        productCount:
+          type: integer
+          minimum: 0
+          description: Solo en `GET /categories`; productos activos e inactivos de la categoría.
     CategoryRequest:
       type: object
       required: [name]

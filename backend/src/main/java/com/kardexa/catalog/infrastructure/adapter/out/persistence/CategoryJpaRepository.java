@@ -14,4 +14,7 @@ interface CategoryJpaRepository extends JpaRepository<CategoryJpaEntity, UUID> {
     /** Orden alfabético sin distinguir mayúsculas, independiente de la collation de la base. */
     @Query("select c from CategoryJpaEntity c order by lower(c.name)")
     List<CategoryJpaEntity> findAllOrderedByName();
+
+    @Query(nativeQuery = true, value = "SELECT category_id, count(*) FROM product GROUP BY category_id")
+    List<Object[]> countProductsByCategory();
 }

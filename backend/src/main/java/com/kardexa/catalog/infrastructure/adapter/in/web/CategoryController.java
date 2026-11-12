@@ -1,5 +1,6 @@
 package com.kardexa.catalog.infrastructure.adapter.in.web;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.kardexa.catalog.application.port.in.CreateCategoryUseCase;
 import com.kardexa.catalog.application.port.in.CreateCategoryUseCase.CreateCategoryCommand;
 import com.kardexa.catalog.application.port.in.ListCategoriesUseCase;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +44,10 @@ class CategoryController {
 
     @GetMapping
     List<CategoryResponse> list() {
-        return listCategories.listAll().stream().map(CategoryResponse::from).toList();
+        Map<UUID, Long> counts = listCategories.productCounts();
+        return listCategories.listAll().stream()
+                .map(category -> CategoryResponse.from(category, counts.getOrDefault(category.id(), 0L)))
+                .toList();
     }
 
     @PostMapping
@@ -75,10 +80,16 @@ class CategoryController {
     }
 
     /** Esquema {@code Category}. */
-    record CategoryResponse(UUID id, String name, boolean active) {
+    /** {@code productCount} solo viaja en el listado; al crear o editar no se calcula. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record CategoryResponse(UUID id, String name, boolean active, Long productCount) {
 
         static CategoryResponse from(Category category) {
-            return new CategoryResponse(category.id(), category.name(), category.isActive());
+            return from(category, null);
+        }
+
+        static CategoryResponse from(Category category, Long productCount) {
+            return new CategoryResponse(category.id(), category.name(), category.isActive(), productCount);
         }
     }
 }

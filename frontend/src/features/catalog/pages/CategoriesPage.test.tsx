@@ -10,8 +10,8 @@ vi.mock('../api/categories', () => ({
   updateCategory: vi.fn(),
 }))
 
-const abarrotes: Category = { id: '1', name: 'Abarrotes', active: true }
-const bebidas: Category = { id: '2', name: 'Bebidas', active: false }
+const abarrotes: Category = { id: '1', name: 'Abarrotes', active: true, productCount: 3 }
+const bebidas: Category = { id: '2', name: 'Bebidas', active: false, productCount: 1 }
 
 function typeName(value: string) {
   fireEvent.change(screen.getByLabelText('Nombre'), { target: { value } })
@@ -164,5 +164,16 @@ describe('CategoriesPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Inténtalo otra vez.')
     expect(screen.getByRole('switch', { name: 'Abarrotes activa' })).toBeChecked()
+  })
+
+  it('resume las categorías y muestra cuántos productos tiene cada una', async () => {
+    vi.mocked(listCategories).mockResolvedValue([bebidas, abarrotes])
+    render(<CategoriesPage />)
+
+    const list = await screen.findByRole('list', { name: 'Categorías' })
+    expect(list).toHaveTextContent('3 productos')
+    expect(list).toHaveTextContent('1 producto')
+    expect(screen.getByText('Activas').nextElementSibling).toHaveTextContent('1')
+    expect(screen.getByText('Productos').nextElementSibling).toHaveTextContent('4')
   })
 })

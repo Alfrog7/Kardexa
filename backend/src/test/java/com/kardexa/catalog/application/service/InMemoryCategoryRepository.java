@@ -28,6 +28,11 @@ class InMemoryCategoryRepository implements CategoryRepository {
     }
 
     @Override
+    public Map<UUID, Long> countProductsByCategory() {
+        return Map.of();
+    }
+
+    @Override
     public List<Category> findAllOrderedByName() {
         return rows.values().stream()
                 .sorted(Comparator.comparing(c -> c.name().toLowerCase()))

@@ -7,6 +7,8 @@ import java.util.Collection;
 import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations.violates;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,6 +47,12 @@ class CategoryPersistenceAdapter implements CategoryRepository {
     @Override
     public List<Category> findAllOrderedByName() {
         return jpa.findAllOrderedByName().stream().map(CategoryJpaEntity::toDomain).toList();
+    }
+
+    @Override
+    public Map<UUID, Long> countProductsByCategory() {
+        return jpa.countProductsByCategory().stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> ((Number) row[1]).longValue()));
     }
 
     @Override
