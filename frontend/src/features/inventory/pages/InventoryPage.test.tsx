@@ -1,16 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, getKardex, registerAdjustment, type Kardex } from '../api/inventory'
+import { findProducts, getKardex, getProduct, registerAdjustment, type Kardex } from '../api/inventory'
 import { InventoryPage } from './InventoryPage'
 
 vi.mock('../api/inventory', () => ({
   findProducts: vi.fn(),
   getKardex: vi.fn(),
+  getProduct: vi.fn(),
   registerAdjustment: vi.fn(),
 }))
 
-const aceite = { id: 'p1', code: 'ACE-1', name: 'Aceite 1 L' }
+const aceite = { id: 'p1', code: 'ACE-1', name: 'Aceite 1 L', stock: '13.000' }
 
 const kardex: Kardex = {
   productId: 'p1',
@@ -41,7 +43,7 @@ const kardex: Kardex = {
 }
 
 async function pickProduct() {
-  render(<InventoryPage />)
+  render(<InventoryPage />, { wrapper: MemoryRouter })
   fireEvent.change(screen.getByLabelText('Producto'), { target: { value: 'ace' } })
   fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
   await screen.findByText('Saldo final')
@@ -65,7 +67,7 @@ describe('InventoryPage', () => {
   })
 
   it('pide elegir un producto y no consulta el kárdex antes', () => {
-    render(<InventoryPage />)
+    render(<InventoryPage />, { wrapper: MemoryRouter })
 
     expect(screen.getByText('Elige un producto para ver su kárdex.')).toBeInTheDocument()
     expect(getKardex).not.toHaveBeenCalled()
@@ -74,7 +76,7 @@ describe('InventoryPage', () => {
 
   it('avisa si ningún producto coincide con la búsqueda', async () => {
     vi.mocked(findProducts).mockResolvedValue([])
-    render(<InventoryPage />)
+    render(<InventoryPage />, { wrapper: MemoryRouter })
 
     fireEvent.change(screen.getByLabelText('Producto'), { target: { value: 'xyz' } })
 
@@ -123,7 +125,7 @@ describe('InventoryPage', () => {
 
   it('muestra el error de carga y permite reintentar', async () => {
     vi.mocked(getKardex).mockRejectedValueOnce(new ApiError({ title: 'Sin conexión', status: 0, detail: 'Sin red.' }))
-    render(<InventoryPage />)
+    render(<InventoryPage />, { wrapper: MemoryRouter })
     fireEvent.change(screen.getByLabelText('Producto'), { target: { value: 'ace' } })
     fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
 
@@ -186,5 +188,18 @@ describe('InventoryPage', () => {
 
     expect(screen.getByLabelText('Producto')).toBeInTheDocument()
     expect(screen.queryByText('Saldo final')).not.toBeInTheDocument()
+  })
+
+  it('desde Productos llega con el producto elegido y el ajuste abierto', async () => {
+    vi.mocked(getProduct).mockResolvedValue(aceite)
+    render(
+      <MemoryRouter initialEntries={['/inventario?producto=p1&ajustar=1']}>
+        <InventoryPage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('dialog', { name: 'Ajustar stock de Aceite 1 L' })).toBeInTheDocument()
+    expect(getProduct).toHaveBeenCalledWith('p1')
+    expect(screen.getByText('Stock actual').nextElementSibling).toHaveTextContent('13')
   })
 })

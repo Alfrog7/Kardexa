@@ -38,3 +38,8 @@
     box-shadow: inset 4px 0 0 var(--color-accent);
   }
 }
+
+.products__adjust {
+  display: block;
+  font-size: 0.8125rem;
+}
