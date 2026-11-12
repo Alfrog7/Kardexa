@@ -207,6 +207,20 @@ describe('ProductsPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('al crear permite dejar el código vacío para que lo asigne la API', async () => {
+    vi.mocked(createProduct).mockResolvedValue({ ...aceite, code: 'P-0001' })
+    render(<ProductsPage />)
+    await screen.findByRole('option', { name: 'Abarrotes' })
+
+    const form = openCreateForm()
+    expect(form.getByLabelText('Nombre')).toHaveFocus()
+    fillCreateForm(form, { ...validValues, Código: '' })
+    fireEvent.click(form.getByRole('button', { name: 'Crear producto' }))
+
+    await screen.findByText('Producto Arroz guardado.')
+    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ code: '' }))
+  })
+
   it('valida como el servidor antes de enviar', async () => {
     render(<ProductsPage />)
     await screen.findByRole('option', { name: 'Abarrotes' })

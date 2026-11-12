@@ -15,6 +15,10 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, UUID id);
 
+    @Query(nativeQuery = true, value = "SELECT COALESCE(MAX(CAST(substring(code FROM 3) AS BIGINT)), 0) "
+            + "FROM product WHERE code ~* '^P-[0-9]{1,15}$'")
+    long maxGeneratedCodeNumber();
+
     /** RN-08: solo el costo, sin tocar los datos que edita el administrador. */
     @Modifying(flushAutomatically = true)
     @Query("update ProductJpaEntity p set p.referenceCost = :cost where p.id = :id")

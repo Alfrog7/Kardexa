@@ -37,8 +37,14 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
         this.stockLevels = Objects.requireNonNull(stockLevels);
     }
 
+    /** Formato del código que se asigna cuando el administrador lo deja vacío. */
+    static final String GENERATED_CODE_FORMAT = "P-%04d";
+
     @Override
     public ProductView create(Product.Details details) {
+        if (details.code() == null || details.code().isBlank()) {
+            details = withCode(details, nextGeneratedCode());
+        }
         Product product = Product.create(details);
         Category category = activeCategory(product.categoryId());
         if (products.existsByCode(product.code())) {
@@ -97,6 +103,21 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
         Map<UUID, Quantity> stock = stockLevels.currentStock(page.content().stream().map(Product::id).toList());
         return page.map(product -> new ProductView(
                 product, categoryNames.get(product.categoryId()), stock.getOrDefault(product.id(), Quantity.ZERO)));
+    }
+
+    /** El siguiente número libre: se salta los códigos {@code P-NNNN} que alguien escribió a mano. */
+    private String nextGeneratedCode() {
+        long next = products.maxGeneratedCodeNumber() + 1;
+        String code = GENERATED_CODE_FORMAT.formatted(next);
+        while (products.existsByCode(code)) {
+            code = GENERATED_CODE_FORMAT.formatted(++next);
+        }
+        return code;
+    }
+
+    private static Product.Details withCode(Product.Details details, String code) {
+        return new Product.Details(code, details.name(), details.categoryId(), details.unit(), details.salePrice(),
+                details.minStock());
     }
 
     private Category existingCategory(UUID id) {

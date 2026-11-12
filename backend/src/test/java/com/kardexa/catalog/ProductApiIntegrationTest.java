@@ -79,6 +79,14 @@ class ProductApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("sin código asigna el siguiente de la secuencia P-0001")
+    void generatesCode() throws Exception {
+        create(body("", drinks, "3.50", "5")).andExpect(jsonPath("$.code").value("P-0001"));
+        create(body("P-0009", drinks, "3.50", "5")).andExpect(status().isCreated());
+        create(body(" ", drinks, "3.50", "5")).andExpect(jsonPath("$.code").value("P-0010"));
+    }
+
+    @Test
     @DisplayName("criterio 2 · RN-10: código repetido sin distinguir mayúsculas devuelve 409")
     void rejectsDuplicateCode() throws Exception {
         create(body("AB-001", drinks, "3.50", "5")).andExpect(status().isCreated());

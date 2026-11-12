@@ -59,6 +59,16 @@ class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
+    public long maxGeneratedCodeNumber() {
+        return rows.values().stream()
+                .map(Product::code)
+                .filter(code -> code.matches("(?i)P-\d{1,15}"))
+                .mapToLong(code -> Long.parseLong(code.substring(2)))
+                .max()
+                .orElse(0);
+    }
+
+    @Override
     public boolean existsByCodeExcluding(String code, UUID excludedId) {
         return rows.values().stream().anyMatch(p -> p.code().equalsIgnoreCase(code) && !p.id().equals(excludedId));
     }

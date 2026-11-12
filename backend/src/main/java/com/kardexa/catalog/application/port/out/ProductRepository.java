@@ -32,6 +32,9 @@ public interface ProductRepository {
 
     boolean existsByCode(String code);
 
+    /** Mayor número usado con el formato automático {@code P-0001} (sin distinguir mayúsculas), o 0. */
+    long maxGeneratedCodeNumber();
+
     boolean existsByCodeExcluding(String code, UUID excludedId);
 
     /**

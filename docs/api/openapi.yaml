@@ -769,9 +769,12 @@ components:
       enum: [UNIT, KG, LITER, BOX]
     ProductRequest:
       type: object
-      required: [code, name, categoryId, unit, salePrice, minStock]
+      required: [name, categoryId, unit, salePrice, minStock]
       properties:
-        code: { type: string, minLength: 1, maxLength: 40 }
+        code:
+          type: string
+          maxLength: 40
+          description: Al crear es opcional; vacío, la API asigna el siguiente libre de la secuencia `P-0001`. Al editar es obligatorio.
         name: { type: string, minLength: 2, maxLength: 120 }
         categoryId: { type: string, format: uuid }
         unit: { $ref: '#/components/schemas/Unit' }
