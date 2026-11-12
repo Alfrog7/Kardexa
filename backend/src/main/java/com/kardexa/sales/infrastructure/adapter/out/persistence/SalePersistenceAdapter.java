@@ -5,6 +5,8 @@ import com.kardexa.sales.application.port.out.SaleRepository;
 import com.kardexa.sales.domain.model.Sale;
 import com.kardexa.sales.domain.model.SaleItem;
 import com.kardexa.sales.domain.model.SaleStatus;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.sql.ResultSet;
@@ -78,6 +80,38 @@ class SalePersistenceAdapter implements SaleRepository {
                 .query(SalePersistenceAdapter::header)
                 .list();
         return withItems(headers).stream().findFirst();
+    }
+
+    @Override
+    public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, PageQuery page) {
+        StringBuilder where = new StringBuilder("WHERE true");
+        Map<String, Object> params = new LinkedHashMap<>();
+        if (from != null) {
+            where.append(" AND s.sold_at >= :from");
+            params.put("from", Timestamp.from(from));
+        }
+        if (to != null) {
+            where.append(" AND s.sold_at < :to");
+            params.put("to", Timestamp.from(to));
+        }
+        if (sellerId != null) {
+            where.append(" AND s.seller_id = :sellerId");
+            params.put("sellerId", sellerId);
+        }
+        long total = jdbc.sql("SELECT count(*) FROM sale s " + where)
+                .params(params)
+                .query(Long.class)
+                .single();
+        List<Header> headers = jdbc.sql(HEADER_SELECT + where + """
+
+                ORDER BY s.sold_at DESC, s.number DESC
+                LIMIT :limit OFFSET :offset""")
+                .params(params)
+                .param("limit", page.size())
+                .param("offset", page.offset())
+                .query(SalePersistenceAdapter::header)
+                .list();
+        return ResultPage.of(withItems(headers), page, total);
     }
 
     /** Lee los ítems de todas las ventas de una vez (sin N+1), en el orden en que se registraron. */

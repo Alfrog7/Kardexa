@@ -485,6 +485,7 @@ paths:
       tags: [sales]
       operationId: listSales
       summary: Historial de ventas (RF-21; un EMPLOYEE solo ve las suyas)
+      description: De la más reciente a la más antigua. Fechas inclusivas en hora de Lima. Un EMPLOYEE recibe solo sus ventas aunque envíe otro sellerId.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'

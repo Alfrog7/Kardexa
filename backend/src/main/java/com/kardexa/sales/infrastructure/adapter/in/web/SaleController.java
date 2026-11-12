@@ -1,24 +1,32 @@
 package com.kardexa.sales.infrastructure.adapter.in.web;
 
 import com.kardexa.sales.application.port.in.ListSalesUseCase;
+import com.kardexa.sales.application.port.in.ListSalesUseCase.SaleFilter;
 import com.kardexa.sales.application.port.in.ListSalesUseCase.Viewer;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.ItemCommand;
 import com.kardexa.sales.application.port.in.RegisterSaleUseCase.RegisterSaleCommand;
 import com.kardexa.sales.application.port.in.SaleView;
 import com.kardexa.sales.domain.model.Sale;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Quantity;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -45,6 +53,13 @@ class SaleController {
         this.listSales = listSales;
     }
 
+    /** HU-16: el EMPLEADO solo recibe sus ventas, aunque envíe otro {@code sellerId}. */
+    @GetMapping
+    SalePageResponse list(@AuthenticationPrincipal Jwt jwt, @Valid @ParameterObject SaleParams params) {
+        return SalePageResponse.from(listSales.list(new SaleFilter(params.from(), params.to(), params.sellerId()),
+                viewer(jwt), PageQuery.of(params.page(), params.size())));
+    }
+
     @PostMapping
     ResponseEntity<SaleResponse> register(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SaleRequest request) {
         Sale sale = registerSale.register(request.toCommand(UUID.fromString(jwt.getSubject())));
@@ -63,6 +78,23 @@ class SaleController {
 
     private static Viewer viewer(Jwt jwt) {
         return new Viewer(UUID.fromString(jwt.getSubject()), "ADMIN".equals(jwt.getClaimAsString("role")));
+    }
+
+    /** Fechas de venta inclusivas en hora de Lima; todo es opcional. */
+    record SaleParams(
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            UUID sellerId,
+            @Min(value = 0, message = "Debe ser 0 o mayor.")
+            Integer page,
+            @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
+            @Max(value = PageQuery.MAX_SIZE, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
+            Integer size) {
+
+        @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
+        public boolean isRange() {
+            return from == null || to == null || !from.isAfter(to);
+        }
     }
 
     /** Esquema {@code SaleRequest}. El precio no viaja: lo pone el catálogo (RN-06). */
@@ -131,6 +163,15 @@ class SaleController {
         static ItemResponse from(SaleView.Item item) {
             return new ItemResponse(item.productId(), item.productCode(), item.productName(),
                     item.quantity().toString(), item.unitPrice().toString(), item.subtotal().toString());
+        }
+    }
+
+    /** Esquema {@code SalePage}: {@code PageMeta} más el contenido. */
+    record SalePageResponse(List<SaleResponse> content, int page, int size, long totalElements, int totalPages) {
+
+        static SalePageResponse from(ResultPage<SaleView> page) {
+            return new SalePageResponse(page.content().stream().map(SaleResponse::from).toList(),
+                    page.page(), page.size(), page.totalElements(), page.totalPages());
         }
     }
 }

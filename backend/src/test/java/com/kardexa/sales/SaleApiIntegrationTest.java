@@ -179,6 +179,51 @@ class SaleApiIntegrationTest {
         mvc.perform(get(URL + "/" + own)).andExpect(status().isOk());
     }
 
+    @Test
+    @DisplayName("HU-16: el ADMIN lista de la más reciente a la más antigua y filtra por fechas de Lima y vendedor")
+    void listsSales() throws Exception {
+        String employee = employeeToken();
+        String first = idOf(sell(null, item(rice, "1")));
+        String second = idOf(sell(employee, item(oil, "1")));
+        String third = idOf(sell(null, item(rice, "2")));
+        // 2026-11-10 23:30 en Lima es 2026-11-11 04:30 UTC: cuenta como día 10.
+        jdbc.update("UPDATE sale SET sold_at = '2026-11-11T04:30:00Z' WHERE id = ?::uuid", first);
+        jdbc.update("UPDATE sale SET sold_at = '2026-11-11T15:00:00Z' WHERE id = ?::uuid", second);
+        jdbc.update("UPDATE sale SET sold_at = '2026-11-12T15:00:00Z' WHERE id = ?::uuid", third);
+
+        mvc.perform(get(URL).param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(third))
+                .andExpect(jsonPath("$.content[1].id").value(second))
+                .andExpect(jsonPath("$.content[1].seller").value("Empleada de pruebas"))
+                .andExpect(jsonPath("$.content[1].total").value("9.90"));
+        mvc.perform(get(URL).param("from", "2026-11-10").param("to", "2026-11-10"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(first));
+        mvc.perform(get(URL).param("sellerId", EMPLOYEE_ID.toString()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(second));
+        mvc.perform(get(URL).param("from", "2026-11-12").param("to", "2026-11-11"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("HU-16 (RNF-03): el EMPLEADO solo ve sus ventas aunque pida las de otro vendedor")
+    void employeeListsOnlyOwnSales() throws Exception {
+        String employee = employeeToken();
+        sell(null, item(rice, "1"));
+        String own = idOf(sell(employee, item(oil, "1")));
+
+        mvc.perform(get(URL).header("Authorization", employee))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(own));
+        mvc.perform(get(URL).param("sellerId", TestSecurity.ADMIN_ID.toString()).header("Authorization", employee))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(own));
+    }
+
     private String employeeToken() {
         User user = User.restore(EMPLOYEE_ID, "Empleada de pruebas", "empleada@pruebas.test", "x", Role.EMPLOYEE, true);
         return "Bearer " + tokens.issue(user).value();
