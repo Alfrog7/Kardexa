@@ -4,6 +4,8 @@ import com.kardexa.catalog.domain.model.Product;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +20,9 @@ public interface ProductRepository {
     Product save(Product product);
 
     Optional<Product> findById(UUID id);
+
+    /** Los que existen entre {@code ids}, en una consulta (RN-06, ADR 0010). */
+    List<Product> findAllById(Collection<UUID> ids);
 
     /**
      * RN-08: cambia solo el costo referencial. {@link #save} nunca lo escribe, para que editar un

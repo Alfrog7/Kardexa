@@ -41,7 +41,7 @@ class SupplierApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.execute("TRUNCATE purchase_item, purchase, supplier");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier");
     }
 
     @Test
