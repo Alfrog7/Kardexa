@@ -12,6 +12,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **HU-14 · Registrar una venta (API):** `POST /api/v1/sales` descuenta el stock con una salida `SALE` por producto, copia código, nombre y precio vigente del catálogo (RN-06) y asigna el número `V-000001` sin huecos (RN-07), todo en una transacción con reintentos (RNF-04, RNF-05). `GET /api/v1/sales/{id}` devuelve el comprobante; al `EMPLEADO` solo las suyas. Tablas `sale`, `sale_item` y `sale_number_counter` (migración V11).
 - **HU-16 · Historial de ventas (API):** `GET /api/v1/sales` pagina de la más reciente a la más antigua y filtra por fechas en hora de Lima y por vendedor. El `EMPLEADO` solo recibe sus ventas aunque pida otro `sellerId` (RF-21, RNF-03).
 - **HU-15 · Anular una venta (API):** `POST /api/v1/sales/{id}/void` con motivo obligatorio devuelve el stock con una entrada `SALE_VOID` por producto y deja la venta `VOIDED` sin perder su número (RN-03, RN-07). Una venta ya anulada responde 422 y un `UPDATE` condicional evita la doble anulación. Solo `ADMIN` (RN-05). Migración V12.
+- **Panel · Ventas:** pantalla `/ventas` para registrar una venta en pocos pasos: buscador con precio y stock, cantidades editables, subtotales y total en vivo, aviso si una cantidad supera el stock, y el número del comprobante al confirmar. Muestra qué producto no alcanza (RN-01) y el conflicto de concurrencia. Para `ADMIN` y `EMPLEADO`.
 
 ## [v0.5-fase5] - 2026-11-11
 
