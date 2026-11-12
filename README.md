@@ -70,6 +70,14 @@ curl -s -X POST localhost:8080/api/v1/categories -H "Content-Type: application/j
 curl -s -X POST localhost:8080/api/v1/products -H "Content-Type: application/json"   -d '{"code": "AB-001", "name": "Gaseosa 500 ml", "categoryId": "<id>", "unit": "UNIT", "salePrice": "3.50", "minStock": "5"}'
 ```
 
+### Datos de ejemplo
+
+Con el backend corriendo y un `ADMIN` creado, `scripts/datos-demo.py` carga productos `DEMO-*`, un proveedor, una empleada de prueba y una compra, registra ventas, anula una y comprueba las reglas principales (stock insuficiente, permisos, correlativo). Solo usa Python estándar; pide las credenciales por consola si no están en `KARDEXA_ADMIN_EMAIL` y `KARDEXA_ADMIN_PASSWORD`. Úsalo solo en una base local: cada ejecución agrega ventas.
+
+```bash
+python scripts/datos-demo.py
+```
+
 ### Problemas frecuentes
 
 | Síntoma | Causa | Solución |
