@@ -13,6 +13,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **HU-16 · Historial de ventas (API):** `GET /api/v1/sales` pagina de la más reciente a la más antigua y filtra por fechas en hora de Lima y por vendedor. El `EMPLEADO` solo recibe sus ventas aunque pida otro `sellerId` (RF-21, RNF-03).
 - **HU-15 · Anular una venta (API):** `POST /api/v1/sales/{id}/void` con motivo obligatorio devuelve el stock con una entrada `SALE_VOID` por producto y deja la venta `VOIDED` sin perder su número (RN-03, RN-07). Una venta ya anulada responde 422 y un `UPDATE` condicional evita la doble anulación. Solo `ADMIN` (RN-05). Migración V12.
 - **Panel · Ventas:** pantalla `/ventas` para registrar una venta en pocos pasos: buscador con precio y stock, cantidades editables, subtotales y total en vivo, aviso si una cantidad supera el stock, y el número del comprobante al confirmar. Muestra qué producto no alcanza (RN-01) y el conflicto de concurrencia. Para `ADMIN` y `EMPLEADO`.
+- **Panel · Comprobante de venta:** comprobante interno con número, fecha y hora de Lima, vendedor, ítems con código y precio copiado, subtotales, total y estado (anulada con su motivo). El botón «Imprimir» saca solo el comprobante, sin menú ni botones (RF-19). No es un comprobante electrónico de SUNAT.
 
 ## [v0.5-fase5] - 2026-11-11
 

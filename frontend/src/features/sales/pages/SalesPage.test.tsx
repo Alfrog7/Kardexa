@@ -63,8 +63,9 @@ describe('SalesPage', () => {
         ],
       }),
     )
-    const dialog = within(await screen.findByRole('dialog', { name: 'Venta V-000001' }))
-    expect(dialog.getByText(/2 × Arroz/)).toBeTruthy()
+    const dialog = within(await screen.findByRole('dialog', { name: 'Comprobante V-000001' }))
+    expect(dialog.getByText('Ana Pérez')).toBeTruthy()
+    expect(dialog.getByRole('button', { name: 'Imprimir' })).toBeTruthy()
     expect(screen.getByText(/Venta V-000001 registrada/)).toBeTruthy()
     expect(screen.queryByLabelText('Cantidad de Arroz')).toBeNull()
   })

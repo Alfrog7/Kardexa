@@ -1,0 +1,117 @@
+.sale-receipt {
+  display: grid;
+  gap: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.sale-receipt__header {
+  display: grid;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.sale-receipt__header p {
+  margin: 0;
+}
+
+.sale-receipt__kind {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.sale-receipt__number {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.sale-receipt__voided {
+  justify-self: center;
+  padding: 0 var(--space-2);
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  color: var(--color-danger, #b42318);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sale-receipt__meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.sale-receipt__meta dt {
+  color: var(--color-text-muted);
+}
+
+.sale-receipt__meta dd {
+  margin: 0;
+}
+
+.sale-receipt__items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.sale-receipt__items th,
+.sale-receipt__items td {
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  text-align: right;
+  vertical-align: top;
+}
+
+.sale-receipt__items th:first-child,
+.sale-receipt__items td:first-child {
+  text-align: left;
+}
+
+.sale-receipt__items tfoot th,
+.sale-receipt__items tfoot td {
+  border-bottom: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sale-receipt__code {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.sale-receipt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Al imprimir solo se ve el comprobante: sin menú, encabezado del diálogo ni botones. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  dialog::backdrop {
+    display: none;
+  }
+
+  .sale-receipt,
+  .sale-receipt * {
+    visibility: visible;
+  }
+
+  .sale-receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    color: #000;
+  }
+
+  .sale-receipt__actions {
+    display: none;
+  }
+}
