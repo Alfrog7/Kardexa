@@ -1,13 +1,15 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, registerSale, type Sale } from '../api/sales'
+import { findProducts, listSales, listSellers, registerSale, type Sale } from '../api/sales'
 import { SalesPage } from './SalesPage'
 
 vi.mock('../api/sales', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/sales')>()),
   registerSale: vi.fn(),
   findProducts: vi.fn(),
+  listSales: vi.fn(),
+  listSellers: vi.fn(),
 }))
 
 const products = [
@@ -31,6 +33,10 @@ const sale: Sale = {
   ],
 }
 
+function page(content: Sale[], totalPages = content.length ? 1 : 0) {
+  return { content, page: 0, size: 20, totalElements: content.length, totalPages }
+}
+
 async function addProduct(name: string) {
   fireEvent.change(screen.getByLabelText('Agregar producto'), { target: { value: name } })
   fireEvent.click(await screen.findByRole('button', { name }))
@@ -39,6 +45,11 @@ async function addProduct(name: string) {
 describe('SalesPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    vi.mocked(listSales).mockResolvedValue(page([]))
+    vi.mocked(listSellers).mockResolvedValue([
+      { id: 'u1', fullName: 'Ana Pérez' },
+      { id: 'u2', fullName: 'Luis Rojas' },
+    ])
     vi.mocked(findProducts).mockImplementation(async (q) =>
       products.filter((product) => product.name.toLowerCase().includes(q.toLowerCase())),
     )
@@ -106,5 +117,51 @@ describe('SalesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Registrar venta' }))
     expect((await screen.findByRole('alert')).textContent).toContain('Otra venta cambió el stock')
     expect(screen.getByLabelText('Cantidad de Arroz')).toBeTruthy()
+  })
+
+  it('lista las ventas del mes, filtra por fechas y vendedor, y abre el comprobante', async () => {
+    const voided: Sale = { ...sale, id: 'v2', number: 'V-000002', status: 'VOIDED', voidReason: 'Error de cobro' }
+    vi.mocked(listSales).mockResolvedValue(page([voided, sale]))
+    render(<SalesPage />)
+
+    const table = within(await screen.findByRole('table', { name: 'Ventas' }))
+    expect(table.getByText('Error de cobro')).toBeTruthy()
+    expect(table.getAllByText('S/ 59.90').length).toBe(2)
+    const [from, to, sellerId, pageNumber] = vi.mocked(listSales).mock.calls[0] ?? []
+    expect(from).toMatch(/^\d{4}-\d{2}-01$/)
+    expect(to).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect([sellerId, pageNumber]).toEqual(['', 0])
+
+    fireEvent.change(await screen.findByLabelText('Vendedor'), { target: { value: 'u2' } })
+    await waitFor(() => expect(listSales).toHaveBeenLastCalledWith(from, to, 'u2', 0))
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-11-05' } })
+    await waitFor(() => expect(listSales).toHaveBeenLastCalledWith('2026-11-05', to, 'u2', 0))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver comprobante V-000002' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Comprobante V-000002' }))
+    expect(dialog.getByText('Anulada')).toBeTruthy()
+  })
+
+  it('avisa si el rango de fechas está al revés y permite reintentar un error', async () => {
+    vi.mocked(listSales).mockRejectedValueOnce(new ApiError({ status: 500, title: 'Error', detail: 'Servidor caído' }))
+    render(<SalesPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('No hay ventas en estas fechas.')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2999-01-01' } })
+    expect(await screen.findByText('La fecha inicial no puede ser posterior a la final.')).toBeTruthy()
+  })
+
+  it('vuelve a cargar el historial después de registrar una venta', async () => {
+    vi.mocked(registerSale).mockResolvedValue(sale)
+    render(<SalesPage />)
+    await screen.findByText('No hay ventas en estas fechas.')
+    const calls = vi.mocked(listSales).mock.calls.length
+
+    await addProduct('Arroz')
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar venta' }))
+
+    await waitFor(() => expect(vi.mocked(listSales).mock.calls.length).toBeGreaterThan(calls))
   })
 })

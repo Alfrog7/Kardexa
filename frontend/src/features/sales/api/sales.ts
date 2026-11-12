@@ -50,3 +50,31 @@ export async function findProducts(q: string): Promise<ProductOption[]> {
   const page = await apiRequest<{ content: ProductOption[] }>(`/products?${params}`)
   return page.content
 }
+
+export interface SalePage {
+  content: Sale[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+/** Vendedor para el filtro del historial (solo `ADMIN`, de `GET /users`). */
+export interface Seller {
+  id: string
+  fullName: string
+}
+
+export const PAGE_SIZE = 20
+
+/** HU-16: fechas inclusivas en hora de Lima. Al `EMPLEADO` la API solo le devuelve sus ventas. */
+export function listSales(from: string, to: string, sellerId: string, page: number): Promise<SalePage> {
+  const params = new URLSearchParams({ from, to, page: String(page), size: String(PAGE_SIZE) })
+  if (sellerId) params.set('sellerId', sellerId)
+  return apiRequest<SalePage>(`/sales?${params}`)
+}
+
+export async function listSellers(): Promise<Seller[]> {
+  const page = await apiRequest<{ content: Seller[] }>('/users?size=100')
+  return page.content
+}

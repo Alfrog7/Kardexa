@@ -61,3 +61,39 @@
 .sale-form__total {
   font-size: 1.125rem;
 }
+
+.sales__history {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sales__history h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.sales__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+  max-width: 40rem;
+}
+
+.sales__row--voided td {
+  color: var(--color-text-muted);
+}
+
+.sales__reason {
+  display: block;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.sales__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
