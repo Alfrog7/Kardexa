@@ -62,7 +62,7 @@ class InMemoryProductRepository implements ProductRepository {
     public long maxGeneratedCodeNumber() {
         return rows.values().stream()
                 .map(Product::code)
-                .filter(code -> code.matches("(?i)P-\d{1,15}"))
+                .filter(code -> code.matches("(?i)P-[0-9]{1,15}"))
                 .mapToLong(code -> Long.parseLong(code.substring(2)))
                 .max()
                 .orElse(0);
