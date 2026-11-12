@@ -16,6 +16,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Panel · Comprobante de venta:** comprobante interno con número, fecha y hora de Lima, vendedor, ítems con código y precio copiado, subtotales, total y estado (anulada con su motivo). El botón «Imprimir» saca solo el comprobante, sin menú ni botones (RF-19). No es un comprobante electrónico de SUNAT.
 - **Panel · Historial de ventas:** en `/ventas`, lista paginada del mes actual con número, fecha, vendedor, total y estado (con el motivo si está anulada). Filtro por fechas y, solo para el `ADMIN`, por vendedor; el `EMPLEADO` ve únicamente sus ventas. Desde la lista se abre el comprobante (HU-16).
 - **Panel · Anular una venta:** el `ADMIN` anula una venta vigente desde su comprobante con un motivo obligatorio; queda «Anulada» con su motivo en el comprobante y en el historial, sin perder su número, y la acción desaparece. El `EMPLEADO` no ve la acción (HU-15).
+- **Datos de ejemplo:** `scripts/datos-demo.py` carga un catálogo `DEMO-*`, un proveedor, una empleada de prueba y una compra, registra ventas como `ADMIN` y `EMPLEADO`, anula una y comprueba RN-01, RN-05, RN-06, RN-07 y RF-21 contra la API local.
 
 ## [v0.5-fase5] - 2026-11-11
 
