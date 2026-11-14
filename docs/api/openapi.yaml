@@ -667,16 +667,20 @@ paths:
     get:
       tags: [dashboard]
       operationId: getDashboard
-      summary: Indicadores del panel (RF-22, RF-23, RF-24)
+      summary: Indicadores del panel (RF-22, RF-23, RF-24; solo ADMIN)
+      description: >-
+        Todo el inicio en una respuesta (ADR 0012). Días en hora de Lima, rango inclusivo; sin fechas, los últimos
+        30 días hasta hoy y como máximo 366 días. Las ventas anuladas no cuentan.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
       responses:
         '200':
-          description: Ventas por día, más vendidos y stock crítico
+          description: Resumen y ventas por día del rango
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Dashboard' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
 components:
@@ -1087,9 +1091,21 @@ components:
 
     Dashboard:
       type: object
-      required: [salesByDay, topProducts, criticalStock]
+      required: [from, to, summary, salesByDay]
       properties:
+        from: { type: string, format: date, description: Fecha inicial aplicada }
+        to: { type: string, format: date, description: Fecha final aplicada }
+        summary:
+          type: object
+          required: [total, count, averageTicket]
+          properties:
+            total: { $ref: '#/components/schemas/Decimal2' }
+            count: { type: integer, format: int64 }
+            averageTicket:
+              allOf: [{ $ref: '#/components/schemas/Decimal2' }]
+              description: Total / número de ventas, half-up; 0 sin ventas
         salesByDay:
+          description: Un elemento por día del rango, también los días sin ventas
           type: array
           items:
             type: object
@@ -1099,6 +1115,7 @@ components:
               total: { $ref: '#/components/schemas/Decimal2' }
               count: { type: integer }
         topProducts:
+          description: Se agrega con la HU-17 (#139)
           type: array
           maxItems: 10
           items:
@@ -1109,6 +1126,7 @@ components:
               productName: { type: string }
               quantity: { $ref: '#/components/schemas/Decimal3' }
         criticalStock:
+          description: Se agrega con la HU-17 (#140)
           type: array
           items: { $ref: '#/components/schemas/Product' }
 
