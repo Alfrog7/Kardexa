@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Agregado
 
+- **ADR 0012 · Indicadores y reportes:** el módulo `reporting` lee ventas, stock y catálogo con consultas agregadas de solo lectura; días en hora de Lima, rango máximo de 366 días, ventas anuladas excluidas y CSV con `;`, UTF-8 con BOM y fórmulas neutralizadas, solo para `ADMIN` (#137).
 - **Productos en tarjetas, lista o tabla:** botones para cambiar de vista (se recuerda la elegida) y, en cada producto, botones Ver, Editar, Ajustar stock y Eliminar. «Ver» abre la ficha con los datos, el estado y el acceso al historial.
 - **Imagen de producto:** `PUT`, `GET` y `DELETE /api/v1/products/{id}/image` (PNG, JPG o WebP de hasta 2 MB, tipo comprobado por contenido; tabla `product_image`, migración V13). Se sube desde la ficha y se ve en las tres vistas.
 - **Eliminar un producto:** `DELETE /api/v1/products/{id}` solo si nunca tuvo movimientos, compras ni ventas; si tiene historial responde 409 (RN-03) y el panel ofrece inhabilitarlo.

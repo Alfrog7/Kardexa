@@ -15,6 +15,7 @@ Cada decisión técnica relevante se documenta en un ADR: contexto, alternativas
 | [0009](0009-compras-entre-modulos.md) | Compras que cambian stock y costo en una sola transacción | Aceptado | 2026-11-11 |
 | [0010](0010-ventas-entre-modulos.md) | Ventas que descuentan stock con comprobante correlativo | Aceptado | 2026-11-12 |
 | [0011](0011-sesion-en-sessionstorage.md) | La sesión del panel sobrevive a una recarga | Aceptado | 2026-11-12 |
+| [0012](0012-indicadores-y-reportes.md) | Indicadores y reportes de solo lectura en el módulo `reporting` | Aceptado | 2026-11-14 |
 
 ## Plantilla
 
