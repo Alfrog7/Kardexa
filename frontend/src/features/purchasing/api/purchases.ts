@@ -65,6 +65,11 @@ export async function findProducts(q: string): Promise<ProductOption[]> {
   return page.content
 }
 
+/** Producto para la compra por su id, cuando se llega desde otra pantalla (`?producto=`). */
+export function getProductOption(id: string): Promise<ProductOption> {
+  return apiRequest<ProductOption>(`/products/${encodeURIComponent(id)}`)
+}
+
 /** Anula una compra registrada (HU-13): el motivo es obligatorio, de 3 a 255 caracteres. */
 export function voidPurchase(id: string, reason: string): Promise<Purchase> {
   return apiRequest<Purchase>(`/purchases/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) })

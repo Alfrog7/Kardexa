@@ -24,6 +24,8 @@ interface PurchaseFormProps {
   /** Fecha del negocio de hoy, `AAAA-MM-DD`. */
   today: string
   onSubmit: (request: PurchaseRequest) => Promise<void>
+  /** Producto ya agregado al abrir, por ejemplo desde el stock crítico del inicio. */
+  initialProduct?: ProductOption
 }
 
 function validate(supplierId: string, purchaseDate: string, rows: ItemRow[]): Errors {
@@ -53,11 +55,11 @@ function errorKey(field: string): string {
 }
 
 /** Registro de una compra con varios productos (HU-12), con subtotales y total en vivo. */
-export function PurchaseForm({ suppliers, today, onSubmit }: PurchaseFormProps) {
+export function PurchaseForm({ suppliers, today, onSubmit, initialProduct }: PurchaseFormProps) {
   const [supplierId, setSupplierId] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(today)
   const [document, setDocument] = useState('')
-  const [rows, setRows] = useState<ItemRow[]>([])
+  const [rows, setRows] = useState<ItemRow[]>(() => (initialProduct ? [{ product: initialProduct, quantity: '', unitCost: '' }] : []))
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string>()
   const [saving, setSaving] = useState(false)

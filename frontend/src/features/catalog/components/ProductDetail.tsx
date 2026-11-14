@@ -6,7 +6,8 @@ import { formatMoney, formatQuantity } from '@shared/lib/format'
 import { Icon } from '@shared/ui/Icon'
 import { removeProductImage, uploadProductImage, type Product } from '../api/products'
 import { unitLabel } from './productFormat'
-import { ProductStatus, ProductThumb } from './ProductViews'
+import { ProductThumb } from '@shared/ui/ProductThumb'
+import { ProductStatus } from './ProductViews'
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']

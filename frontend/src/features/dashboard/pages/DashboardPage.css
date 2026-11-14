@@ -282,6 +282,89 @@
   stroke-width: 2;
 }
 
+/* Más vendidos y stock crítico: dos paneles lado a lado que se apilan en pantallas angostas. */
+.home__panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-4);
+}
+
+.home__panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.home__panel h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+}
+
+.home__empty {
+  margin: 0;
+  padding: var(--space-4) 0;
+}
+
+.home__rank {
+  width: 2rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.home__product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.home__product-name,
+.home__product-meta {
+  display: block;
+}
+
+.home__product-meta {
+  font-size: var(--font-size-sm);
+}
+
+.home__critical {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__critical-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.home__critical-item:last-child {
+  border-bottom: 0;
+}
+
+.home__stock {
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home__stock--out {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
 @media (max-width: 40rem) {
   .home__shortcut {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -295,5 +378,14 @@
   .home__shortcut svg {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+
+  .home__critical-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .home__stock {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
