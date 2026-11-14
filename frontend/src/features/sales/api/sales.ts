@@ -1,4 +1,4 @@
-import { apiRequest } from '@shared/api/http'
+import { apiDownload, apiRequest } from '@shared/api/http'
 
 export type SaleStatus = 'REGISTERED' | 'VOIDED'
 
@@ -82,4 +82,11 @@ export async function listSellers(): Promise<Seller[]> {
 /** HU-15: anula una venta registrada (solo `ADMIN`); el motivo es obligatorio, de 3 a 255 caracteres. */
 export function voidSale(id: string, reason: string): Promise<Sale> {
   return apiRequest<Sale>(`/sales/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) })
+}
+
+/** `GET /sales/export`: el historial con los mismos filtros, en CSV (HU-18, solo `ADMIN`). */
+export function exportSales(from: string, to: string, sellerId: string): Promise<void> {
+  const params = new URLSearchParams({ from, to })
+  if (sellerId) params.set('sellerId', sellerId)
+  return apiDownload(`/sales/export?${params}`, `ventas-${from}_${to}.csv`)
 }

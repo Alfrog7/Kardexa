@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import './ExportButton.css'
 
 interface ExportButtonProps {
   /** Descarga el archivo; si falla, el botón muestra el motivo. */
@@ -7,7 +8,7 @@ interface ExportButtonProps {
   disabled?: boolean
 }
 
-/** «Exportar CSV» (HU-18): queda deshabilitado mientras descarga y avisa si algo falla. */
+/** «Exportar CSV» (HU-18): queda deshabilitado mientras descarga y avisa si algo falla. Lo usan Inventario y Ventas. */
 export function ExportButton({ onExport, disabled }: ExportButtonProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()

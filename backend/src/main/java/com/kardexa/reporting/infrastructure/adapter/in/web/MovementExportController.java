@@ -1,23 +1,19 @@
 package com.kardexa.reporting.infrastructure.adapter.in.web;
 
+import static com.kardexa.reporting.infrastructure.adapter.in.web.CsvResponses.DATE_TIME;
+import static com.kardexa.reporting.infrastructure.adapter.in.web.CsvResponses.csv;
+
 import com.kardexa.reporting.application.port.in.ExportMovementsUseCase;
 import com.kardexa.reporting.domain.model.MovementRow;
 import com.kardexa.reporting.domain.model.ReportPeriod;
-import com.kardexa.shared.domain.BusinessCalendar;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,11 +26,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
  */
 @RestController
 class MovementExportController {
-
-    static final MediaType TEXT_CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
-
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-            .withZone(BusinessCalendar.ZONE);
 
     /** Mismos nombres que muestra Inventario. */
     private static final Map<String, String> TYPE_LABELS = Map.of(
@@ -79,14 +70,6 @@ class MovementExportController {
         return csv("movimientos-%s_%s.csv".formatted(period.from(), period.to()), body);
     }
 
-    private static ResponseEntity<StreamingResponseBody> csv(String filename, StreamingResponseBody body) {
-        return ResponseEntity.ok()
-                .contentType(TEXT_CSV)
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build()
-                        .toString())
-                .body(body);
-    }
-
     private static String label(MovementRow row) {
         return TYPE_LABELS.getOrDefault(row.type(), row.type());
     }
@@ -115,12 +98,12 @@ class MovementExportController {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {
-            return validRange(from, to);
+            return CsvResponses.validRange(from, to);
         }
 
         @AssertTrue(message = "El rango puede tener como máximo " + ReportPeriod.MAX_DAYS + " días.")
         public boolean isWithinLimit() {
-            return withinLimit(from, to);
+            return CsvResponses.withinLimit(from, to);
         }
     }
 
@@ -133,21 +116,12 @@ class MovementExportController {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {
-            return validRange(from, to);
+            return CsvResponses.validRange(from, to);
         }
 
         @AssertTrue(message = "El rango puede tener como máximo " + ReportPeriod.MAX_DAYS + " días.")
         public boolean isWithinLimit() {
-            return withinLimit(from, to);
+            return CsvResponses.withinLimit(from, to);
         }
-    }
-
-    private static boolean validRange(LocalDate from, LocalDate to) {
-        return from == null || to == null || !from.isAfter(to);
-    }
-
-    private static boolean withinLimit(LocalDate from, LocalDate to) {
-        return from == null || to == null || from.isAfter(to)
-                || ChronoUnit.DAYS.between(from, to) + 1 <= ReportPeriod.MAX_DAYS;
     }
 }

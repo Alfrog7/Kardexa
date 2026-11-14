@@ -3,9 +3,9 @@ import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
 import { formatDateTime, formatQuantity } from '@shared/lib/format'
 import { ActionButton } from '@shared/ui/ActionButton'
+import { ExportButton } from '@shared/ui/ExportButton'
 import { Icon } from '@shared/ui/Icon'
 import { exportMovements, listMovements, type MovementPage, type MovementType, type ProductOption } from '../api/inventory'
-import { ExportButton } from './ExportButton'
 import { MOVEMENT_LABELS } from './movementLabels'
 
 interface HistoryResult {

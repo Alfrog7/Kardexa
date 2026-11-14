@@ -13,26 +13,16 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import javax.sql.DataSource;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Lee {@code stock_movement} (módulo {@code inventory}) con el producto, el documento de origen ({@code sale},
  * {@code purchase}), el costo de compra ({@code purchase_item}) y el usuario ({@code app_user}): lectura
- * permitida por los ADR 0007 y 0012.
- *
- * <p>PostgreSQL solo entrega las filas por partes dentro de una transacción y con un {@code fetchSize}; así el
- * CSV se escribe mientras se lee, sin cargar todo el resultado en memoria.
+ * permitida por los ADR 0007 y 0012. Las filas se recorren por partes con {@link StreamingQueries}.
  */
 @Component
 class MovementFiguresAdapter implements MovementFigures {
-
-    private static final int FETCH_SIZE = 500;
 
     private static final String SELECT = """
             SELECT m.occurred_at, p.code, p.name, m.type, m.direction, m.quantity, m.balance_after,
@@ -53,20 +43,15 @@ class MovementFiguresAdapter implements MovementFigures {
             WHERE m.occurred_at >= :from AND m.occurred_at < :to
             """;
 
-    private final NamedParameterJdbcTemplate jdbc;
-    private final TransactionTemplate readOnly;
+    private final StreamingQueries queries;
 
-    MovementFiguresAdapter(DataSource dataSource, PlatformTransactionManager transactions) {
-        JdbcTemplate template = new JdbcTemplate(dataSource);
-        template.setFetchSize(FETCH_SIZE);
-        this.jdbc = new NamedParameterJdbcTemplate(template);
-        this.readOnly = new TransactionTemplate(transactions);
-        this.readOnly.setReadOnly(true);
+    MovementFiguresAdapter(StreamingQueries queries) {
+        this.queries = queries;
     }
 
     @Override
     public Optional<String> productCode(UUID productId) {
-        return jdbc.queryForList("SELECT code FROM product WHERE id = :id", new MapSqlParameterSource("id", productId),
+        return queries.jdbc().queryForList("SELECT code FROM product WHERE id = :id", new MapSqlParameterSource("id", productId),
                 String.class).stream().findFirst();
     }
 
@@ -88,9 +73,9 @@ class MovementFiguresAdapter implements MovementFigures {
     }
 
     private void stream(String sql, MapSqlParameterSource params, Consumer<MovementRow> sink) {
-        readOnly.executeWithoutResult(status -> jdbc.query(sql, params, row -> {
+        queries.stream(sql, params, row -> {
             sink.accept(toRow(row));
-        }));
+        });
     }
 
     private static MapSqlParameterSource range(ReportPeriod period) {
