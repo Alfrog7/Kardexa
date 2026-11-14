@@ -32,7 +32,7 @@ describe('SalesChart', () => {
   it('espacia las etiquetas de fecha en rangos largos', () => {
     const { container } = render(<SalesChart days={month()} />)
 
-    expect(container.querySelectorAll('.sales-chart__date')).toHaveLength(8)
+    expect(container.querySelectorAll('.sales-chart__date')).toHaveLength(6)
   })
 
   it('con el teclado hay una sola parada y las flechas, Inicio y Fin recorren los días mostrando el detalle', () => {
@@ -48,7 +48,7 @@ describe('SalesChart', () => {
     expect(document.activeElement).toBe(bars[0])
     fireEvent.keyDown(bars[0] as Element, { key: 'ArrowRight' })
     expect(document.activeElement).toBe(bars[1])
-    expect(detail()).toMatch(/^sábado, 17 de octubre/)
+    expect(detail()).toMatch(/^Díasábado, 17 de octubre/)
     fireEvent.keyDown(bars[1] as Element, { key: 'End' })
     expect(document.activeElement).toBe(bars[29])
   })
@@ -57,14 +57,24 @@ describe('SalesChart', () => {
     render(<SalesChart days={month()} />)
 
     fireEvent.mouseEnter(screen.getAllByRole('img')[16] as Element)
-    expect(detail()).toBe(`domingo, 1 de noviembre: ${text(formatMoney('15.50'))}, 2 ventas`)
+    expect(detail()).toBe(`Díadomingo, 1 de noviembre${text(formatMoney('15.50'))}2 ventas`)
   })
 
-  it('tiene una tabla equivalente para lectores de pantalla', () => {
+  it('sin puntero destaca el mejor día y, sin ventas, lo dice', () => {
+    const { unmount } = render(<SalesChart days={month()} />)
+    expect(detail()).toBe(`Mejor díadomingo, 1 de noviembre${text(formatMoney('15.50'))}2 ventas`)
+    unmount()
+
+    render(<SalesChart days={month().map((day) => ({ ...day, total: '0.00', count: 0 }))} />)
+    expect(detail()).toBe('Sin ventas en este rango')
+  })
+
+  it('tiene una tabla equivalente solo para lectores de pantalla', () => {
     render(<SalesChart days={month()} />)
 
-    const table = screen.getByRole('table', { name: 'Ventas por día', hidden: true })
-    expect(within(table).getAllByRole('row', { hidden: true })).toHaveLength(31)
+    const table = screen.getByRole('table', { name: 'Ventas por día' })
+    expect(table).toHaveClass('visually-hidden')
+    expect(within(table).getAllByRole('row')).toHaveLength(31)
   })
 
   it('redondea el tope del eje a 1, 2, 5 o 10 por potencia de diez', () => {

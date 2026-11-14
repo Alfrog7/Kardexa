@@ -5,14 +5,19 @@ import { niceMax } from '../lib/chart'
 
 /** Medidas del lienzo SVG; el gráfico se escala al ancho disponible. */
 const WIDTH = 640
-const HEIGHT = 240
-const PLOT = { top: 12, right: 8, bottom: 28, left: 64 }
-const TICKS = 4
+const HEIGHT = 260
+const PLOT = { top: 16, right: 12, bottom: 32, left: 52 }
+const TICKS = 3
 /** Como máximo esta cantidad de etiquetas de fecha; en rangos largos se espacian. */
-const MAX_DATE_LABELS = 8
+const MAX_DATE_LABELS = 6
+/** Ancho máximo de una barra, para que en rangos cortos no queden bloques enormes. */
+const MAX_BAR_WIDTH = 28
+/** Alto mínimo de la marca de un día sin ventas, para que se vea que el día existe. */
+const EMPTY_BAR_HEIGHT = 2
 
 const shortDate = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const longDate = new Intl.DateTimeFormat('es-PE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+const axisMoney = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 0 })
 
 /** Las fechas ya son del negocio (`AAAA-MM-DD`): se formatean sin cambiar de zona. */
 function asDate(date: string): Date {
@@ -27,9 +32,17 @@ function describe(day: DaySales): string {
   return `${longDate.format(asDate(day.date))}: ${formatMoney(day.total)}, ${salesLabel(day.count)}`
 }
 
+/** El día con más monto vendido; `undefined` si no hubo ventas en el rango. */
+function bestDay(days: DaySales[]): DaySales | undefined {
+  return days.reduce<DaySales | undefined>(
+    (best, day) => (day.count > 0 && (!best || Number(day.total) > Number(best.total)) ? day : best),
+    undefined,
+  )
+}
+
 /**
  * Ventas por día en barras (HU-17, RF-22), en SVG propio sin librería. Una sola parada de tabulación: las flechas,
- * Inicio y Fin recorren los días. La tabla equivalente se puede abrir debajo.
+ * Inicio y Fin recorren los días. Los lectores de pantalla tienen además una tabla equivalente oculta a la vista.
  */
 export function SalesChart({ days }: { days: DaySales[] }) {
   const [active, setActive] = useState<number>()
@@ -43,10 +56,13 @@ export function SalesChart({ days }: { days: DaySales[] }) {
   const plotWidth = WIDTH - PLOT.left - PLOT.right
   const plotHeight = HEIGHT - PLOT.top - PLOT.bottom
   const slot = plotWidth / days.length
-  const barWidth = Math.max(slot * 0.7, 1)
+  const barWidth = Math.min(Math.max(slot * 0.6, 1), MAX_BAR_WIDTH)
   const labelStep = Math.ceil(days.length / MAX_DATE_LABELS)
-  const y = (value: number) => PLOT.top + plotHeight - (value / max) * plotHeight
+  const baseline = PLOT.top + plotHeight
+  const y = (value: number) => baseline - (value / max) * plotHeight
+  const best = bestDay(days)
   const shown = active === undefined ? undefined : days[active]
+  const highlighted = shown ?? best
   const tabbable = Math.min(focusIndex, days.length - 1)
 
   function move(event: KeyboardEvent<SVGRectElement>, index: number) {
@@ -65,10 +81,19 @@ export function SalesChart({ days }: { days: DaySales[] }) {
 
   return (
     <figure className="sales-chart">
-      <figcaption className="sales-chart__caption">
-        <span>Ventas por día</span>
+      <figcaption className="sales-chart__header">
+        <span className="sales-chart__title">Ventas por día</span>
         <span className="sales-chart__detail" aria-live="polite">
-          {shown ? describe(shown) : 'Pasa el puntero o usa las flechas sobre una barra para ver el detalle.'}
+          {highlighted ? (
+            <>
+              <span className="sales-chart__detail-label">{shown ? 'Día' : 'Mejor día'}</span>
+              <span className="sales-chart__detail-date">{longDate.format(asDate(highlighted.date))}</span>
+              <span className="sales-chart__detail-total">{formatMoney(highlighted.total)}</span>
+              <span className="sales-chart__detail-count">{salesLabel(highlighted.count)}</span>
+            </>
+          ) : (
+            <span className="sales-chart__detail-label">Sin ventas en este rango</span>
+          )}
         </span>
       </figcaption>
       <svg
@@ -82,16 +107,21 @@ export function SalesChart({ days }: { days: DaySales[] }) {
           const value = (max / TICKS) * tick
           return (
             <g key={tick} className="sales-chart__tick" aria-hidden="true">
-              <line x1={PLOT.left} x2={WIDTH - PLOT.right} y1={y(value)} y2={y(value)} />
-              <text x={PLOT.left - 6} y={y(value)} dy="0.32em" textAnchor="end">
-                {formatMoney(value.toFixed(2))}
+              {tick > 0 ? <line x1={PLOT.left} x2={WIDTH - PLOT.right} y1={y(value)} y2={y(value)} /> : null}
+              <text x={PLOT.left - 8} y={y(value)} dy="0.32em" textAnchor="end">
+                {axisMoney.format(value)}
               </text>
             </g>
           )
         })}
         {days.map((day, index) => {
           const x = PLOT.left + slot * index + (slot - barWidth) / 2
-          const top = y(totals[index] ?? 0)
+          const empty = (totals[index] ?? 0) === 0
+          const height = empty ? EMPTY_BAR_HEIGHT : Math.max(baseline - y(totals[index] ?? 0), EMPTY_BAR_HEIGHT)
+          const classes = ['sales-chart__bar']
+          if (empty) classes.push('sales-chart__bar--empty')
+          if (day === best) classes.push('sales-chart__bar--best')
+          if (active === index) classes.push('sales-chart__bar--active')
           return (
             <g key={day.date}>
               {/* Franja transparente de todo el alto: facilita apuntar a los días en 0. */}
@@ -108,11 +138,12 @@ export function SalesChart({ days }: { days: DaySales[] }) {
                 ref={(element) => {
                   bars.current[index] = element
                 }}
-                className={active === index ? 'sales-chart__bar sales-chart__bar--active' : 'sales-chart__bar'}
+                className={classes.join(' ')}
                 x={x}
-                y={top}
+                y={baseline - height}
                 width={barWidth}
-                height={Math.max(PLOT.top + plotHeight - top, 0)}
+                height={height}
+                rx={Math.min(barWidth / 4, 4)}
                 role="img"
                 aria-label={describe(day)}
                 tabIndex={index === tabbable ? 0 : -1}
@@ -132,39 +163,26 @@ export function SalesChart({ days }: { days: DaySales[] }) {
             </g>
           )
         })}
-        <line className="sales-chart__axis" x1={PLOT.left} x2={WIDTH - PLOT.right} y1={y(0)} y2={y(0)} aria-hidden="true" />
+        <line className="sales-chart__axis" x1={PLOT.left} x2={WIDTH - PLOT.right} y1={baseline} y2={baseline} aria-hidden="true" />
       </svg>
-      <details className="sales-chart__table">
-        <summary>Ver como tabla</summary>
-        <div className="data-table-card">
-          <table className="data-table" aria-label="Ventas por día">
-            <thead>
-              <tr>
-                <th scope="col">Fecha</th>
-                <th scope="col" className="data-table__number">
-                  Total
-                </th>
-                <th scope="col" className="data-table__number">
-                  Ventas
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {days.map((day) => (
-                <tr key={day.date}>
-                  <td data-label="Fecha">{longDate.format(asDate(day.date))}</td>
-                  <td data-label="Total" className="data-table__number">
-                    {formatMoney(day.total)}
-                  </td>
-                  <td data-label="Ventas" className="data-table__number">
-                    {day.count}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
+      <table className="visually-hidden" aria-label="Ventas por día">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Total</th>
+            <th scope="col">Ventas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((day) => (
+            <tr key={day.date}>
+              <td>{longDate.format(asDate(day.date))}</td>
+              <td>{formatMoney(day.total)}</td>
+              <td>{day.count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </figure>
   )
 }
