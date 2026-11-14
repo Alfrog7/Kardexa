@@ -6,6 +6,7 @@ import { businessDate, formatDateTime, formatQuantity } from '@shared/lib/format
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import {
+  exportKardex,
   getKardex,
   getProduct,
   registerAdjustment,
@@ -15,6 +16,7 @@ import {
 } from '../api/inventory'
 import { Icon } from '@shared/ui/Icon'
 import { AdjustmentForm } from '../components/AdjustmentForm'
+import { ExportButton } from '../components/ExportButton'
 import { MovementHistory } from '../components/MovementHistory'
 import { MOVEMENT_LABELS } from '../components/movementLabels'
 import { ProductPicker } from '../components/ProductPicker'
@@ -178,6 +180,7 @@ export function InventoryPage() {
             <label htmlFor="kardex-to">Hasta</label>
             <input id="kardex-to" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
+          {canManage ? <ExportButton onExport={() => exportKardex(product.id, from, to)} disabled={invalidRange} /> : null}
         </div>
       ) : null}
 
