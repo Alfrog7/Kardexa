@@ -76,7 +76,7 @@ class SecurityConfig {
                     auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
                     // Exportar a CSV muestra costos y movimientos de todo el negocio: solo ADMIN (ADR 0012).
-                    auth.requestMatchers(API + "/products/*/kardex/export", API + "/stock-movements/export")
+                    auth.requestMatchers(API + "/products/*/kardex/export", API + "/stock-movements/export", API + "/sales/export")
                             .hasRole("ADMIN");
                     // Las imágenes de producto se cargan con una etiqueta img, que no envía el token.
                     auth.requestMatchers(HttpMethod.GET, API + "/products/*/image").permitAll();

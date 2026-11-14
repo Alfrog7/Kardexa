@@ -685,6 +685,38 @@ paths:
         '409': { $ref: '#/components/responses/ConcurrentModification' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
+  /sales/export:
+    get:
+      tags: [dashboard]
+      operationId: exportSales
+      summary: Historial de ventas en CSV (RF-25, solo ADMIN)
+      description: >-
+        Solo ADMIN (ADR 0012). Mismos filtros que `GET /sales` (fechas y vendedor) y, opcional, el estado. Sin
+        fechas, los últimos 30 días; como máximo 366. Mismo formato CSV que el kárdex (UTF-8 con BOM, `;`, CRLF,
+        fórmulas neutralizadas), de la venta más reciente a la más antigua. Columnas: Número, Fecha y hora,
+        Vendedor, Estado (Registrada o Anulada), Productos (cantidad de productos distintos), Total y Motivo de
+        anulación. El detalle por producto queda fuera de este archivo.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - name: sellerId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { type: string, enum: [REGISTERED, VOIDED] }
+      responses:
+        '200':
+          description: Archivo `ventas-<desde>_<hasta>.csv`
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="ventas-2026-11-01_2026-11-30.csv"' }
+          content:
+            text/csv:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
   /sales/{id}:
     parameters:
       - $ref: '#/components/parameters/Id'

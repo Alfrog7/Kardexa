@@ -1,0 +1,7 @@
+/* El botón de exportar se alinea con los campos de fecha y se va al final de la fila. */
+.export-button {
+  display: grid;
+  align-content: end;
+  gap: var(--space-1);
+  margin-left: auto;
+}

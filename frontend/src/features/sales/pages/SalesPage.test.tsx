@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
 import { SessionContext } from '@shared/auth/session'
-import { findProducts, listSales, listSellers, registerSale, voidSale, type Sale } from '../api/sales'
+import { exportSales, findProducts, listSales, listSellers, registerSale, voidSale, type Sale } from '../api/sales'
 import { SalesPage } from './SalesPage'
 
 vi.mock('../api/sales', async (importOriginal) => ({
@@ -12,6 +12,7 @@ vi.mock('../api/sales', async (importOriginal) => ({
   listSales: vi.fn(),
   listSellers: vi.fn(),
   voidSale: vi.fn(),
+  exportSales: vi.fn(),
 }))
 
 const products = [
@@ -219,5 +220,16 @@ describe('SalesPage', () => {
     expect(within(screen.getByRole('dialog')).queryByRole('button', { name: 'Anular venta' })).toBeNull()
     expect(screen.queryByLabelText('Vendedor')).toBeNull()
     expect(listSellers).not.toHaveBeenCalled()
+  })
+
+  it('exporta a CSV el historial con las fechas y el vendedor elegidos', async () => {
+    vi.mocked(exportSales).mockResolvedValue()
+    render(<SalesPage />)
+
+    fireEvent.change(await screen.findByLabelText('Vendedor'), { target: { value: 'u2' } })
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-11-01' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }))
+
+    await waitFor(() => expect(exportSales).toHaveBeenCalledWith('2026-11-01', expect.any(String), 'u2'))
   })
 })

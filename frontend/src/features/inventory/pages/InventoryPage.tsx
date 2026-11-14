@@ -14,9 +14,9 @@ import {
   type ProductOption,
   type StockAdjustmentRequest,
 } from '../api/inventory'
+import { ExportButton } from '@shared/ui/ExportButton'
 import { Icon } from '@shared/ui/Icon'
 import { AdjustmentForm } from '../components/AdjustmentForm'
-import { ExportButton } from '../components/ExportButton'
 import { MovementHistory } from '../components/MovementHistory'
 import { MOVEMENT_LABELS } from '../components/movementLabels'
 import { ProductPicker } from '../components/ProductPicker'
