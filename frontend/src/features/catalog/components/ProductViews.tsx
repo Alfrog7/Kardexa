@@ -1,7 +1,7 @@
 import { routes } from '@app/navigation'
-import { apiResourceUrl } from '@shared/api/http'
 import { formatMoney, formatQuantity } from '@shared/lib/format'
 import { ActionButton, ActionLink, Actions } from '@shared/ui/ActionButton'
+import { ProductThumb } from '@shared/ui/ProductThumb'
 import type { ViewMode } from '@shared/ui/useViewMode'
 import type { Product } from '../api/products'
 import { unitLabel } from './productFormat'
@@ -30,19 +30,6 @@ export function ProductStatus({ product }: { product: Product }) {
     )
   }
   return <span className="status">Stock normal</span>
-}
-
-/** Foto del producto o, sin imagen, la inicial de su nombre. */
-export function ProductThumb({ product, size = 'md' }: { product: Product; size?: 'sm' | 'md' | 'lg' }) {
-  return (
-    <div className={`product-thumb product-thumb--${size}`}>
-      {product.imageUrl ? (
-        <img src={apiResourceUrl(product.imageUrl)} alt="" loading="lazy" />
-      ) : (
-        <span aria-hidden="true">{product.name.trim().charAt(0).toUpperCase()}</span>
-      )}
-    </div>
-  )
 }
 
 /** Ver, editar, ajustar stock y eliminar: las mismas acciones en las tres vistas. */

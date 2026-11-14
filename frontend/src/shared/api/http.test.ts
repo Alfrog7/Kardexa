@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiRequest } from './http'
+import { ApiError, apiDownload, apiRequest, filenameOf } from './http'
 
 function mockFetch(response: Response | Error) {
   const fn = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
@@ -97,5 +97,45 @@ describe('apiRequest', () => {
     mockFetch(new TypeError('Failed to fetch'))
 
     await expect(apiRequest('/products')).rejects.toMatchObject({ status: 0, title: 'Sin conexión' })
+  })
+})
+
+describe('apiDownload', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('descarga el archivo con el nombre de Content-Disposition', async () => {
+    mockFetch(
+      new Response('\uFEFFFecha;Tipo\r\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/csv;charset=UTF-8', 'Content-Disposition': 'attachment; filename="kardex-P-0001.csv"' },
+      }),
+    )
+    const createObjectURL = vi.fn(() => 'blob:csv')
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      expect(this.download).toBe('kardex-P-0001.csv')
+      expect(this.href).toBe('blob:csv')
+    })
+
+    await apiDownload('/products/1/kardex/export', 'respaldo.csv')
+
+    expect(click).toHaveBeenCalledOnce()
+  })
+
+  it('si la API responde con error lanza ApiError y no descarga', async () => {
+    mockFetch(json({ title: 'Prohibido', status: 403, detail: 'Solo el administrador.' }, 403, 'application/problem+json'))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click')
+
+    await expect(apiDownload('/stock-movements/export', 'x.csv')).rejects.toThrow('Solo el administrador.')
+    expect(click).not.toHaveBeenCalled()
+  })
+
+  it('lee el nombre con o sin comillas', () => {
+    expect(filenameOf('attachment; filename="a.csv"')).toBe('a.csv')
+    expect(filenameOf('attachment; filename=b.csv')).toBe('b.csv')
+    expect(filenameOf(null)).toBeUndefined()
   })
 })

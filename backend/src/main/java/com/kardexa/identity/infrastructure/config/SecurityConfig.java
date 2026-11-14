@@ -75,12 +75,17 @@ class SecurityConfig {
                     auth.requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll();
                     auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
+                    // Exportar a CSV muestra costos y movimientos de todo el negocio: solo ADMIN (ADR 0012).
+                    auth.requestMatchers(API + "/products/*/kardex/export", API + "/stock-movements/export", API + "/sales/export")
+                            .hasRole("ADMIN");
                     // Las imágenes de producto se cargan con una etiqueta img, que no envía el token.
                     auth.requestMatchers(HttpMethod.GET, API + "/products/*/image").permitAll();
                     // Solo ADMIN gestiona usuarios (RNF-03).
                     auth.requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN");
                     // Las compras muestran costos: consultarlas también es solo de ADMIN (RN-05, ADR 0009).
                     auth.requestMatchers(API + "/purchases", API + "/purchases/**").hasRole("ADMIN");
+                    // Los indicadores muestran montos de todo el negocio: solo ADMIN (ADR 0012).
+                    auth.requestMatchers(API + "/dashboard", API + "/dashboard/**").hasRole("ADMIN");
                     // RN-05: registrar y consultar ventas es de todos; anularlas, solo del ADMIN (ADR 0010).
                     auth.requestMatchers(HttpMethod.POST, API + "/sales/*/void").hasRole("ADMIN");
                     // RN-05: crear, editar y ajustar el stock es solo de ADMIN; consultar, de cualquiera con sesión.

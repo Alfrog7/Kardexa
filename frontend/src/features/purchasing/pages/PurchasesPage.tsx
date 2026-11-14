@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { businessDate, formatMoney, formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Icon } from '@shared/ui/Icon'
 import { Toast } from '@shared/ui/Toast'
-import { listPurchases, registerPurchase, voidPurchase, type Purchase, type PurchasePage, type PurchaseRequest } from '../api/purchases'
+import {
+  getProductOption,
+  listPurchases,
+  registerPurchase,
+  voidPurchase,
+  type ProductOption,
+  type Purchase,
+  type PurchasePage,
+  type PurchaseRequest,
+} from '../api/purchases'
 import { listSuppliers, type Supplier } from '../api/suppliers'
 import { PurchaseForm } from '../components/PurchaseForm'
 import { VoidPurchaseForm } from '../components/VoidPurchaseForm'
@@ -46,6 +56,9 @@ export function PurchasesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [formLoadError, setFormLoadError] = useState<string>()
   const [notice, setNotice] = useState<string>()
+  const [initialProduct, setInitialProduct] = useState<ProductOption>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const linkedId = searchParams.get('producto')
   const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   const rangeError = range.from && range.to && range.from > range.to ? 'La fecha inicial no puede ser posterior a la final.' : undefined
@@ -74,6 +87,25 @@ export function PurchasesPage() {
     setPage(0)
   }
 
+  // Desde el stock crítico del inicio se llega con ?producto=<id>: se abre el registro con ese producto.
+  useEffect(() => {
+    if (!linkedId) return
+    const request = { active: true }
+    getProductOption(linkedId)
+      .then((product) => {
+        if (!request.active) return
+        setInitialProduct(product)
+        openForm()
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (request.active) setSearchParams({}, { replace: true })
+      })
+    return () => {
+      request.active = false
+    }
+  }, [linkedId, setSearchParams])
+
   function openForm() {
     setFormOpen(true)
     setFormLoadError(undefined)
@@ -85,6 +117,7 @@ export function PurchasesPage() {
   async function handleRegister(request: PurchaseRequest) {
     const created = await registerPurchase(request)
     setFormOpen(false)
+    setInitialProduct(undefined)
     setNotice(`Compra a ${created.supplier.businessName} registrada por ${formatMoney(created.total)}.`)
     setAttempt((value) => value + 1)
   }
@@ -119,7 +152,14 @@ export function PurchasesPage() {
       </header>
 
       {formOpen ? (
-        <Dialog title="Registrar compra" variant="drawer" onClose={() => setFormOpen(false)}>
+        <Dialog
+          title="Registrar compra"
+          variant="drawer"
+          onClose={() => {
+            setFormOpen(false)
+            setInitialProduct(undefined)
+          }}
+        >
           {formLoadError ? (
             <p className="alert" role="alert">
               {formLoadError}
@@ -131,7 +171,7 @@ export function PurchasesPage() {
           ) : suppliers.length === 0 ? (
             <p className="muted">No hay proveedores activos. Registra uno en Proveedores antes de la compra.</p>
           ) : (
-            <PurchaseForm suppliers={suppliers} today={today} onSubmit={handleRegister} />
+            <PurchaseForm suppliers={suppliers} today={today} onSubmit={handleRegister} initialProduct={initialProduct} />
           )}
         </Dialog>
       ) : null}

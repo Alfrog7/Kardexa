@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
 import { formatQuantity } from '@shared/lib/format'
@@ -55,7 +56,9 @@ export function ProductsPage() {
   const [text, setText] = useState('')
   const [q, setQ] = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [criticalOnly, setCriticalOnly] = useState(false)
+  const [searchParams] = useSearchParams()
+  // El inicio enlaza con `?critico=1` para abrir la lista ya filtrada por stock crítico.
+  const [criticalOnly, setCriticalOnly] = useState(() => searchParams.get('critico') === '1')
   const [page, setPage] = useState(0)
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<SearchResult>()

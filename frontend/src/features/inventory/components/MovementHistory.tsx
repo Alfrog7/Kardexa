@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ApiError } from '@shared/api/http'
+import { useCanManage } from '@shared/auth/session'
 import { formatDateTime, formatQuantity } from '@shared/lib/format'
 import { ActionButton } from '@shared/ui/ActionButton'
+import { ExportButton } from '@shared/ui/ExportButton'
 import { Icon } from '@shared/ui/Icon'
-import { listMovements, type MovementPage, type MovementType, type ProductOption } from '../api/inventory'
+import { exportMovements, listMovements, type MovementPage, type MovementType, type ProductOption } from '../api/inventory'
 import { MOVEMENT_LABELS } from './movementLabels'
 
 interface HistoryResult {
@@ -26,6 +28,7 @@ export function MovementHistory({ from: initialFrom, to: initialTo, onOpenProduc
   const [from, setFrom] = useState(initialFrom)
   const [to, setTo] = useState(initialTo)
   const [type, setType] = useState<MovementType | ''>('')
+  const canExport = useCanManage()
   const [page, setPage] = useState(0)
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<HistoryResult>()
@@ -94,6 +97,7 @@ export function MovementHistory({ from: initialFrom, to: initialTo, onOpenProduc
             ))}
           </select>
         </div>
+        {canExport ? <ExportButton onExport={() => exportMovements(from, to, type)} disabled={invalidRange} /> : null}
       </div>
 
       {invalidRange ? (

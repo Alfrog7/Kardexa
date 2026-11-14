@@ -1,0 +1,237 @@
+package com.kardexa.reporting;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.kardexa.TestSecurity;
+import com.kardexa.TestcontainersConfiguration;
+import com.kardexa.identity.application.port.out.TokenIssuer;
+import com.kardexa.identity.domain.model.Role;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.MockMvc;
+
+/** HU-17 · ventas por día, resumen, más vendidos y stock crítico contra PostgreSQL real (ADR 0012). */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import({TestcontainersConfiguration.class, TestSecurity.class})
+@DisplayName("API del inicio: ventas por día (HU-17)")
+class DashboardApiIntegrationTest {
+
+    private static final String URL = "/api/v1/dashboard";
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private TokenIssuer tokens;
+
+    private int number;
+
+    private UUID category;
+
+    @BeforeEach
+    void setUp() {
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
+                + " product_stock, product_image, product, category");
+        TestSecurity.insertAdmin(jdbc);
+        number = 0;
+        category = UUID.randomUUID();
+        jdbc.update("INSERT INTO category (id, name) VALUES (?, 'Abarrotes')", category);
+    }
+
+    @Test
+    @DisplayName("criterio 1: suma por día de Lima, incluye los días sin ventas y no cuenta las anuladas")
+    void salesByDay() throws Exception {
+        // 2026-11-01 10:00 y 23:30 en Lima (UTC-5): la segunda ya es 2 de noviembre en UTC.
+        sale("2026-11-01T15:00:00Z", "10.00", false);
+        sale("2026-11-02T04:30:00Z", "5.50", false);
+        // 2026-11-02 00:10 en Lima.
+        sale("2026-11-02T05:10:00Z", "7.25", false);
+        sale("2026-11-02T06:00:00Z", "100.00", true);
+
+        mvc.perform(get(URL).param("from", "2026-11-01").param("to", "2026-11-03"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-11-01"))
+                .andExpect(jsonPath("$.to").value("2026-11-03"))
+                .andExpect(jsonPath("$.salesByDay.length()").value(3))
+                .andExpect(jsonPath("$.salesByDay[0].date").value("2026-11-01"))
+                .andExpect(jsonPath("$.salesByDay[0].total").value("15.50"))
+                .andExpect(jsonPath("$.salesByDay[0].count").value(2))
+                .andExpect(jsonPath("$.salesByDay[1].total").value("7.25"))
+                .andExpect(jsonPath("$.salesByDay[1].count").value(1))
+                .andExpect(jsonPath("$.salesByDay[2].date").value("2026-11-03"))
+                .andExpect(jsonPath("$.salesByDay[2].total").value("0.00"))
+                .andExpect(jsonPath("$.salesByDay[2].count").value(0))
+                .andExpect(jsonPath("$.summary.total").value("22.75"))
+                .andExpect(jsonPath("$.summary.count").value(3))
+                .andExpect(jsonPath("$.summary.averageTicket").value("7.58"));
+    }
+
+    @Test
+    @DisplayName("más vendidos: por cantidad, desempate por monto y nombre; sin anuladas ni ventas fuera del rango")
+    void topProducts() throws Exception {
+        UUID rice = product("A01", "Arroz");
+        UUID sugar = product("A02", "Azúcar");
+        UUID milk = product("A03", "Leche");
+        UUID noodles = product("A04", "Fideos");
+        UUID cookies = product("A05", "Galletas");
+
+        jdbc.update("INSERT INTO product_image (product_id, content_type, data)"
+                + " VALUES (?, 'image/png', decode('89', 'hex'))", sugar);
+        UUID first = sale("2026-11-01T15:00:00Z", "44.00", false);
+        item(first, 1, rice, "5", "4.00");
+        item(first, 2, sugar, "5", "3.00");
+        item(first, 3, milk, "2", "4.50");
+        item(sale("2026-11-02T03:00:00Z", "45.00", true), 1, milk, "10", "4.50");
+        UUID second = sale("2026-11-02T05:10:00Z", "22.50", false);
+        item(second, 1, milk, "1", "4.50");
+        item(second, 2, cookies, "3", "3.00");
+        item(second, 3, noodles, "3", "3.00");
+        // 2026-11-04 00:30 en Lima: fuera del rango.
+        item(sale("2026-11-04T05:30:00Z", "400.00", false), 1, rice, "100", "4.00");
+
+        mvc.perform(get(URL).param("from", "2026-11-01").param("to", "2026-11-03"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topProducts.length()").value(5))
+                .andExpect(jsonPath("$.topProducts[0].productId").value(rice.toString()))
+                .andExpect(jsonPath("$.topProducts[0].productCode").value("A01"))
+                .andExpect(jsonPath("$.topProducts[0].productName").value("Arroz"))
+                .andExpect(jsonPath("$.topProducts[0].quantity").value("5.000"))
+                .andExpect(jsonPath("$.topProducts[0].amount").value("20.00"))
+                .andExpect(jsonPath("$.topProducts[0].imageUrl").doesNotExist())
+                .andExpect(jsonPath("$.topProducts[1].imageUrl")
+                        .value(org.hamcrest.Matchers.startsWith("/api/v1/products/" + sugar + "/image?v=")))
+                .andExpect(jsonPath("$.topProducts[1].productName").value("Azúcar"))
+                .andExpect(jsonPath("$.topProducts[2].productName").value("Leche"))
+                .andExpect(jsonPath("$.topProducts[2].quantity").value("3.000"))
+                .andExpect(jsonPath("$.topProducts[2].amount").value("13.50"))
+                .andExpect(jsonPath("$.topProducts[3].productName").value("Fideos"))
+                .andExpect(jsonPath("$.topProducts[4].productName").value("Galletas"));
+    }
+
+    @Test
+    @DisplayName("más vendidos: como máximo 10 productos")
+    void topProductsLimit() throws Exception {
+        for (int i = 1; i <= 11; i++) {
+            item(sale("2026-11-01T15:00:00Z", "1.00", false), 1, product("P%02d".formatted(i), "Producto " + i),
+                    String.valueOf(i), "1.00");
+        }
+
+        mvc.perform(get(URL).param("from", "2026-11-01").param("to", "2026-11-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topProducts.length()").value(10))
+                .andExpect(jsonPath("$.topProducts[0].productCode").value("P11"))
+                .andExpect(jsonPath("$.topProducts[9].productCode").value("P02"));
+    }
+
+    @Test
+    @DisplayName("stock crítico: activos con stock <= mínimo, primero los agotados; mínimo 0 y stock 0 cuenta")
+    void criticalStock() throws Exception {
+        stocked("C01", "Sobra", "2", "10", true);
+        stocked("C02", "Inactivo", "5", "0", false);
+        UUID low = stocked("C03", "Bajo", "5", "4", true);
+        stocked("C04", "Justo", "3", "3", true);
+        stocked("C05", "Cero y cero", "0", "0", true);
+        UUID out = product("C06", "Agotado");
+        jdbc.update("UPDATE product SET min_stock = 5 WHERE id = ?", out);
+        jdbc.update("INSERT INTO product_image (product_id, content_type, data)"
+                + " VALUES (?, 'image/png', decode('89', 'hex'))", low);
+
+        mvc.perform(get(URL).param("from", "2020-01-01").param("to", "2020-01-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summary.criticalCount").value(4))
+                .andExpect(jsonPath("$.criticalStock.length()").value(4))
+                .andExpect(jsonPath("$.criticalStock[0].productId").value(out.toString()))
+                .andExpect(jsonPath("$.criticalStock[0].productCode").value("C06"))
+                .andExpect(jsonPath("$.criticalStock[0].categoryName").value("Abarrotes"))
+                .andExpect(jsonPath("$.criticalStock[0].stock").value("0.000"))
+                .andExpect(jsonPath("$.criticalStock[0].minStock").value("5.000"))
+                .andExpect(jsonPath("$.criticalStock[0].imageUrl").doesNotExist())
+                .andExpect(jsonPath("$.criticalStock[1].productName").value("Cero y cero"))
+                .andExpect(jsonPath("$.criticalStock[2].productName").value("Bajo"))
+                .andExpect(jsonPath("$.criticalStock[2].imageUrl")
+                        .value(org.hamcrest.Matchers.startsWith("/api/v1/products/" + low + "/image?v=")))
+                .andExpect(jsonPath("$.criticalStock[3].productName").value("Justo"));
+    }
+
+    @Test
+    @DisplayName("sin fechas devuelve los últimos 30 días")
+    void defaultPeriod() throws Exception {
+        mvc.perform(get(URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.salesByDay.length()").value(30))
+                .andExpect(jsonPath("$.summary.total").value("0.00"))
+                .andExpect(jsonPath("$.summary.averageTicket").value("0.00"))
+                .andExpect(jsonPath("$.topProducts.length()").value(0))
+                .andExpect(jsonPath("$.criticalStock.length()").value(0))
+                .andExpect(jsonPath("$.summary.criticalCount").value(0));
+    }
+
+    @Test
+    @DisplayName("un rango invertido o de más de 366 días responde 400")
+    void rejectsInvalidPeriods() throws Exception {
+        mvc.perform(get(URL).param("from", "2026-11-05").param("to", "2026-11-01"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(URL).param("from", "2025-01-01").param("to", "2026-01-02"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("solo ADMIN: el EMPLEADO recibe 403 y un token inválido 401")
+    void onlyAdmin() throws Exception {
+        mvc.perform(get(URL).header("Authorization", "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE)))
+                .andExpect(status().isForbidden());
+        mvc.perform(get(URL).header("Authorization", "Bearer token-invalido"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private UUID sale(String soldAt, String total, boolean voided) {
+        number++;
+        UUID id = UUID.randomUUID();
+        Timestamp at = Timestamp.from(Instant.parse(soldAt));
+        jdbc.update("""
+                INSERT INTO sale (id, number, status, total, seller_id, sold_at, void_reason, voided_at, voided_by)
+                VALUES (?, ?, ?, ?::numeric, ?, ?, ?, ?, ?)""",
+                id, "V-%06d".formatted(number), voided ? "VOIDED" : "REGISTERED", total,
+                TestSecurity.ADMIN_ID, at, voided ? "Error de digitación" : null, voided ? at : null,
+                voided ? TestSecurity.ADMIN_ID : null);
+        return id;
+    }
+
+    private UUID product(String code, String name) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO product (id, code, name, category_id, unit, sale_price, min_stock)
+                VALUES (?, ?, ?, ?, 'UNIT', 1, 1)""", id, code, name, category);
+        return id;
+    }
+
+    private UUID stocked(String code, String name, String minStock, String stock, boolean active) {
+        UUID id = product(code, name);
+        jdbc.update("UPDATE product SET min_stock = ?::numeric, active = ? WHERE id = ?", minStock, active, id);
+        jdbc.update("INSERT INTO product_stock (product_id, quantity, version) VALUES (?, ?::numeric, 0)", id, stock);
+        return id;
+    }
+
+    private void item(UUID sale, int line, UUID product, String quantity, String price) {
+        jdbc.update("""
+                INSERT INTO sale_item (sale_id, line_no, product_id, product_code, product_name, quantity, unit_price,
+                                       subtotal)
+                SELECT ?, ?, p.id, p.code, p.name, ?::numeric, ?::numeric, ?::numeric * ?::numeric
+                FROM product p WHERE p.id = ?""", sale, line, quantity, price, quantity, price, product);
+    }
+}

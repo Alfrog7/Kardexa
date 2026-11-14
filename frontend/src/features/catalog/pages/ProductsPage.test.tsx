@@ -83,6 +83,16 @@ describe('ProductsPage', () => {
     vi.mocked(searchProducts).mockResolvedValue(pageOf([aceite, gaseosa]))
   })
 
+  it('con ?critico=1 abre la lista filtrada por stock crítico (enlace del inicio)', async () => {
+    render(
+      <MemoryRouter initialEntries={['/productos?critico=1']}>
+        <ProductsPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(searchProducts).toHaveBeenCalledWith(expect.objectContaining({ criticalOnly: true })))
+  })
+
   it('muestra los productos con precio y stock, y distingue el stock crítico con texto', async () => {
     render(<ProductsPage />, { wrapper: MemoryRouter })
 

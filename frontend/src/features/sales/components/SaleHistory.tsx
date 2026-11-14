@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
 import { formatDateTime, formatMoney } from '@shared/lib/format'
+import { ExportButton } from '@shared/ui/ExportButton'
 import { Icon } from '@shared/ui/Icon'
-import { listSales, listSellers, type Sale, type SalePage, type Seller } from '../api/sales'
+import { exportSales, listSales, listSellers, type Sale, type SalePage, type Seller } from '../api/sales'
 
 const STATUS_LABEL = { REGISTERED: 'Registrada', VOIDED: 'Anulada' } as const
 
@@ -106,6 +107,7 @@ export function SaleHistory({ today, version, onOpen }: SaleHistoryProps) {
             </select>
           </div>
         ) : null}
+        {admin ? <ExportButton onExport={() => exportSales(filters.from, filters.to, filters.sellerId)} disabled={Boolean(rangeError)} /> : null}
       </div>
 
       {rangeError ? (

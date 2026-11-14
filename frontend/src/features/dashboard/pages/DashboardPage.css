@@ -83,13 +83,286 @@
   text-wrap: pretty;
 }
 
-.home__soon {
+/* Resumen del negocio (HU-17): rango arriba y cuatro tarjetas. */
+.home__summary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.home__summary-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.home__summary-header h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.range-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.range-picker__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.range-picker__preset[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.range-picker__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.home__period {
+  margin: 0;
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__card {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.home__card-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.home__card-value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.home__card--alert .home__card-value {
+  color: var(--color-danger);
+}
+
+.home__card-link {
+  font-size: var(--font-size-sm);
+}
+
+/* Gráfico de ventas por día: SVG propio, colores del tema (el pulido visual va en la Fase 8). */
+.sales-chart {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.sales-chart__header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  margin: 0;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
+.sales-chart__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+}
+
+/* Detalle del día: etiqueta, fecha, monto y ventas en una franja suave, sin frases largas. */
+.sales-chart__detail {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-height: 2.25rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  font-size: var(--font-size-sm);
+}
+
+.sales-chart__detail-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sales-chart__detail-date::first-letter {
+  text-transform: uppercase;
+}
+
+.sales-chart__detail-total {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-chart__detail-count {
   color: var(--color-text-secondary);
+}
+
+.sales-chart__frame {
+  min-width: 0;
+}
+
+/* Ancho y alto en píxeles reales (medidos): el texto queda a 12 px en cualquier pantalla. */
+.sales-chart__svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  font-size: 12px;
+}
+
+.sales-chart__tick line {
+  stroke: var(--color-border);
+  stroke-dasharray: 3 4;
+}
+
+.sales-chart__tick text,
+.sales-chart__date {
+  fill: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-chart__axis {
+  stroke: var(--color-border);
+}
+
+.sales-chart__hit {
+  fill: transparent;
+}
+
+.sales-chart__bar {
+  fill: var(--color-primary);
+  opacity: 0.55;
+  transition: opacity 120ms var(--ease-out);
+}
+
+.sales-chart__bar--best {
+  opacity: 0.85;
+}
+
+.sales-chart__bar--empty {
+  fill: var(--color-border);
+  opacity: 1;
+}
+
+.sales-chart__bar--active,
+.sales-chart__bar:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.sales-chart__bar:focus-visible {
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+/* Más vendidos y stock crítico: dos paneles lado a lado que se apilan en pantallas angostas. */
+.home__panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-4);
+}
+
+.home__panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.home__panel h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+}
+
+.home__empty {
+  margin: 0;
+  padding: var(--space-4) 0;
+}
+
+.home__rank {
+  width: 2rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.home__product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.home__product-name,
+.home__product-meta {
+  display: block;
+}
+
+.home__product-meta {
+  font-size: var(--font-size-sm);
+}
+
+.home__critical {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__critical-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.home__critical-item:last-child {
+  border-bottom: 0;
+}
+
+.home__stock {
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home__stock--out {
+  color: var(--color-danger);
+  font-weight: 600;
 }
 
 @media (max-width: 40rem) {
@@ -105,5 +378,14 @@
   .home__shortcut svg {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+
+  .home__critical-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .home__stock {
+    grid-column: 1;
+    grid-row: 2;
   }
 }

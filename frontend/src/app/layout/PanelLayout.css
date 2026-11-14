@@ -136,17 +136,27 @@
   background: rgb(255 255 255 / 0.07);
 }
 
-/* Pestaña activa: como la lengüeta de una tarjeta de kárdex, se funde con la página. */
+/* Módulo activo: fondo elevado de la marca y una línea de acento a la izquierda, igual en tema claro y oscuro. */
 .panel__link.active {
-  min-height: 3rem;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  color: var(--color-text);
-  background: var(--color-bg);
+  position: relative;
+  color: var(--color-on-brand);
+  background: var(--color-brand-deep-raised);
   font-weight: 700;
 }
 
+.panel__link.active::before {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-brand-signal);
+}
+
 .panel__link.active .panel__icon {
-  color: var(--color-primary);
+  color: var(--color-brand-signal);
 }
 
 .panel__icon {
@@ -165,8 +175,8 @@
 }
 
 .panel--collapsed .panel__link.active {
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  margin-left: var(--space-3);
+  margin: 0 var(--space-2);
+  border-radius: var(--radius-md);
 }
 
 /* En el riel solo quedan los iconos; el texto sigue disponible para lectores de pantalla. */
@@ -358,7 +368,7 @@
 
   .panel__link.active,
   .panel--collapsed .panel__link.active {
-    margin-left: 0;
+    margin: 0;
     border-radius: var(--radius-md);
   }
 

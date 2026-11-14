@@ -57,6 +57,7 @@
   max-width: 14rem;
 }
 
+
 .inventory__balances {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 14rem));

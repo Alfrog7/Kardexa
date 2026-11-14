@@ -6,7 +6,7 @@
 <p align="center">
   <a href="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alfrog7/Kardexa/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/licencia-MIT-0F766E"></a>
-  <img alt="Estado: fase 6 cerrada" src="https://img.shields.io/badge/estado-fase%206%20%C2%B7%20ventas-0F766E">
+  <img alt="Estado: fase 7 cerrada" src="https://img.shields.io/badge/estado-fase%207%20%C2%B7%20panel%20y%20reportes-0F766E">
   <img alt="Java 21" src="https://img.shields.io/badge/Java-21-0F172A?logo=openjdk&logoColor=white">
   <img alt="Spring Boot 4" src="https://img.shields.io/badge/Spring%20Boot-4-0F172A?logo=springboot&logoColor=6DB33F">
   <img alt="React + TypeScript" src="https://img.shields.io/badge/React-TypeScript-0F172A?logo=react&logoColor=61DAFB">
@@ -78,6 +78,12 @@ Con el backend corriendo y un `ADMIN` creado, `scripts/datos-demo.py` carga prod
 python scripts/datos-demo.py
 ```
 
+Para que el inicio tenga indicadores con sentido, `--repartir` registra además unas 60 ventas (algunas anuladas) y, como la API solo acepta la hora actual, les cambia la fecha a los 29 días anteriores con `psql` dentro del contenedor `kardexa-postgres` (otro con `--contenedor`). Los movimientos del kárdex conservan la fecha real de registro (RN-03). El script también deja productos en stock crítico y comprueba que el total del inicio cuadre con el historial.
+
+```bash
+python scripts/datos-demo.py --repartir
+```
+
 ### Problemas frecuentes
 
 | Síntoma | Causa | Solución |
@@ -99,7 +105,7 @@ Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](fr
 | 4 · Autenticación | Registro, login, roles, JWT | ✅ Completada |
 | 5 · Proveedores y compras | Una compra suma stock | ✅ Completada |
 | 6 · Ventas | Una venta descuenta stock | ✅ Completada |
-| 7 · Panel y reportes | Dashboard con indicadores | ⚪ Pendiente |
+| 7 · Panel y reportes | Dashboard con indicadores | ✅ Completada |
 | 8 · Landing | Página pública del producto | ⚪ Pendiente |
 | 9 · Despliegue | Publicación gratuita | ⚪ Pendiente |
 
