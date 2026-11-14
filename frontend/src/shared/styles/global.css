@@ -460,3 +460,126 @@ a {
     color: var(--color-text-secondary);
   }
 }
+
+/* Botones de vista (tarjetas, lista, tabla). */
+.view-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.view-toggle__button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.view-toggle__button:hover {
+  color: var(--color-primary);
+}
+
+.view-toggle__button--active {
+  color: var(--color-primary-contrast);
+  background: var(--color-primary);
+}
+
+.view-toggle__button--active:hover {
+  color: var(--color-primary-contrast);
+}
+
+/* Acciones de una fila o tarjeta: botones cuadrados con icono y aviso al pasar el mouse. */
+.actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.action-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.action-button:hover:not(:disabled) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.action-button--danger {
+  color: var(--color-danger);
+}
+
+.action-button--danger:hover:not(:disabled) {
+  color: var(--color-primary-contrast);
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Barra de herramientas sobre una lista: vista, búsqueda, filtros y acción principal. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.toolbar__grow {
+  flex: 1 1 14rem;
+}
+
+.page__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.button--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: var(--color-danger);
+  filter: brightness(0.92);
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Lista vacía: explica qué falta y ofrece la acción para empezar. */
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.empty-state p {
+  max-width: 32rem;
+  margin: 0;
+}

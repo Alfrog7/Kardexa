@@ -1,5 +1,14 @@
 package com.kardexa.catalog.infrastructure.adapter.in.web;
 
+import com.kardexa.catalog.application.port.in.DeleteProductUseCase;
+import com.kardexa.catalog.application.port.in.ManageProductImageUseCase;
+import java.io.IOException;
+import java.time.Duration;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import com.kardexa.catalog.application.port.in.CreateProductUseCase;
 import com.kardexa.catalog.application.port.in.GetProductUseCase;
 import com.kardexa.catalog.application.port.in.ProductView;
@@ -46,16 +55,55 @@ class ProductController {
     private final UpdateProductUseCase updateProduct;
     private final GetProductUseCase getProduct;
     private final SearchProductsUseCase searchProducts;
+    private final DeleteProductUseCase deleteProduct;
+    private final ManageProductImageUseCase productImage;
 
     ProductController(
             CreateProductUseCase createProduct,
             UpdateProductUseCase updateProduct,
             GetProductUseCase getProduct,
-            SearchProductsUseCase searchProducts) {
+            SearchProductsUseCase searchProducts,
+            DeleteProductUseCase deleteProduct,
+            ManageProductImageUseCase productImage) {
         this.createProduct = createProduct;
         this.updateProduct = updateProduct;
         this.getProduct = getProduct;
         this.searchProducts = searchProducts;
+        this.deleteProduct = deleteProduct;
+        this.productImage = productImage;
+    }
+
+    /** Elimina un producto sin historial; con movimientos, compras o ventas responde 409 (RN-03). */
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> delete(@PathVariable UUID id) {
+        deleteProduct.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Sube o reemplaza la imagen (PNG, JPG o WebP de hasta 2 MB). */
+    @PutMapping(path = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ProductResponse uploadImage(@PathVariable UUID id, @RequestParam("file") MultipartFile file) throws IOException {
+        return ProductResponse.from(productImage.upload(id, file.getBytes()));
+    }
+
+    @DeleteMapping("/{id}/image")
+    ProductResponse removeImage(@PathVariable UUID id) {
+        return ProductResponse.from(productImage.remove(id));
+    }
+
+    /**
+     * Imagen pública para que una etiqueta img la cargue sin token. La URL lleva la versión en
+     * {@code ?v=}, así que se puede guardar en caché mucho tiempo.
+     */
+    @GetMapping("/{id}/image")
+    ResponseEntity<byte[]> image(@PathVariable UUID id) {
+        return productImage.find(id)
+                .map(image -> ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(image.contentType()))
+                        .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic())
+                        .header("X-Content-Type-Options", "nosniff")
+                        .body(image.data()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /** HU-07 y HU-10 · Búsqueda paginada de productos (activos, salvo que se pidan todos; {@code searchProducts} en el contrato). */
@@ -90,7 +138,7 @@ class ProductController {
 
     /** Esquema {@code ProductRequest}. Montos y cantidades viajan como texto para no perder precisión. */
     record ProductRequest(
-            @NotBlank(message = "El código es obligatorio.")
+            // Opcional al crear: vacío, la API asigna el siguiente de la secuencia P-0001.
             @Size(max = Product.CODE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
             String code,
             @NotBlank(message = "El nombre es obligatorio.")
@@ -164,13 +212,16 @@ class ProductController {
             boolean active,
             String referenceCost,
             String stock,
-            boolean critical) {
+            boolean critical,
+            String imageUrl) {
 
         static ProductResponse from(ProductView view) {
             Product p = view.product();
             return new ProductResponse(p.id(), p.code(), p.name(), p.categoryId(), view.categoryName(), p.unit(),
                     p.salePrice().toString(), p.minStock().toString(), p.isActive(),
-                    p.referenceCost().toString(), view.stock().toString(), view.critical());
+                    p.referenceCost().toString(), view.stock().toString(), view.critical(),
+                    view.imageVersion() == null ? null
+                            : "/api/v1/products/%s/image?v=%d".formatted(p.id(), view.imageVersion().toEpochMilli()));
         }
     }
 }

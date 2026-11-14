@@ -62,7 +62,7 @@ class StockAdjustmentApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product_image, product, category");
         TestSecurity.insertAdmin(jdbc);
         categoryId = idOf(send(post("/api/v1/categories"), "{\"name\": \"Abarrotes\"}"));
         productId = idOf(send(post(PRODUCTS), productJson()));

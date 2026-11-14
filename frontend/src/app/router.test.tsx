@@ -64,7 +64,7 @@ describe('rutas del panel', () => {
     renderAt('/productos')
 
     expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
-    expect(await screen.findByText('No hay productos con estos filtros.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no tienes productos.')).toBeInTheDocument()
     vi.unstubAllGlobals()
   })
 

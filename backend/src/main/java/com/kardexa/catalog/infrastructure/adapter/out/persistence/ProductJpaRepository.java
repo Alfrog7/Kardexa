@@ -1,5 +1,6 @@
 package com.kardexa.catalog.infrastructure.adapter.out.persistence;
 
+import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,15 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
     boolean existsByCodeIgnoreCase(String code);
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, UUID id);
+
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true, value = "DELETE FROM product WHERE id = :id")
+    int deleteNow(@Param("id") UUID id);
+
+    @Query(nativeQuery = true, value = "SELECT COALESCE(MAX(CAST(substring(code FROM 3) AS BIGINT)), 0) "
+            + "FROM product WHERE code ~* '^P-[0-9]{1,15}$'")
+    long maxGeneratedCodeNumber();
 
     /** RN-08: solo el costo, sin tocar los datos que edita el administrador. */
     @Modifying(flushAutomatically = true)

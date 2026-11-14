@@ -27,7 +27,7 @@ describe('SaleReceipt', () => {
     expect(receipt.getByText(/12\/11\/26/)).toBeTruthy()
     expect(receipt.getByText('Ana Pérez')).toBeTruthy()
     const rows = receipt.getAllByRole('row')
-    expect(rows[1]?.textContent).toMatch(/Arroz 5 kg.*ARR-1.*2.*25\.00.*50\.00/)
+    expect(rows[1]?.textContent).toMatch(/Arroz 5 kg.*ARR-1.*25\.00.*2.*50\.00/)
     expect(rows[2]?.textContent).toMatch(/1\.5/)
     expect(rows[3]?.textContent).toMatch(/Total.*64\.85/)
     expect(receipt.queryByText('Anulada')).toBeNull()

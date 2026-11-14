@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { setAccessToken, setUnauthorizedHandler } from '@shared/api/http'
 import { SessionContext, type Session, type SessionUser } from './session'
+import { clearSession, loadSession, saveSession } from './sessionStore'
 
 interface SessionProviderProps {
   children: ReactNode
@@ -9,21 +10,25 @@ interface SessionProviderProps {
 }
 
 export function SessionProvider({ children, initialSession }: SessionProviderProps) {
-  const [user, setUser] = useState<SessionUser | undefined>(initialSession?.user)
+  // Sin sesión de prueba, se restaura la guardada: recargar la página no obliga a ingresar de nuevo.
+  const [restored] = useState(() => initialSession ?? loadSession())
+  const [user, setUser] = useState<SessionUser | undefined>(restored?.user)
   const [expired, setExpired] = useState(false)
 
-  if (initialSession) {
-    setAccessToken(initialSession.token)
+  if (restored) {
+    setAccessToken(restored.token)
   }
 
   const start = useCallback((session: Session) => {
     setAccessToken(session.token)
+    saveSession(session)
     setExpired(false)
     setUser(session.user)
   }, [])
 
   const end = useCallback(() => {
     setAccessToken(undefined)
+    clearSession()
     setUser(undefined)
   }, [])
 
@@ -31,6 +36,7 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
   useEffect(() => {
     setUnauthorizedHandler(() => {
       setAccessToken(undefined)
+      clearSession()
       setUser(undefined)
       setExpired(true)
     })

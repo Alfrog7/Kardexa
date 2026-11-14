@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
-import { formatMoney, formatQuantity } from '@shared/lib/format'
+import { formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
+import { useViewMode } from '@shared/ui/useViewMode'
+import { ViewToggle } from '@shared/ui/ViewToggle'
 import { listCategories, type Category } from '../api/categories'
 import {
   createProduct,
+  deleteProduct,
+  registerInitialStock,
   searchProducts,
   updateProduct,
   type Product,
@@ -14,7 +18,9 @@ import {
   type ProductRequest,
 } from '../api/products'
 import { Icon } from '@shared/ui/Icon'
+import { ProductDetail } from '../components/ProductDetail'
 import { ProductForm } from '../components/ProductForm'
+import { ProductView } from '../components/ProductViews'
 import './ProductsPage.css'
 
 const SEARCH_DELAY_MS = 300
@@ -26,16 +32,22 @@ interface SearchResult {
   error?: string
 }
 
-/** El formulario está cerrado, crea un producto o edita el indicado. */
-type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; product: Product }
+/** Panel lateral cerrado, creando, editando o mostrando la ficha de un producto. */
+type FormMode =
+  | { kind: 'closed' }
+  | { kind: 'create' }
+  | { kind: 'edit'; product: Product }
+  | { kind: 'view'; product: Product }
+
+/** Producto que se quiere eliminar; `error` explica por qué no se pudo (tiene historial). */
+interface Removal {
+  product: Product
+  error?: string
+  busy?: boolean
+}
 
 function messageOf(error: unknown): string {
   return error instanceof ApiError ? error.message : 'Algo salió mal. Inténtalo otra vez.'
-}
-
-function rowClass(product: Product): string | undefined {
-  if (!product.active) return 'products__row--inactive'
-  return product.critical ? 'products__row--critical' : undefined
 }
 
 /** Productos (HU-06, HU-07, HU-10): búsqueda, filtros, marca de stock crítico, alta y edición. */
@@ -52,6 +64,8 @@ export function ProductsPage() {
   const canManage = useCanManage()
   const [form, setForm] = useState<FormMode>({ kind: 'closed' })
   const [notice, setNotice] = useState<string>()
+  const [view, setView] = useViewMode('products', 'table')
+  const [removal, setRemoval] = useState<Removal>()
   const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   const query = useMemo(
@@ -101,39 +115,155 @@ export function ProductsPage() {
   const loading = result?.query !== query
   const found = result?.page
 
-  async function handleSubmit(request: ProductRequest) {
+  async function handleSubmit(request: ProductRequest, initialStock?: string) {
+    let message = `Producto ${request.name} guardado.`
     if (form.kind === 'edit') {
       await updateProduct(form.product.id, request)
     } else {
-      await createProduct(request)
+      const created = await createProduct(request)
+      message = `Producto ${created.name} creado con el código ${created.code}.`
+      if (initialStock) {
+        try {
+          await registerInitialStock(created.id, initialStock)
+          message += ` Stock inicial: ${formatQuantity(initialStock)}.`
+        } catch (error) {
+          message += ` No se registró el stock inicial: ${messageOf(error)} Agrégalo desde Inventario.`
+        }
+      }
     }
-    setNotice(`Producto ${request.name} guardado.`)
+    setNotice(message)
     setAttempt((value) => value + 1)
     setForm({ kind: 'closed' })
   }
 
+  /** Reemplaza un producto en la lista y en el panel abierto, sin volver a buscar. */
+  function replaceProduct(updated: Product) {
+    setResult((current) =>
+      current?.page
+        ? { ...current, page: { ...current.page, content: current.page.content.map((p) => (p.id === updated.id ? updated : p)) } }
+        : current,
+    )
+    setForm((current) => (current.kind === 'view' && current.product.id === updated.id ? { kind: 'view', product: updated } : current))
+  }
+
+  async function confirmRemoval() {
+    if (!removal) return
+    setRemoval({ ...removal, busy: true, error: undefined })
+    try {
+      await deleteProduct(removal.product.id)
+      setRemoval(undefined)
+      setNotice(`Producto ${removal.product.name} eliminado.`)
+      setAttempt((value) => value + 1)
+    } catch (error) {
+      setRemoval({ ...removal, busy: false, error: messageOf(error) })
+    }
+  }
+
+  /** Alternativa cuando el producto tiene historial: inhabilitarlo para que no se venda más. */
+  async function deactivateInstead() {
+    if (!removal) return
+    const { product } = removal
+    setRemoval({ ...removal, busy: true })
+    try {
+      await updateProduct(product.id, {
+        code: product.code,
+        name: product.name,
+        categoryId: product.categoryId,
+        unit: product.unit,
+        salePrice: product.salePrice,
+        minStock: product.minStock,
+        active: false,
+      })
+      setRemoval(undefined)
+      setNotice(`Producto ${product.name} inhabilitado: ya no aparece en las ventas.`)
+      setAttempt((value) => value + 1)
+    } catch (error) {
+      setRemoval({ ...removal, busy: false, error: messageOf(error) })
+    }
+  }
+
+  const handlers = {
+    canManage,
+    onView: (product: Product) => setForm({ kind: 'view', product }),
+    onEdit: (product: Product) => setForm({ kind: 'edit', product }),
+    onDelete: (product: Product) => setRemoval({ product }),
+  }
+
+  const drawerTitle =
+    form.kind === 'edit' ? `Editar ${form.product.name}` : form.kind === 'view' ? form.product.name : 'Nuevo producto'
+
   return (
     <section className="page">
       <header className="page__header page__header--spread">
-        <h1>Productos</h1>
+        <div>
+          <h1>Productos</h1>
+          <p className="page__subtitle">Tu catálogo: precios, stock y estado de cada producto.</p>
+        </div>
         {canManage ? (
-          <button className="button button--icon" type="button" aria-label="Nuevo producto" title="Nuevo producto" onClick={() => setForm({ kind: 'create' })}>
-            <Icon name="plus" />
+          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" size={18} />
+            Nuevo producto
           </button>
         ) : null}
       </header>
 
       {form.kind !== 'closed' ? (
-        <Dialog
-          variant="drawer"
-          title={form.kind === 'edit' ? `Editar ${form.product.name}` : 'Nuevo producto'}
-          onClose={() => setForm({ kind: 'closed' })}
-        >
-          <ProductForm
-            product={form.kind === 'edit' ? form.product : undefined}
-            categories={categories}
-            onSubmit={handleSubmit}
-          />
+        <Dialog variant="drawer" title={drawerTitle} onClose={() => setForm({ kind: 'closed' })}>
+          {form.kind === 'view' ? (
+            <ProductDetail
+              product={form.product}
+              canManage={canManage}
+              onEdit={() => setForm({ kind: 'edit', product: form.product })}
+              onChanged={replaceProduct}
+            />
+          ) : (
+            <ProductForm
+              product={form.kind === 'edit' ? form.product : undefined}
+              categories={categories}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </Dialog>
+      ) : null}
+
+      {removal ? (
+        <Dialog title={`Eliminar ${removal.product.name}`} onClose={() => setRemoval(undefined)}>
+          <div className="form">
+            {removal.error ? (
+              <>
+                <p className="alert" role="alert">
+                  {removal.error}
+                </p>
+                <p>Al inhabilitarlo deja de aparecer en las ventas, pero su historial se conserva y puedes reactivarlo cuando quieras.</p>
+                <div className="dialog__actions">
+                  <button className="button button--secondary" type="button" onClick={() => setRemoval(undefined)}>
+                    Cancelar
+                  </button>
+                  {removal.product.active ? (
+                    <button className="button" type="button" disabled={removal.busy} onClick={() => void deactivateInstead()}>
+                      Inhabilitar producto
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  Se eliminará <strong>{removal.product.name}</strong> ({removal.product.code}) del catálogo. Esta acción no se
+                  puede deshacer.
+                </p>
+                <p className="muted">Solo se puede eliminar un producto que nunca tuvo compras, ventas ni ajustes.</p>
+                <div className="dialog__actions">
+                  <button className="button button--secondary" type="button" onClick={() => setRemoval(undefined)}>
+                    Cancelar
+                  </button>
+                  <button className="button button--danger" type="button" disabled={removal.busy} onClick={() => void confirmRemoval()}>
+                    Eliminar producto
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </Dialog>
       ) : null}
 
@@ -145,8 +275,8 @@ export function ProductsPage() {
         </p>
       ) : null}
 
-      <div className="products__filters" role="search">
-        <div className="field">
+      <div className="toolbar products__filters" role="search">
+        <div className="field toolbar__grow">
           <label htmlFor="products-search">Buscar por nombre o código</label>
           <input
             id="products-search"
@@ -185,6 +315,7 @@ export function ProductsPage() {
           />
           Solo stock crítico
         </label>
+        <ViewToggle value={view} onChange={setView} />
       </div>
 
       {loading ? (
@@ -203,67 +334,22 @@ export function ProductsPage() {
       ) : null}
 
       {found && found.content.length === 0 && !loading ? (
-        <p className="muted">No hay productos con estos filtros.</p>
+        <div className="empty-state card">
+          <p>{q || categoryId || criticalOnly ? 'No hay productos con estos filtros.' : 'Aún no tienes productos.'}</p>
+          {canManage && !q && !categoryId && !criticalOnly ? (
+            <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+              Crear el primer producto
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
+      {found && found.content.length > 0 ? <ProductView mode={view} products={found.content} handlers={handlers} /> : null}
+
       {found && found.content.length > 0 ? (
-        <div className="card data-table-card">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th scope="col">Código</th>
-                <th scope="col">Nombre</th>
-                <th scope="col">Categoría</th>
-                <th scope="col" className="data-table__number">
-                  Precio
-                </th>
-                <th scope="col" className="data-table__number">
-                  Stock
-                </th>
-                <th scope="col">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {found.content.map((product) => (
-                <tr key={product.id} className={rowClass(product)}>
-                  <td data-label="Código">{product.code}</td>
-                  <td data-label="Nombre">
-                    {canManage ? (
-                      <button
-                        className="link-button"
-                        type="button"
-                        onClick={() => setForm({ kind: 'edit', product })}
-                      >
-                        {product.name}
-                      </button>
-                    ) : (
-                      product.name
-                    )}
-                  </td>
-                  <td data-label="Categoría">{product.categoryName}</td>
-                  <td data-label="Precio" className="data-table__number">
-                    {formatMoney(product.salePrice)}
-                  </td>
-                  <td data-label="Stock" className="data-table__number">
-                    {formatQuantity(product.stock)}
-                  </td>
-                  <td data-label="Estado">
-                    {!product.active ? (
-                      <span className="status status--disabled">Inhabilitado</span>
-                    ) : product.critical ? (
-                      <span className="badge">
-                        <span aria-hidden="true">⚠ </span>
-                        Stock crítico
-                      </span>
-                    ) : (
-                      <span className="status">Stock normal</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="muted products__total">
+          {found.totalElements === 1 ? '1 producto' : `${found.totalElements} productos`}
+        </p>
       ) : null}
 
       {found && (found.totalPages > 1 || found.page > 0) ? (

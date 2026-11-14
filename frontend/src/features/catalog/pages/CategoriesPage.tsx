@@ -4,6 +4,7 @@ import { useCanManage } from '@shared/auth/session'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
+import { ActionButton } from '@shared/ui/ActionButton'
 import { Icon } from '@shared/ui/Icon'
 import { CategoryForm } from '../components/CategoryForm'
 import './CategoriesPage.css'
@@ -13,6 +14,10 @@ type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; catego
 
 function sortByName(categories: Category[]): Category[] {
   return [...categories].sort((a, b) => a.name.localeCompare(b.name, 'es'))
+}
+
+function productsLabel(count: number): string {
+  return count === 1 ? '1 producto' : `${count} productos`
 }
 
 function messageOf(error: unknown): string {
@@ -56,10 +61,11 @@ export function CategoriesPage() {
 
   async function handleSubmit(name: string) {
     if (form.kind === 'edit') {
-      replace(await updateCategory(form.category.id, name, form.category.active))
+      const productCount = form.category.productCount
+      replace({ ...(await updateCategory(form.category.id, name, form.category.active)), productCount })
     } else {
       const created = await createCategory(name)
-      setCategories((current) => sortByName([...(current ?? []), created]))
+      setCategories((current) => sortByName([...(current ?? []), { ...created, productCount: 0 }]))
     }
     setForm({ kind: 'closed' })
     setNotice(`Categoría ${name.trim()} guardada.`)
@@ -69,7 +75,7 @@ export function CategoriesPage() {
     setActionError(undefined)
     setTogglingId(category.id)
     try {
-      replace(await updateCategory(category.id, category.name, !category.active))
+      replace({ ...(await updateCategory(category.id, category.name, !category.active)), productCount: category.productCount })
     } catch (error) {
       setActionError(messageOf(error))
     } finally {
@@ -80,10 +86,14 @@ export function CategoriesPage() {
   return (
     <section className="page">
       <header className="page__header page__header--spread">
-        <h1>Categorías</h1>
+        <div>
+          <h1>Categorías</h1>
+          <p className="page__subtitle">Agrupan tus productos para buscarlos y filtrarlos rápido.</p>
+        </div>
         {canManage ? (
-          <button className="button button--icon" type="button" aria-label="Nueva categoría" title="Nueva categoría" onClick={() => setForm({ kind: 'create' })}>
-            <Icon name="plus" />
+          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" size={18} />
+            Nueva categoría
           </button>
         ) : null}
       </header>
@@ -117,36 +127,55 @@ export function CategoriesPage() {
           Cargando categorías…
         </p>
       ) : categories.length === 0 ? (
-        <p className="muted">Aún no tienes categorías. Crea la primera con «Nueva categoría».</p>
+        <div className="category-empty card">
+          <p>Aún no tienes categorías. Agrupan tus productos, por ejemplo «Bebidas» o «Abarrotes».</p>
+          {canManage ? (
+            <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+              Crear la primera categoría
+            </button>
+          ) : null}
+        </div>
       ) : (
-        <ul className="category-list card" aria-label="Categorías">
-          {categories.map((category) => (
-            <li key={category.id} className="category-list__item">
-              {canManage ? (
-                <button
-                  className="link-button category-list__name"
-                  type="button"
-                  onClick={() => setForm({ kind: 'edit', category })}
-                >
-                  {category.name}
-                </button>
-              ) : (
+        <>
+          <dl className="category-summary">
+            <div className="card">
+              <dt>Categorías</dt>
+              <dd>{categories.length}</dd>
+            </div>
+            <div className="card">
+              <dt>Activas</dt>
+              <dd>{categories.filter((category) => category.active).length}</dd>
+            </div>
+            <div className="card">
+              <dt>Productos</dt>
+              <dd>{categories.reduce((sum, category) => sum + (category.productCount ?? 0), 0)}</dd>
+            </div>
+          </dl>
+          <ul className="category-list card" aria-label="Categorías">
+            {categories.map((category) => (
+              <li key={category.id} className="category-list__item">
                 <span className="category-list__name">{category.name}</span>
-              )}
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  aria-label={`${category.name} activa`}
-                  checked={category.active}
-                  disabled={!canManage || togglingId === category.id}
-                  onChange={() => void handleToggle(category)}
-                />
-                <span aria-hidden="true">{category.active ? 'Activa' : 'Desactivada'}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
+                <span className={category.productCount ? 'category-list__count' : 'category-list__count muted'}>
+                  {productsLabel(category.productCount ?? 0)}
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={`${category.name} activa`}
+                    checked={category.active}
+                    disabled={!canManage || togglingId === category.id}
+                    onChange={() => void handleToggle(category)}
+                  />
+                  <span aria-hidden="true">{category.active ? 'Activa' : 'Desactivada'}</span>
+                </label>
+                {canManage ? (
+                  <ActionButton icon="pencil" label={`Editar ${category.name}`} onClick={() => setForm({ kind: 'edit', category })} />
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   )

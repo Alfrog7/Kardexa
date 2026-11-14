@@ -5,6 +5,8 @@ export interface Category {
   id: string
   name: string
   active: boolean
+  /** Solo en el listado: productos (activos e inactivos) de la categoría. */
+  productCount?: number
 }
 
 export function listCategories(): Promise<Category[]> {

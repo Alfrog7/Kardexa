@@ -14,6 +14,7 @@ Cada decisión técnica relevante se documenta en un ADR: contexto, alternativas
 | [0008](0008-autenticacion-con-jwt.md) | Autenticación con JWT propio | Aceptado | 2026-11-09 |
 | [0009](0009-compras-entre-modulos.md) | Compras que cambian stock y costo en una sola transacción | Aceptado | 2026-11-11 |
 | [0010](0010-ventas-entre-modulos.md) | Ventas que descuentan stock con comprobante correlativo | Aceptado | 2026-11-12 |
+| [0011](0011-sesion-en-sessionstorage.md) | La sesión del panel sobrevive a una recarga | Aceptado | 2026-11-12 |
 
 ## Plantilla
 

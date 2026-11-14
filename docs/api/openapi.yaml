@@ -313,6 +313,112 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+    delete:
+      tags: [catalog]
+      operationId: deleteProduct
+      summary: Elimina un producto sin historial (solo ADMIN)
+      description: >-
+        Solo si nunca tuvo movimientos de stock, compras ni ventas. Con historial responde 409 con la regla
+        `RN-03`: en ese caso se inhabilita con `PUT` y `active: false`.
+      responses:
+        '204': { description: Producto eliminado }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /products/{id}/image:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [catalog]
+      operationId: getProductImage
+      summary: Imagen del producto (pública)
+      description: >-
+        No pide token para que una etiqueta img pueda cargarla. Se guarda en caché 30 días: la URL que trae
+        `Product.imageUrl` cambia con cada imagen nueva (`?v=`).
+      security: []
+      responses:
+        '200':
+          description: Imagen
+          content:
+            image/png: {}
+            image/jpeg: {}
+            image/webp: {}
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [catalog]
+      operationId: uploadProductImage
+      summary: Sube o reemplaza la imagen (solo ADMIN)
+      description: PNG, JPG o WebP de hasta 2 MB; el tipo se comprueba con el contenido del archivo.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: Producto con su nueva `imageUrl`
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+    delete:
+      tags: [catalog]
+      operationId: removeProductImage
+      summary: Quita la imagen (solo ADMIN)
+      responses:
+        '200':
+          description: Producto sin imagen
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /stock-movements:
+    get:
+      tags: [inventory]
+      operationId: listStockMovements
+      summary: Historial general de movimientos de stock
+      description: Todos los productos, del más reciente al más antiguo. Fechas en hora de Lima, inclusivas.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - name: type
+          in: query
+          schema: { $ref: '#/components/schemas/MovementType' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de movimientos con su producto
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [content, page, size, totalElements, totalPages]
+                properties:
+                  content:
+                    type: array
+                    items:
+                      type: object
+                      required: [productId, productCode, productName, movement]
+                      properties:
+                        productId: { type: string, format: uuid }
+                        productCode: { type: string }
+                        productName: { type: string }
+                        movement: { $ref: '#/components/schemas/StockMovement' }
+                  page: { type: integer }
+                  size: { type: integer }
+                  totalElements: { type: integer, format: int64 }
+                  totalPages: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /products/{id}/kardex:
     parameters:
@@ -757,6 +863,10 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         active: { type: boolean }
+        productCount:
+          type: integer
+          minimum: 0
+          description: Solo en `GET /categories`; productos activos e inactivos de la categoría.
     CategoryRequest:
       type: object
       required: [name]
@@ -769,9 +879,12 @@ components:
       enum: [UNIT, KG, LITER, BOX]
     ProductRequest:
       type: object
-      required: [code, name, categoryId, unit, salePrice, minStock]
+      required: [name, categoryId, unit, salePrice, minStock]
       properties:
-        code: { type: string, minLength: 1, maxLength: 40 }
+        code:
+          type: string
+          maxLength: 40
+          description: Al crear es opcional; vacío, la API asigna el siguiente libre de la secuencia `P-0001`. Al editar es obligatorio.
         name: { type: string, minLength: 2, maxLength: 120 }
         categoryId: { type: string, format: uuid }
         unit: { $ref: '#/components/schemas/Unit' }
@@ -791,6 +904,9 @@ components:
             critical:
               type: boolean
               description: stock ≤ minStock (RN-09)
+            imageUrl:
+              type: string
+              description: Ruta de la imagen con su versión (`/api/v1/products/{id}/image?v=…`). No llega si no tiene.
     ProductPage:
       allOf:
         - $ref: '#/components/schemas/PageMeta'

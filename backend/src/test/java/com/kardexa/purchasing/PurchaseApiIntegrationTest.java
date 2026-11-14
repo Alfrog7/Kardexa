@@ -62,7 +62,7 @@ class PurchaseApiIntegrationTest {
     @BeforeEach
     void setUp() {
         jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment, product_stock,"
-                + " product, category");
+                + " product_image, product, category");
         TestSecurity.insertAdmin(jdbc);
         UUID category = UUID.randomUUID();
         jdbc.update("INSERT INTO category (id, name) VALUES (?, 'Abarrotes')", category);

@@ -65,7 +65,7 @@ describe('SalesPage', () => {
     await addProduct('Aceite')
     fireEvent.change(screen.getByLabelText('Cantidad de Arroz'), { target: { value: '2' } })
 
-    expect(screen.getByText('Total:').textContent).toMatch(/59\.90/)
+    expect(screen.getByLabelText('Total de la venta')).toHaveTextContent(/59\.90/)
     fireEvent.click(screen.getByRole('button', { name: 'Registrar venta' }))
 
     await waitFor(() =>

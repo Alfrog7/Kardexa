@@ -1,13 +1,27 @@
-.products__filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  align-items: end;
-  gap: var(--space-4);
+.products__filters .check {
+  align-self: center;
+  min-height: 2.5rem;
 }
 
-/* Además de la etiqueta con texto, una franja ámbar marca la fila. */
+/* Además de la etiqueta con texto, una franja ámbar marca el producto en stock crítico. */
 .products__row--critical td:first-child {
   box-shadow: inset 4px 0 0 var(--color-accent);
+}
+
+.products__row--inactive {
+  background: var(--color-surface-soft);
+}
+
+.products__name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.products__total {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  text-align: right;
 }
 
 .products__pagination {
@@ -24,8 +38,203 @@
   gap: var(--space-4);
 }
 
-.products__row--inactive {
+/* Miniatura: la foto o la inicial del producto. */
+.product-thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
   background: var(--color-surface-soft);
+  font-weight: 700;
+}
+
+.product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-thumb--sm {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.875rem;
+}
+
+.product-thumb--md {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.product-thumb--lg {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  font-size: 2.5rem;
+}
+
+/* Vista de tarjetas. */
+.product-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.product-card.products__row--critical {
+  box-shadow: inset 0 4px 0 var(--color-accent), var(--shadow-sm);
+}
+
+.product-card__body {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-1);
+}
+
+.product-card__category {
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.product-card__name {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.product-card__code {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.product-card__figures {
+  display: flex;
+  gap: var(--space-4);
+  margin: var(--space-1) 0;
+}
+
+.product-card__figures dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.product-card__figures dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-card__actions {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Vista de lista. */
+.product-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.product-list__item + .product-list__item {
+  border-top: 1px solid var(--color-border);
+}
+
+.product-list__item.products__row--critical {
+  box-shadow: inset 4px 0 0 var(--color-accent);
+}
+
+.product-list__main {
+  display: grid;
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-list__main .muted,
+.product-list__figures .muted {
+  font-size: var(--font-size-sm);
+}
+
+.product-list__figures {
+  display: grid;
+  justify-items: end;
+  min-width: 7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ficha del producto. */
+.product-detail {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.product-detail__media {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.product-detail__media .product-thumb--lg {
+  max-width: 20rem;
+}
+
+.product-detail__image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.product-detail__image-actions p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.product-detail__data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+.product-detail__data dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.product-detail__data dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.product-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 /* En móvil, la franja pasa de la celda a la ficha completa. */

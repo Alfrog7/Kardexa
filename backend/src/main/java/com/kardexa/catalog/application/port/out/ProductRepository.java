@@ -32,6 +32,15 @@ public interface ProductRepository {
 
     boolean existsByCode(String code);
 
+    /**
+     * Borra el producto si nada lo referencia (kárdex, compras, ventas). Devuelve {@code false} si tiene
+     * historial y no se borró (RN-03).
+     */
+    boolean deleteIfUnused(UUID id);
+
+    /** Mayor número usado con el formato automático {@code P-0001} (sin distinguir mayúsculas), o 0. */
+    long maxGeneratedCodeNumber();
+
     boolean existsByCodeExcluding(String code, UUID excludedId);
 
     /**

@@ -5,6 +5,8 @@ export interface ProductOption {
   id: string
   code: string
   name: string
+  /** Stock actual; el kárdex lo explica movimiento a movimiento. Falta mientras se carga. */
+  stock?: string
 }
 
 export type Direction = 'IN' | 'OUT'
@@ -49,6 +51,10 @@ export async function findProducts(q: string): Promise<ProductOption[]> {
   return page.content
 }
 
+export function getProduct(id: string): Promise<ProductOption> {
+  return apiRequest<ProductOption>(`/products/${id}`)
+}
+
 export function getKardex(productId: string, from: string, to: string): Promise<Kardex> {
   const params = new URLSearchParams()
   if (from) params.set('from', from)
@@ -58,4 +64,31 @@ export function getKardex(productId: string, from: string, to: string): Promise<
 
 export function registerAdjustment(request: StockAdjustmentRequest): Promise<StockMovement> {
   return apiRequest<StockMovement>('/stock-adjustments', { method: 'POST', body: JSON.stringify(request) })
+}
+
+/** Un movimiento del historial general, con su producto. */
+export interface MovementEntry {
+  productId: string
+  productCode: string
+  productName: string
+  movement: StockMovement
+}
+
+export interface MovementPage {
+  content: MovementEntry[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export const HISTORY_PAGE_SIZE = 20
+
+/** `GET /stock-movements`: todos los movimientos, del más reciente al más antiguo. */
+export function listMovements(from: string, to: string, type: MovementType | '', page: number): Promise<MovementPage> {
+  const params = new URLSearchParams({ page: String(page), size: String(HISTORY_PAGE_SIZE) })
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  if (type) params.set('type', type)
+  return apiRequest<MovementPage>(`/stock-movements?${params}`)
 }

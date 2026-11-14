@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -56,6 +58,28 @@ class InMemoryProductRepository implements ProductRepository {
     @Override
     public boolean existsByCode(String code) {
         return rows.values().stream().anyMatch(p -> p.code().equalsIgnoreCase(code));
+    }
+
+    @Override
+    public long maxGeneratedCodeNumber() {
+        return rows.values().stream()
+                .map(Product::code)
+                .filter(code -> code.matches("(?i)P-[0-9]{1,15}"))
+                .mapToLong(code -> Long.parseLong(code.substring(2)))
+                .max()
+                .orElse(0);
+    }
+
+    /** Productos con historial: no se pueden borrar. */
+    final Set<UUID> used = new HashSet<>();
+
+    @Override
+    public boolean deleteIfUnused(UUID id) {
+        if (used.contains(id)) {
+            return false;
+        }
+        rows.remove(id);
+        return true;
     }
 
     @Override

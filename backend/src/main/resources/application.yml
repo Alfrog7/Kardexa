@@ -1,6 +1,11 @@
 spring:
   application:
     name: kardexa
+  servlet:
+    multipart:
+      # Imagen de producto: hasta 2 MB (ProductImage.MAX_BYTES), con margen para el formulario.
+      max-file-size: 2MB
+      max-request-size: 3MB
   config:
     # En local se lee el mismo .env que docker-compose.yml (raíz del repo), si existe.
     # Las variables de entorno siempre tienen prioridad sobre el archivo.

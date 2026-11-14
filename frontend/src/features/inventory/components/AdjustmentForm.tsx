@@ -71,8 +71,8 @@ export function AdjustmentForm({ productId, onSubmit }: AdjustmentFormProps) {
           value={direction}
           onChange={(event) => setDirection(event.target.value as Direction)}
         >
-          <option value="OUT">Salida</option>
-          <option value="IN">Entrada</option>
+          <option value="OUT">Salida (resta stock)</option>
+          <option value="IN">Entrada (suma stock)</option>
         </select>
       </div>
       <div className="field">

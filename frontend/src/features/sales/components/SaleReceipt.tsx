@@ -17,57 +17,69 @@ export function SaleReceipt({ sale, actions }: SaleReceiptProps) {
   const voided = sale.status === 'VOIDED'
 
   return (
-    <article className="sale-receipt" aria-label={`Comprobante ${sale.number}`}>
-      <header className="sale-receipt__header">
-        <p className="sale-receipt__kind">Comprobante interno de venta</p>
-        <p className="sale-receipt__number">{sale.number}</p>
-        {voided ? <p className="sale-receipt__voided">Anulada</p> : null}
-      </header>
+    <div className="sale-receipt-wrap">
+      <article className={voided ? 'sale-receipt sale-receipt--voided' : 'sale-receipt'} aria-label={`Comprobante ${sale.number}`}>
+        <header className="sale-receipt__header">
+          <img className="sale-receipt__logo" src="/logo.svg" alt="Kardexa" width="120" height="32" />
+          <p className="sale-receipt__kind">Comprobante interno de venta</p>
+          <p className="sale-receipt__number">{sale.number}</p>
+          {voided ? <p className="sale-receipt__voided">Anulada</p> : null}
+        </header>
 
-      <dl className="sale-receipt__meta">
-        <dt>Fecha</dt>
-        <dd>{formatDateTime(sale.soldAt)}</dd>
-        <dt>Vendedor</dt>
-        <dd>{sale.seller}</dd>
-        {voided && sale.voidReason ? (
-          <>
-            <dt>Motivo de anulación</dt>
-            <dd>{sale.voidReason}</dd>
-          </>
-        ) : null}
-      </dl>
+        <dl className="sale-receipt__meta">
+          <div>
+            <dt>Fecha</dt>
+            <dd>{formatDateTime(sale.soldAt)}</dd>
+          </div>
+          <div>
+            <dt>Vendedor</dt>
+            <dd>{sale.seller}</dd>
+          </div>
+          {voided && sale.voidReason ? (
+            <div>
+              <dt>Motivo de anulación</dt>
+              <dd>{sale.voidReason}</dd>
+            </div>
+          ) : null}
+        </dl>
 
-      <table className="sale-receipt__items">
-        <thead>
-          <tr>
-            <th scope="col">Producto</th>
-            <th scope="col">Cant.</th>
-            <th scope="col">P. unit.</th>
-            <th scope="col">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sale.items.map((item) => (
-            <tr key={item.productId}>
-              <td>
-                {item.productName}
-                <span className="sale-receipt__code">{item.productCode}</span>
-              </td>
-              <td>{formatQuantity(item.quantity)}</td>
-              <td>{formatMoney(item.unitPrice)}</td>
-              <td>{formatMoney(item.subtotal)}</td>
+        <table className="sale-receipt__items">
+          <thead>
+            <tr>
+              <th scope="col">Descripción</th>
+              <th scope="col">Cant.</th>
+              <th scope="col">Importe</th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" colSpan={3}>
-              Total
-            </th>
-            <td>{formatMoney(sale.total)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {sale.items.map((item) => (
+              <tr key={item.productId}>
+                <td>
+                  <span className="sale-receipt__product">{item.productName}</span>
+                  <span className="sale-receipt__detail">
+                    {item.productCode} · {formatMoney(item.unitPrice)} c/u
+                  </span>
+                </td>
+                <td>{formatQuantity(item.quantity)}</td>
+                <td>{formatMoney(item.subtotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colSpan={2}>
+                Total
+              </th>
+              <td>{formatMoney(sale.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <footer className="sale-receipt__footer">
+          <p>Gracias por su compra.</p>
+          <p>Documento interno: no es un comprobante electrónico de SUNAT.</p>
+        </footer>
+      </article>
 
       <div className="sale-receipt__actions">
         {actions}
@@ -75,6 +87,6 @@ export function SaleReceipt({ sale, actions }: SaleReceiptProps) {
           Imprimir
         </button>
       </div>
-    </article>
+    </div>
   )
 }

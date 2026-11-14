@@ -46,7 +46,7 @@ export class ApiError extends Error {
 let accessToken: string | undefined
 let onUnauthorized: (() => void) | undefined
 
-/** Token de acceso en memoria (ADR 0008): nunca se guarda en localStorage ni en sessionStorage. */
+/** Token de acceso que usan las peticiones. La copia que sobrevive a una recarga la guarda la sesión (ADR 0011). */
 export function setAccessToken(token: string | undefined): void {
   accessToken = token
 }
@@ -58,10 +58,19 @@ export function setUnauthorizedHandler(handler: (() => void) | undefined): void 
 
 export const API_BASE_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1'
 
+/**
+ * URL absoluta de un recurso que la API devuelve como ruta (`/api/v1/...`), por ejemplo una imagen, para
+ * que funcione también cuando el panel y la API están en dominios distintos.
+ */
+export function apiResourceUrl(path: string): string {
+  return `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${path}`
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json, application/problem+json')
-  if (init.body !== undefined && !headers.has('Content-Type')) {
+  // Con FormData (subir archivos) el navegador pone el Content-Type con su separador.
+  if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 

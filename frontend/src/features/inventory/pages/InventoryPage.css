@@ -12,9 +12,38 @@
   list-style: none;
 }
 
-.inventory__selected {
+.inventory__help {
+  max-width: 48rem;
   margin: 0;
+}
+
+.inventory__selected {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-4);
   overflow-wrap: anywhere;
+}
+
+.inventory__product {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+}
+
+.inventory__stock {
+  display: grid;
+  justify-items: end;
+  margin: 0;
+}
+
+.inventory__stock strong {
+  font-size: var(--font-size-xl);
+  font-variant-numeric: tabular-nums;
 }
 
 .inventory__range {
@@ -49,4 +78,67 @@
   font-size: var(--font-size-xl);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.inventory__history {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.inventory__history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.inventory__history-head h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.inventory__code {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* Tipo de movimiento con texto y color: verde si suma, rojo si resta. */
+.movement-type {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.movement-type--in {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.movement-type--out {
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.inventory__in {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.inventory__out {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.inventory__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
 }

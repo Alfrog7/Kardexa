@@ -48,7 +48,7 @@ class CategoryApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product_image, product, category");
     }
 
     @Test
@@ -60,6 +60,24 @@ class CategoryApiIntegrationTest {
                 .andExpect(jsonPath("$.active").value(true));
 
         result.andExpect(header().string("Location", endsWith(URL + "/" + idOf(result))));
+    }
+
+    @Test
+    @DisplayName("el listado indica cuántos productos tiene cada categoría")
+    void listsProductCounts() throws Exception {
+        String drinks = idOf(create("Bebidas"));
+        create("Limpieza");
+        for (String code : new String[] {"B-1", "B-2"}) {
+            mvc.perform(post("/api/v1/products").contentType(MediaType.APPLICATION_JSON).content("""
+                    {"code": "%s", "name": "Gaseosa %s", "categoryId": "%s", "unit": "UNIT", "salePrice": "3.50", "minStock": "1"}
+                    """.formatted(code, code, drinks))).andExpect(status().isCreated());
+        }
+
+        mvc.perform(get(URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Bebidas"))
+                .andExpect(jsonPath("$[0].productCount").value(2))
+                .andExpect(jsonPath("$[1].productCount").value(0));
     }
 
     @Test

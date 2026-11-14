@@ -1,15 +1,20 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
 import { formatMoney } from '@shared/lib/format'
 import { listCategories } from '../api/categories'
-import { createProduct, searchProducts, updateProduct, type Product, type ProductPage } from '../api/products'
+import { createProduct, deleteProduct, registerInitialStock, searchProducts, updateProduct, type Product, type ProductPage } from '../api/products'
 import { ProductsPage } from './ProductsPage'
 
 vi.mock('../api/categories', () => ({ listCategories: vi.fn() }))
 vi.mock('../api/products', () => ({
   searchProducts: vi.fn(),
   createProduct: vi.fn(),
+  deleteProduct: vi.fn(),
+  uploadProductImage: vi.fn(),
+  removeProductImage: vi.fn(),
+  registerInitialStock: vi.fn(),
   updateProduct: vi.fn(),
 }))
 
@@ -79,7 +84,7 @@ describe('ProductsPage', () => {
   })
 
   it('muestra los productos con precio y stock, y distingue el stock crítico con texto', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
 
     const row = (await screen.findByText('Aceite 1 L')).closest('tr') as HTMLElement
     expect(row).toHaveTextContent('ACE-1')
@@ -92,7 +97,7 @@ describe('ProductsPage', () => {
 
   it('mantiene en la lista los inhabilitados, marcados con texto y sin alerta de stock', async () => {
     vi.mocked(searchProducts).mockResolvedValue(pageOf([{ ...aceite, active: false }]))
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
 
     const row = (await screen.findByText('Aceite 1 L')).closest('tr') as HTMLElement
     expect(within(row).getByText('Inhabilitado')).toBeInTheDocument()
@@ -103,10 +108,10 @@ describe('ProductsPage', () => {
   it('reactiva un producto inhabilitado desde su edición', async () => {
     vi.mocked(searchProducts).mockResolvedValue(pageOf([{ ...aceite, active: false }]))
     vi.mocked(updateProduct).mockResolvedValue(aceite)
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Aceite 1 L' }))
     expect(screen.getByText('Seguirá en la lista como inhabilitado.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('switch', { name: /Producto activo/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
@@ -116,7 +121,7 @@ describe('ProductsPage', () => {
   })
 
   it('el filtro de stock crítico deja fuera a los inhabilitados', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByText('Aceite 1 L')
 
     fireEvent.click(screen.getByLabelText('Solo stock crítico'))
@@ -127,7 +132,7 @@ describe('ProductsPage', () => {
   })
 
   it('busca tras una espera corta, sin consultar por cada tecla', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByText('Aceite 1 L')
     vi.mocked(searchProducts).mockClear()
 
@@ -140,7 +145,7 @@ describe('ProductsPage', () => {
   })
 
   it('combina el filtro de categoría con el de stock crítico', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
     fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: 'c1' } })
@@ -154,7 +159,7 @@ describe('ProductsPage', () => {
 
   it('pagina los resultados y vuelve a la primera página al filtrar', async () => {
     vi.mocked(searchProducts).mockImplementation(async ({ page }) => pageOf([aceite], page, 2))
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByText('Página 1 de 2')
 
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
@@ -169,14 +174,15 @@ describe('ProductsPage', () => {
 
   it('avisa cuando ningún producto coincide', async () => {
     vi.mocked(searchProducts).mockResolvedValue(pageOf([], 0, 0))
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
 
-    expect(await screen.findByText('No hay productos con estos filtros.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no tienes productos.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Crear el primer producto' })).toBeInTheDocument()
   })
 
   it('muestra el error de carga y permite reintentar', async () => {
     vi.mocked(searchProducts).mockRejectedValueOnce(new ApiError({ title: 'Sin conexión', status: 0, detail: 'Sin red.' }))
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Sin red.')
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
@@ -185,8 +191,8 @@ describe('ProductsPage', () => {
   })
 
   it('crea un producto, cierra el formulario y actualiza la tabla', async () => {
-    vi.mocked(createProduct).mockResolvedValue(aceite)
-    render(<ProductsPage />)
+    vi.mocked(createProduct).mockResolvedValue({ ...aceite, name: 'Arroz', code: 'ARR-1' })
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
     vi.mocked(searchProducts).mockClear()
 
@@ -194,7 +200,7 @@ describe('ProductsPage', () => {
     fillCreateForm(form)
     fireEvent.click(form.getByRole('button', { name: 'Crear producto' }))
 
-    await screen.findByText('Producto Arroz guardado.')
+    await screen.findByText('Producto Arroz creado con el código ARR-1.')
     expect(createProduct).toHaveBeenCalledWith({
       code: 'ARR-1',
       name: 'Arroz',
@@ -207,8 +213,44 @@ describe('ProductsPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('al crear permite dejar el código vacío para que lo asigne la API', async () => {
+    vi.mocked(createProduct).mockResolvedValue({ ...aceite, name: 'Arroz', code: 'P-0001' })
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+    await screen.findByRole('option', { name: 'Abarrotes' })
+
+    const form = openCreateForm()
+    expect(form.getByLabelText('Nombre')).toHaveFocus()
+    fillCreateForm(form, { ...validValues, Código: '' })
+    fireEvent.click(form.getByRole('button', { name: 'Crear producto' }))
+
+    await screen.findByText('Producto Arroz creado con el código P-0001.')
+    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ code: '' }))
+    expect(registerInitialStock).not.toHaveBeenCalled()
+  })
+
+  it('registra el stock inicial después de crear el producto', async () => {
+    vi.mocked(createProduct).mockResolvedValue({ ...aceite, id: 'new', name: 'Arroz', code: 'P-0002' })
+    vi.mocked(registerInitialStock).mockResolvedValue({})
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+    await screen.findByRole('option', { name: 'Abarrotes' })
+
+    const form = openCreateForm()
+    fillCreateForm(form, { ...validValues, 'Stock inicial': '12' })
+    fireEvent.click(form.getByRole('button', { name: 'Crear producto' }))
+
+    await screen.findByText('Producto Arroz creado con el código P-0002. Stock inicial: 12.')
+    expect(registerInitialStock).toHaveBeenCalledWith('new', '12')
+  })
+
+  it('el administrador ve el enlace para ajustar el stock de cada producto', async () => {
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+
+    const link = await screen.findByRole('link', { name: 'Ajustar stock de Aceite 1 L' })
+    expect(link).toHaveAttribute('href', '/inventario?producto=p1&ajustar=1')
+  })
+
   it('valida como el servidor antes de enviar', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
     const form = openCreateForm()
@@ -225,7 +267,7 @@ describe('ProductsPage', () => {
     vi.mocked(createProduct).mockRejectedValue(
       new ApiError({ title: 'Conflicto', status: 409, rule: 'RN-10', detail: 'Ya existe un producto con el código "ARR-1".' }),
     )
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
     const form = openCreateForm()
@@ -242,7 +284,7 @@ describe('ProductsPage', () => {
     vi.mocked(createProduct).mockRejectedValue(
       new ApiError({ title: 'Regla', status: 422, rule: 'RF-06', detail: 'La categoría "Abarrotes" está desactivada.' }),
     )
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
     const form = openCreateForm()
@@ -254,7 +296,7 @@ describe('ProductsPage', () => {
   })
 
   it('al crear solo ofrece categorías activas', async () => {
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
     const form = openCreateForm()
@@ -265,10 +307,10 @@ describe('ProductsPage', () => {
 
   it('edita un producto y permite desactivarlo', async () => {
     vi.mocked(updateProduct).mockResolvedValue({ ...aceite, active: false })
-    render(<ProductsPage />)
+    render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Aceite 1 L' }))
     expect(screen.getByRole('dialog', { name: 'Editar Aceite 1 L' })).toBeInTheDocument()
     expect(screen.getByLabelText('Código')).toHaveFocus()
     expect(screen.getByLabelText('Precio de venta (S/)')).toHaveValue('12.50')
@@ -282,5 +324,47 @@ describe('ProductsPage', () => {
       'p1',
       expect.objectContaining({ name: 'Aceite 900 ml', unit: 'LITER', active: false }),
     )
+  })
+
+  it('cambia entre tarjetas, lista y tabla, y recuerda la elección', async () => {
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vista de tarjetas' }))
+    expect(screen.getByRole('list', { name: 'Productos' })).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vista de tarjetas' })).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('kardexa.view.products')).toBe('cards')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vista de lista' }))
+    expect(screen.getByRole('button', { name: 'Editar Aceite 1 L' })).toBeInTheDocument()
+  })
+
+  it('abre la ficha del producto con el botón Ver', async () => {
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver Aceite 1 L' }))
+    const drawer = within(screen.getByRole('dialog', { name: 'Aceite 1 L' }))
+    expect(drawer.getByText('Stock actual')).toBeInTheDocument()
+    expect(drawer.getByRole('link', { name: 'Ver historial de stock' })).toHaveAttribute('href', '/inventario?producto=p1')
+    expect(drawer.getByRole('button', { name: 'Agregar imagen' })).toBeInTheDocument()
+  })
+
+  it('si el producto tiene historial ofrece inhabilitarlo en lugar de eliminarlo', async () => {
+    vi.mocked(deleteProduct).mockRejectedValue(
+      new ApiError({ title: 'Producto con historial', status: 409, rule: 'RN-03', detail: 'Ya tiene movimientos.' }),
+    )
+    vi.mocked(updateProduct).mockResolvedValue({ ...aceite, active: false })
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar Aceite 1 L' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Eliminar Aceite 1 L' }))
+    fireEvent.click(dialog.getByRole('button', { name: 'Eliminar producto' }))
+
+    expect(await dialog.findByText('Ya tiene movimientos.')).toBeInTheDocument()
+    fireEvent.click(dialog.getByRole('button', { name: 'Inhabilitar producto' }))
+
+    await screen.findByText(/Producto Aceite 1 L inhabilitado/)
+    expect(updateProduct).toHaveBeenCalledWith('p1', expect.objectContaining({ active: false }))
   })
 })

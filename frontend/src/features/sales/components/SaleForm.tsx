@@ -121,65 +121,95 @@ export function SaleForm({ onSubmit }: SaleFormProps) {
     ) : null
   }
 
+  const units = rows.length === 1 ? '1 producto' : `${rows.length} productos`
+
   return (
-    <form className="form" noValidate onSubmit={handleSubmit}>
-      <ProductSearch excludedIds={rows.map((row) => row.product.id)} onSelect={addProduct} />
-      {errors.items ? (
-        <p className="field__error" role="alert">
-          {errors.items}
+    <form className="sale-form" noValidate onSubmit={handleSubmit}>
+      <div className="sale-form__main">
+        <ProductSearch excludedIds={rows.map((row) => row.product.id)} onSelect={addProduct} />
+        {errors.items ? (
+          <p className="field__error" role="alert">
+            {errors.items}
+          </p>
+        ) : null}
+
+        {rows.length > 0 ? (
+          <table className="sale-form__items" aria-label="Productos de la venta">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Subtotal</th>
+                <th scope="col">
+                  <span className="visually-hidden">Quitar</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => {
+                const subtotal = subtotals[index]
+                return (
+                  <tr key={row.product.id}>
+                    <td data-label="Producto">
+                      <strong className="sale-form__name">{row.product.name}</strong>
+                      <span className="sale-form__meta">
+                        {formatMoney(row.product.salePrice)} c/u · stock {formatQuantity(row.product.stock)}
+                      </span>
+                    </td>
+                    <td data-label="Cantidad">
+                      <input
+                        id={`sale-items-${index}-quantity`}
+                        className="sale-form__quantity"
+                        aria-label={`Cantidad de ${row.product.name}`}
+                        inputMode="decimal"
+                        value={row.quantity}
+                        maxLength={13}
+                        onChange={(event) => updateQuantity(index, event.target.value)}
+                        {...describe(`items.${index}.quantity`)}
+                      />
+                      {errorOf(`items.${index}.quantity`)}
+                    </td>
+                    <td data-label="Subtotal" className="sale-form__amount">
+                      {subtotal == null ? '—' : formatMoney(centsToAmount(subtotal))}
+                    </td>
+                    <td className="sale-form__remove">
+                      <button
+                        className="link-button"
+                        type="button"
+                        aria-label={`Quitar ${row.product.name}`}
+                        title="Quitar"
+                        onClick={() => removeRow(index)}
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p className="sale-form__empty muted">Busca un producto por su nombre o código para empezar la venta.</p>
+        )}
+      </div>
+
+      <aside className="sale-form__summary card" aria-label="Resumen de la venta">
+        <p className="sale-form__count muted">{rows.length === 0 ? 'Sin productos' : units}</p>
+        <p className="sale-form__total">
+          <span>Total</span>
+          <output aria-label="Total de la venta" aria-live="polite">
+            {total === null ? '—' : formatMoney(centsToAmount(total))}
+          </output>
         </p>
-      ) : null}
-
-      {rows.length > 0 ? (
-        <ul className="sale-form__items" aria-label="Productos de la venta">
-          {rows.map((row, index) => {
-            const subtotal = subtotals[index]
-            return (
-              <li key={row.product.id} className="sale-form__item card">
-                <div className="sale-form__item-head">
-                  <strong>{row.product.name}</strong>
-                  <button className="link-button" type="button" onClick={() => removeRow(index)}>
-                    Quitar
-                  </button>
-                </div>
-                <div className="sale-form__item-fields">
-                  <div className="field">
-                    <label htmlFor={`sale-items-${index}-quantity`}>Cantidad de {row.product.name}</label>
-                    <input
-                      id={`sale-items-${index}-quantity`}
-                      inputMode="decimal"
-                      value={row.quantity}
-                      maxLength={13}
-                      onChange={(event) => updateQuantity(index, event.target.value)}
-                      {...describe(`items.${index}.quantity`)}
-                    />
-                    {errorOf(`items.${index}.quantity`)}
-                  </div>
-                  <p className="sale-form__price muted">
-                    {formatMoney(row.product.salePrice)} c/u · stock {formatQuantity(row.product.stock)}
-                  </p>
-                </div>
-                <p className="sale-form__subtotal">
-                  Subtotal: {subtotal == null ? '—' : formatMoney(centsToAmount(subtotal))}
-                </p>
-              </li>
-            )
-          })}
-        </ul>
-      ) : null}
-
-      <p className="sale-form__total" aria-live="polite">
-        Total: <strong>{total === null ? '—' : formatMoney(centsToAmount(total))}</strong>
-      </p>
-
-      {formError ? (
-        <p className="alert" role="alert">
-          {formError}
-        </p>
-      ) : null}
-      <button className="button" type="submit" disabled={saving}>
-        Registrar venta
-      </button>
+        {formError ? (
+          <p className="alert" role="alert">
+            {formError}
+          </p>
+        ) : null}
+        <button className="button sale-form__submit" type="submit" disabled={saving}>
+          Registrar venta
+        </button>
+      </aside>
     </form>
   )
 }
