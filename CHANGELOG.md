@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+## [v0.7-fase7] - 2026-11-14
+
 ### Agregado
 
 - **Datos de ejemplo para el inicio:** `scripts/datos-demo.py --repartir` registra ventas del último mes con algunas anuladas (la fecha se ajusta con `psql` en el contenedor local, porque la API solo acepta la hora actual), deja productos en stock crítico y comprueba que el total de `/dashboard` cuadra con las ventas registradas y que el gráfico, los más vendidos y el stock crítico tienen elementos (#146).
