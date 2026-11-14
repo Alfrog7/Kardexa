@@ -10,25 +10,19 @@ import {
   getProduct,
   registerAdjustment,
   type Kardex,
-  type MovementType,
   type ProductOption,
   type StockAdjustmentRequest,
 } from '../api/inventory'
 import { Icon } from '@shared/ui/Icon'
 import { AdjustmentForm } from '../components/AdjustmentForm'
+import { MovementHistory } from '../components/MovementHistory'
+import { MOVEMENT_LABELS } from '../components/movementLabels'
 import { ProductPicker } from '../components/ProductPicker'
 import './InventoryPage.css'
 
 /** La API del kárdex no pagina: se empieza por un rango acotado. */
 const DEFAULT_RANGE_DAYS = 30
 
-const MOVEMENT_LABELS: Record<MovementType, string> = {
-  PURCHASE: 'Compra',
-  SALE: 'Venta',
-  ADJUSTMENT: 'Ajuste',
-  PURCHASE_VOID: 'Anulación de compra',
-  SALE_VOID: 'Anulación de venta',
-}
 
 interface KardexResult {
   /** Consulta que produjo este resultado: si no es la actual, hay otra en curso. */
@@ -102,6 +96,16 @@ export function InventoryPage() {
   // Al cambiar de producto, o con un rango inválido, no se muestra el kárdex anterior.
   const kardex = !invalidRange && result?.kardex?.productId === productId ? result?.kardex : undefined
 
+  /** Desde el historial: muestra el kárdex y completa el stock actual del producto. */
+  function openProduct(option: ProductOption) {
+    setProduct(option)
+    getProduct(option.id)
+      .then((found) => {
+        if (found) setProduct((current) => (current?.id === option.id ? found : current))
+      })
+      .catch(() => undefined)
+  }
+
   async function handleAdjustment(request: StockAdjustmentRequest) {
     await registerAdjustment(request)
     setAdjusting(false)
@@ -160,6 +164,7 @@ export function InventoryPage() {
         <>
           <ProductPicker onSelect={setProduct} />
           <p className="muted">Elige un producto para ver su kárdex.</p>
+          <MovementHistory from={from} to={to} onOpenProduct={openProduct} />
         </>
       )}
 

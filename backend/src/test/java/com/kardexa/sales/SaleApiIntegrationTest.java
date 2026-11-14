@@ -58,7 +58,7 @@ class SaleApiIntegrationTest {
     @BeforeEach
     void setUp() {
         jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
-                + " product_stock, product, category");
+                + " product_stock, product_image, product, category");
         jdbc.update("UPDATE sale_number_counter SET last_value = 0");
         TestSecurity.insertAdmin(jdbc);
         jdbc.update("""

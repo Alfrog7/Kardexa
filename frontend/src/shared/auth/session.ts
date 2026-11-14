@@ -20,7 +20,7 @@ export interface SessionContextValue {
   user?: SessionUser
   /** La sesión se cerró porque el token venció o dejó de ser válido. */
   expired: boolean
-  /** Abre la sesión. El token vive solo en memoria (ADR 0008): al recargar hay que ingresar de nuevo. */
+  /** Abre la sesión. Se guarda en `sessionStorage` (ADR 0011): una recarga no la cierra; cerrar la pestaña sí. */
   start: (session: Session) => void
   /** Cierra la sesión y descarta el token. */
   end: () => void

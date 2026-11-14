@@ -2,13 +2,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, getKardex, getProduct, registerAdjustment, type Kardex } from '../api/inventory'
+import { findProducts, getKardex, getProduct, listMovements, registerAdjustment, type Kardex } from '../api/inventory'
 import { InventoryPage } from './InventoryPage'
 
 vi.mock('../api/inventory', () => ({
   findProducts: vi.fn(),
   getKardex: vi.fn(),
   getProduct: vi.fn(),
+  listMovements: vi.fn(),
   registerAdjustment: vi.fn(),
 }))
 
@@ -64,6 +65,7 @@ describe('InventoryPage', () => {
     vi.resetAllMocks()
     vi.mocked(findProducts).mockResolvedValue([aceite])
     vi.mocked(getKardex).mockResolvedValue(kardex)
+    vi.mocked(listMovements).mockResolvedValue({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
   })
 
   it('pide elegir un producto y no consulta el kárdex antes', () => {
@@ -201,5 +203,26 @@ describe('InventoryPage', () => {
     expect(await screen.findByRole('dialog', { name: 'Ajustar stock de Aceite 1 L' })).toBeInTheDocument()
     expect(getProduct).toHaveBeenCalledWith('p1')
     expect(screen.getByText('Stock actual').nextElementSibling).toHaveTextContent('13')
+  })
+
+  it('sin producto elegido muestra el historial general y abre el kárdex desde una fila', async () => {
+    vi.mocked(listMovements).mockResolvedValue({
+      content: [{ productId: 'p1', productCode: 'ACE-1', productName: 'Aceite 1 L', movement: kardex.movements[1]! }],
+      page: 0,
+      size: 20,
+      totalElements: 1,
+      totalPages: 1,
+    })
+    vi.mocked(getProduct).mockResolvedValue(aceite)
+    render(<InventoryPage />, { wrapper: MemoryRouter })
+
+    const table = await screen.findByRole('table', { name: 'Historial de movimientos' })
+    expect(table).toHaveTextContent('Aceite 1 L')
+    expect(table).toHaveTextContent('Ajuste')
+    expect(table).toHaveTextContent('−2')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver kárdex de Aceite 1 L' }))
+    expect(await screen.findByText('Saldo final')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Historial de movimientos' })).not.toBeInTheDocument()
   })
 })

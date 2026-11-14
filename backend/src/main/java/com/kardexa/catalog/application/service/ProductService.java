@@ -1,5 +1,13 @@
 package com.kardexa.catalog.application.service;
 
+import com.kardexa.catalog.application.port.in.DeleteProductUseCase;
+import com.kardexa.catalog.application.port.in.ManageProductImageUseCase;
+import com.kardexa.catalog.application.port.out.ProductImageRepository;
+import com.kardexa.catalog.domain.exception.ProductInUseException;
+import com.kardexa.catalog.domain.model.ProductImage;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Optional;
 import com.kardexa.catalog.application.port.in.CreateProductUseCase;
 import com.kardexa.catalog.application.port.in.GetProductSummaryUseCase;
 import com.kardexa.catalog.application.port.in.GetProductUseCase;
@@ -25,16 +33,48 @@ import java.util.stream.Collectors;
 
 /** Casos de uso de HU-06, HU-07 y HU-10. Java puro: se registra como bean en {@code CatalogConfig}. */
 public class ProductService implements CreateProductUseCase, UpdateProductUseCase, GetProductUseCase,
-        SearchProductsUseCase, GetProductSummaryUseCase {
+        SearchProductsUseCase, GetProductSummaryUseCase, DeleteProductUseCase, ManageProductImageUseCase {
 
     private final ProductRepository products;
     private final CategoryRepository categories;
     private final StockLevels stockLevels;
+    private final ProductImageRepository images;
+    private final Clock clock;
 
-    public ProductService(ProductRepository products, CategoryRepository categories, StockLevels stockLevels) {
+    public ProductService(ProductRepository products, CategoryRepository categories, StockLevels stockLevels,
+            ProductImageRepository images, Clock clock) {
         this.products = Objects.requireNonNull(products);
         this.categories = Objects.requireNonNull(categories);
         this.stockLevels = Objects.requireNonNull(stockLevels);
+        this.images = Objects.requireNonNull(images);
+        this.clock = Objects.requireNonNull(clock);
+    }
+
+    @Override
+    public void delete(UUID id) {
+        Product product = products.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+        if (!products.deleteIfUnused(id)) {
+            throw new ProductInUseException(product.name());
+        }
+    }
+
+    @Override
+    public ProductView upload(UUID productId, byte[] data) {
+        Product product = products.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+        images.save(productId, ProductImage.of(data, Instant.now(clock)));
+        return view(product, existingCategory(product.categoryId()));
+    }
+
+    @Override
+    public ProductView remove(UUID productId) {
+        Product product = products.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+        images.delete(productId);
+        return view(product, existingCategory(product.categoryId()));
+    }
+
+    @Override
+    public Optional<ProductImage> find(UUID productId) {
+        return images.find(productId);
     }
 
     /** Formato del código que se asigna cuando el administrador lo deja vacío. */
@@ -100,9 +140,11 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
                         page.content().stream().map(Product::categoryId).collect(Collectors.toSet()))
                 .stream()
                 .collect(Collectors.toMap(Category::id, Category::name));
-        Map<UUID, Quantity> stock = stockLevels.currentStock(page.content().stream().map(Product::id).toList());
-        return page.map(product -> new ProductView(
-                product, categoryNames.get(product.categoryId()), stock.getOrDefault(product.id(), Quantity.ZERO)));
+        List<UUID> ids = page.content().stream().map(Product::id).toList();
+        Map<UUID, Quantity> stock = stockLevels.currentStock(ids);
+        Map<UUID, Instant> imageVersions = images.versions(ids);
+        return page.map(product -> new ProductView(product, categoryNames.get(product.categoryId()),
+                stock.getOrDefault(product.id(), Quantity.ZERO), imageVersions.get(product.id())));
     }
 
     /** El siguiente número libre: se salta los códigos {@code P-NNNN} que alguien escribió a mano. */
@@ -133,6 +175,7 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
     }
 
     private ProductView view(Product product, Category category) {
-        return new ProductView(product, category.name(), stockLevels.currentStock(product.id()));
+        return new ProductView(product, category.name(), stockLevels.currentStock(product.id()),
+                images.versions(List.of(product.id())).get(product.id()));
     }
 }

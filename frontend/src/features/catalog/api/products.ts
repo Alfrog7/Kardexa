@@ -16,6 +16,8 @@ export interface Product {
   referenceCost: string
   stock: string
   critical: boolean
+  /** Ruta de la imagen (`/api/v1/products/{id}/image?v=…`); sin imagen no llega. */
+  imageUrl?: string | null
 }
 
 /** Esquema `ProductPage`. */
@@ -73,4 +75,20 @@ export function registerInitialStock(productId: string, quantity: string): Promi
 
 export function updateProduct(id: string, request: ProductRequest): Promise<Product> {
   return apiRequest<Product>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(request) })
+}
+
+/** Elimina un producto sin historial. Con movimientos, compras o ventas la API responde 409 (RN-03). */
+export function deleteProduct(id: string): Promise<void> {
+  return apiRequest<void>(`/products/${id}`, { method: 'DELETE' })
+}
+
+/** Sube o reemplaza la imagen: PNG, JPG o WebP de hasta 2 MB. */
+export function uploadProductImage(id: string, file: File): Promise<Product> {
+  const body = new FormData()
+  body.append('file', file)
+  return apiRequest<Product>(`/products/${id}/image`, { method: 'PUT', body })
+}
+
+export function removeProductImage(id: string): Promise<Product> {
+  return apiRequest<Product>(`/products/${id}/image`, { method: 'DELETE' })
 }

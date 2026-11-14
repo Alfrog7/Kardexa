@@ -4,13 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
 import { formatMoney } from '@shared/lib/format'
 import { listCategories } from '../api/categories'
-import { createProduct, registerInitialStock, searchProducts, updateProduct, type Product, type ProductPage } from '../api/products'
+import { createProduct, deleteProduct, registerInitialStock, searchProducts, updateProduct, type Product, type ProductPage } from '../api/products'
 import { ProductsPage } from './ProductsPage'
 
 vi.mock('../api/categories', () => ({ listCategories: vi.fn() }))
 vi.mock('../api/products', () => ({
   searchProducts: vi.fn(),
   createProduct: vi.fn(),
+  deleteProduct: vi.fn(),
+  uploadProductImage: vi.fn(),
+  removeProductImage: vi.fn(),
   registerInitialStock: vi.fn(),
   updateProduct: vi.fn(),
 }))
@@ -108,7 +111,7 @@ describe('ProductsPage', () => {
     render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Aceite 1 L' }))
     expect(screen.getByText('Seguirá en la lista como inhabilitado.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('switch', { name: /Producto activo/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
@@ -173,7 +176,8 @@ describe('ProductsPage', () => {
     vi.mocked(searchProducts).mockResolvedValue(pageOf([], 0, 0))
     render(<ProductsPage />, { wrapper: MemoryRouter })
 
-    expect(await screen.findByText('No hay productos con estos filtros.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no tienes productos.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Crear el primer producto' })).toBeInTheDocument()
   })
 
   it('muestra el error de carga y permite reintentar', async () => {
@@ -306,7 +310,7 @@ describe('ProductsPage', () => {
     render(<ProductsPage />, { wrapper: MemoryRouter })
     await screen.findByRole('option', { name: 'Abarrotes' })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Aceite 1 L' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Aceite 1 L' }))
     expect(screen.getByRole('dialog', { name: 'Editar Aceite 1 L' })).toBeInTheDocument()
     expect(screen.getByLabelText('Código')).toHaveFocus()
     expect(screen.getByLabelText('Precio de venta (S/)')).toHaveValue('12.50')
@@ -320,5 +324,47 @@ describe('ProductsPage', () => {
       'p1',
       expect.objectContaining({ name: 'Aceite 900 ml', unit: 'LITER', active: false }),
     )
+  })
+
+  it('cambia entre tarjetas, lista y tabla, y recuerda la elección', async () => {
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vista de tarjetas' }))
+    expect(screen.getByRole('list', { name: 'Productos' })).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vista de tarjetas' })).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('kardexa.view.products')).toBe('cards')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Vista de lista' }))
+    expect(screen.getByRole('button', { name: 'Editar Aceite 1 L' })).toBeInTheDocument()
+  })
+
+  it('abre la ficha del producto con el botón Ver', async () => {
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver Aceite 1 L' }))
+    const drawer = within(screen.getByRole('dialog', { name: 'Aceite 1 L' }))
+    expect(drawer.getByText('Stock actual')).toBeInTheDocument()
+    expect(drawer.getByRole('link', { name: 'Ver historial de stock' })).toHaveAttribute('href', '/inventario?producto=p1')
+    expect(drawer.getByRole('button', { name: 'Agregar imagen' })).toBeInTheDocument()
+  })
+
+  it('si el producto tiene historial ofrece inhabilitarlo en lugar de eliminarlo', async () => {
+    vi.mocked(deleteProduct).mockRejectedValue(
+      new ApiError({ title: 'Producto con historial', status: 409, rule: 'RN-03', detail: 'Ya tiene movimientos.' }),
+    )
+    vi.mocked(updateProduct).mockResolvedValue({ ...aceite, active: false })
+    render(<ProductsPage />, { wrapper: MemoryRouter })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar Aceite 1 L' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Eliminar Aceite 1 L' }))
+    fireEvent.click(dialog.getByRole('button', { name: 'Eliminar producto' }))
+
+    expect(await dialog.findByText('Ya tiene movimientos.')).toBeInTheDocument()
+    fireEvent.click(dialog.getByRole('button', { name: 'Inhabilitar producto' }))
+
+    await screen.findByText(/Producto Aceite 1 L inhabilitado/)
+    expect(updateProduct).toHaveBeenCalledWith('p1', expect.objectContaining({ active: false }))
   })
 })

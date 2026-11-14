@@ -23,7 +23,7 @@ La API es sin estado y la consume un panel web (SPA). Hay que identificar al usu
 2. **JWT de acceso HS256**, emitido por `POST /auth/login`, con `sub` = id del usuario, `role` y `exp`. La clave sale de la variable `JWT_SECRET` (mínimo 32 bytes; no se versiona).
 3. **Expiración:** 60 min por defecto, configurable con `JWT_EXPIRATION_MINUTES`. **Sin *refresh tokens***: al vencer, el usuario vuelve a ingresar.
 4. **Contraseñas con BCrypt** (`BCryptPasswordEncoder`, incluido en Spring Security). Nunca se guardan ni se registran en texto plano.
-5. **Almacenamiento en el panel:** el token vive **en memoria** (estado de la app). Al recargar la página se pide ingresar de nuevo. Se descartan `localStorage`/`sessionStorage` (legibles por cualquier XSS) y la cookie `HttpOnly` (exigiría CSRF y mismo sitio).
+5. **Almacenamiento en el panel:** el token vive **en memoria** (estado de la app). Al recargar la página se pide ingresar de nuevo. Se descartan `localStorage`/`sessionStorage` (legibles por cualquier XSS) y la cookie `HttpOnly` (exigiría CSRF y mismo sitio). **Reemplazado por el [ADR 0011](0011-sesion-en-sessionstorage.md):** la sesión se guarda en `sessionStorage`.
 6. **Endpoints públicos:** `POST /auth/setup`, `POST /auth/login`, Swagger/OpenAPI y `/actuator/health`. Todo lo demás exige `Authorization: Bearer <JWT>`.
 7. **Errores** en Problem Details: `401` sin token, inválido o vencido; `403` con token válido pero rol insuficiente.
 8. El dominio no depende de Spring Security: la emisión del token y el hash son puertos de salida con adaptadores en `infrastructure`.

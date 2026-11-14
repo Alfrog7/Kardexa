@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.endsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -56,7 +60,7 @@ class ProductApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product_image, product, category");
         drinks = createCategory("Bebidas");
     }
 
@@ -147,7 +151,6 @@ class ProductApiIntegrationTest {
                 .andExpect(jsonPath("$.salePrice").value("3.90"))
                 .andExpect(jsonPath("$.active").value(false));
 
-        mvc.perform(delete(URL + "/" + id)).andExpect(status().isMethodNotAllowed());
         mvc.perform(get(URL + "/" + id)).andExpect(jsonPath("$.active").value(false));
     }
 
@@ -348,6 +351,45 @@ class ProductApiIntegrationTest {
 
     private static String product(String code, String name, String categoryId, String minStock) {
         return body(code, categoryId, "3.50", minStock).replace("Gaseosa 500 ml", name);
+    }
+
+    @Test
+    @DisplayName("sube, sirve y quita la imagen; la URL del producto cambia con cada versión")
+    void managesImage() throws Exception {
+        String id = idOf(create(body("AB-001", drinks, "3.50", "5")));
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0};
+
+        String url = JsonPath.read(mvc.perform(multipart(HttpMethod.PUT, URL + "/" + id + "/image")
+                        .file(new MockMultipartFile("file", "foto.png", "image/png", png)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "$.imageUrl");
+        org.assertj.core.api.Assertions.assertThat(url).startsWith(URL + "/" + id + "/image?v=");
+
+        mvc.perform(get(URL + "/" + id + "/image"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "image/png"))
+                .andExpect(content().bytes(png));
+
+        mvc.perform(multipart(HttpMethod.PUT, URL + "/" + id + "/image")
+                        .file(new MockMultipartFile("file", "nota.txt", "image/png", "hola".getBytes())))
+                .andExpect(status().isUnprocessableContent());
+
+        mvc.perform(delete(URL + "/" + id + "/image")).andExpect(jsonPath("$.imageUrl").doesNotExist());
+        mvc.perform(get(URL + "/" + id + "/image")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("elimina un producto sin historial; con stock movido responde 409 RN-03")
+    void deletesOnlyUnused() throws Exception {
+        String unused = idOf(create(body("AB-001", drinks, "3.50", "5")));
+        String used = idOf(create(body("AB-002", drinks, "3.50", "5")));
+        setStock(used, "4");
+
+        mvc.perform(delete(URL + "/" + unused)).andExpect(status().isNoContent());
+        mvc.perform(get(URL + "/" + unused)).andExpect(status().isNotFound());
+        mvc.perform(delete(URL + "/" + used))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.rule").value("RN-03"));
     }
 
     /** Simula el stock que dejará un movimiento de inventario (los ajustes llegan con HU-09). */

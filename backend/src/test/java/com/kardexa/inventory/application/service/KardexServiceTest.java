@@ -43,6 +43,14 @@ class KardexServiceTest {
                     .filter(m -> to == null || m.occurredAt().isBefore(to))
                     .toList();
         }
+
+        @Override
+        public com.kardexa.shared.application.ResultPage<
+                com.kardexa.inventory.application.port.in.ListStockMovementsUseCase.MovementEntry> findAll(
+                Instant from, Instant to, com.kardexa.inventory.domain.model.MovementType type,
+                com.kardexa.shared.application.PageQuery page) {
+            throw new UnsupportedOperationException();
+        }
     }, id -> {
         if (!exists) {
             throw new IllegalStateException("no encontrado");

@@ -31,6 +31,38 @@ const PATHS = {
       <path d="M10.5 12H20M17 8.5l3.5 3.5-3.5 3.5" />
     </>
   ),
+  eye: (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  pencil: <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4" />,
+  trash: <path d="M4.5 7h15M10 11v6M14 11v6M6 7l1 12.5h10L18 7M9.5 7V4.5h5V7" />,
+  grid: (
+    <>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+    </>
+  ),
+  list: <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />,
+  table: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
+    </>
+  ),
+  image: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <circle cx="9" cy="10" r="1.75" />
+      <path d="m20.5 16-5-5-9 8.5" />
+    </>
+  ),
+  history: <path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5M4 4v4.5h4.5M12 8v4l3 2" />,
+  refresh: <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9M19.5 4.5V9H15" />,
 } satisfies Record<string, ReactNode>
 
 export type IconName = keyof typeof PATHS

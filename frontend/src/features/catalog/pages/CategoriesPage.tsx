@@ -4,6 +4,7 @@ import { useCanManage } from '@shared/auth/session'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
+import { ActionButton } from '@shared/ui/ActionButton'
 import { Icon } from '@shared/ui/Icon'
 import { CategoryForm } from '../components/CategoryForm'
 import './CategoriesPage.css'
@@ -85,10 +86,14 @@ export function CategoriesPage() {
   return (
     <section className="page">
       <header className="page__header page__header--spread">
-        <h1>Categorías</h1>
+        <div>
+          <h1>Categorías</h1>
+          <p className="page__subtitle">Agrupan tus productos para buscarlos y filtrarlos rápido.</p>
+        </div>
         {canManage ? (
-          <button className="button button--icon" type="button" aria-label="Nueva categoría" title="Nueva categoría" onClick={() => setForm({ kind: 'create' })}>
-            <Icon name="plus" />
+          <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
+            <Icon name="plus" size={18} />
+            Nueva categoría
           </button>
         ) : null}
       </header>
@@ -149,17 +154,7 @@ export function CategoriesPage() {
           <ul className="category-list card" aria-label="Categorías">
             {categories.map((category) => (
               <li key={category.id} className="category-list__item">
-                {canManage ? (
-                  <button
-                    className="link-button category-list__name"
-                    type="button"
-                    onClick={() => setForm({ kind: 'edit', category })}
-                  >
-                    {category.name}
-                  </button>
-                ) : (
-                  <span className="category-list__name">{category.name}</span>
-                )}
+                <span className="category-list__name">{category.name}</span>
                 <span className={category.productCount ? 'category-list__count' : 'category-list__count muted'}>
                   {productsLabel(category.productCount ?? 0)}
                 </span>
@@ -174,6 +169,9 @@ export function CategoriesPage() {
                   />
                   <span aria-hidden="true">{category.active ? 'Activa' : 'Desactivada'}</span>
                 </label>
+                {canManage ? (
+                  <ActionButton icon="pencil" label={`Editar ${category.name}`} onClick={() => setForm({ kind: 'edit', category })} />
+                ) : null}
               </li>
             ))}
           </ul>

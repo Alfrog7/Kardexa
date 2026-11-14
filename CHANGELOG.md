@@ -6,6 +6,14 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Sin publicar]
 
+### Agregado
+
+- **Productos en tarjetas, lista o tabla:** botones para cambiar de vista (se recuerda la elegida) y, en cada producto, botones Ver, Editar, Ajustar stock y Eliminar. «Ver» abre la ficha con los datos, el estado y el acceso al historial.
+- **Imagen de producto:** `PUT`, `GET` y `DELETE /api/v1/products/{id}/image` (PNG, JPG o WebP de hasta 2 MB, tipo comprobado por contenido; tabla `product_image`, migración V13). Se sube desde la ficha y se ve en las tres vistas.
+- **Eliminar un producto:** `DELETE /api/v1/products/{id}` solo si nunca tuvo movimientos, compras ni ventas; si tiene historial responde 409 (RN-03) y el panel ofrece inhabilitarlo.
+- **Historial general del inventario:** `GET /api/v1/stock-movements` con filtros de fecha y tipo; Inventario lo muestra con producto, tipo, cantidad (+/−), saldo y usuario, y un botón para abrir el kárdex del producto.
+- **La sesión sobrevive a una recarga (ADR 0011):** el token se guarda en `sessionStorage`; F5 o Ctrl+R ya no piden ingresar de nuevo, y cerrar la pestaña sí cierra la sesión.
+
 ### Cambiado
 
 - **Agregar stock más claro:** al crear un producto se puede indicar el stock inicial (entrada por conteo físico); cada producto tiene en la lista el enlace «Ajustar», que abre Inventario con ese producto y el ajuste listo; Inventario muestra el stock actual, explica cómo entra y sale el stock y el botón «Registrar ajuste» ya tiene texto (#123).

@@ -1,5 +1,11 @@
 package com.kardexa.catalog.application.service;
 
+import com.kardexa.catalog.domain.model.ProductImage;
+import com.kardexa.catalog.domain.exception.InvalidProductImageException;
+import com.kardexa.catalog.domain.exception.ProductInUseException;
+import java.time.ZoneOffset;
+import java.time.Instant;
+import java.time.Clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -34,18 +40,19 @@ class ProductServiceTest {
     private final List<Collection<UUID>> stockQueries = new ArrayList<>();
     private InMemoryCategoryRepository categories;
     private ProductService service;
+    private InMemoryProductRepository products;
     private Category drinks;
 
     @BeforeEach
     void setUp() {
         categories = new InMemoryCategoryRepository();
-        service = new ProductService(
-                new InMemoryProductRepository(id -> stock.getOrDefault(id, Quantity.ZERO)), categories, ids -> {
+        products = new InMemoryProductRepository(id -> stock.getOrDefault(id, Quantity.ZERO));
+        service = new ProductService(products, categories, ids -> {
             stockQueries.add(List.copyOf(ids));
             Map<UUID, Quantity> result = new HashMap<>();
             ids.forEach(id -> result.put(id, stock.getOrDefault(id, Quantity.ZERO)));
             return result;
-        });
+        }, new InMemoryProductImageRepository(), Clock.fixed(Instant.parse("2026-11-12T15:00:00Z"), ZoneOffset.UTC));
         drinks = categories.save(Category.create("Bebidas"));
     }
 
@@ -101,6 +108,30 @@ class ProductServiceTest {
         service.create(details("p-0003", drinks.id()));
         assertThat(service.create(details(null, drinks.id())).product().code()).isEqualTo("P-0004");
         assertThat(service.create(details("  ", drinks.id())).product().code()).isEqualTo("P-0005");
+    }
+
+    @Test
+    @DisplayName("elimina un producto sin historial; con historial pide inhabilitarlo (RN-03)")
+    void deletesOnlyUnusedProducts() {
+        UUID unused = service.create(details("AB-001", drinks.id())).product().id();
+        UUID used = service.create(details("AB-002", drinks.id())).product().id();
+        products.used.add(used);
+
+        service.delete(unused);
+        assertThatThrownBy(() -> service.get(unused)).isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(() -> service.delete(used)).isInstanceOf(ProductInUseException.class);
+    }
+
+    @Test
+    @DisplayName("guarda una imagen PNG y rechaza un archivo que no es imagen")
+    void uploadsImage() {
+        UUID id = service.create(details("AB-001", drinks.id())).product().id();
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+
+        assertThat(service.upload(id, png).imageVersion()).isEqualTo(Instant.parse("2026-11-12T15:00:00Z"));
+        assertThat(service.find(id)).get().extracting(ProductImage::contentType).isEqualTo("image/png");
+        assertThatThrownBy(() -> service.upload(id, "hola".getBytes())).isInstanceOf(InvalidProductImageException.class);
+        assertThat(service.remove(id).imageVersion()).isNull();
     }
 
     @Test

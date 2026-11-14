@@ -43,7 +43,7 @@ class KardexApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product, category");
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock, product_image, product, category");
         TestSecurity.insertAdmin(jdbc);
         String categoryId = idOf(postJson("/api/v1/categories", "{\"name\": \"Abarrotes\"}"));
         productId = idOf(postJson("/api/v1/products", """
@@ -173,6 +173,26 @@ class KardexApiIntegrationTest {
 
         mvc.perform(get("/v3/api-docs"))
                 .andExpect(jsonPath(parameters + "[*].name", containsInAnyOrder("id", "from", "to")));
+    }
+
+    @Test
+    @DisplayName("historial general: todos los productos, del más reciente al más antiguo, con filtro de tipo")
+    void listsAllMovements() throws Exception {
+        adjust("IN", "20", "PHYSICAL_COUNT");
+        adjust("OUT", "3", "SHRINKAGE");
+
+        mvc.perform(get("/api/v1/stock-movements"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[0].productCode").value("AR-001"))
+                .andExpect(jsonPath("$.content[0].productName").value("Arroz 5 kg"))
+                .andExpect(jsonPath("$.content[*].movement.direction", contains("OUT", "IN")))
+                .andExpect(jsonPath("$.content[0].movement.user").value("Administrador de pruebas"));
+
+        mvc.perform(get("/api/v1/stock-movements").param("type", "SALE"))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/v1/stock-movements").param("from", "2026-11-10").param("to", "2026-11-01"))
+                .andExpect(status().isBadRequest());
     }
 
     /** Inserta un movimiento en una fecha concreta, algo que la API no permite: siempre usa la hora actual. */

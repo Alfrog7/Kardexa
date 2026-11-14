@@ -113,7 +113,7 @@ describe('CategoriesPage', () => {
     render(<CategoriesPage />)
     await renderedNames()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Abarrotes' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Abarrotes' }))
     expect(screen.getByRole('dialog', { name: 'Editar Abarrotes' })).toBeInTheDocument()
     expect(screen.getByLabelText('Nombre')).toHaveValue('Abarrotes')
     expect(screen.getByLabelText('Nombre')).toHaveFocus()
@@ -130,7 +130,7 @@ describe('CategoriesPage', () => {
     render(<CategoriesPage />)
     await renderedNames()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Abarrotes' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Editar Abarrotes' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

@@ -1,5 +1,10 @@
 package com.kardexa.inventory.infrastructure.adapter.out.persistence;
 
+import com.kardexa.inventory.application.port.in.ListStockMovementsUseCase.MovementEntry;
+import com.kardexa.shared.application.PageQuery;
+import com.kardexa.shared.application.ResultPage;
+import java.util.HashMap;
+import java.util.Map;
 import com.kardexa.inventory.application.port.out.StockMovementQueries;
 import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.MovementType;
@@ -57,6 +62,40 @@ class StockMovementQueriesAdapter implements StockMovementQueries {
             query = query.param("to", Timestamp.from(to));
         }
         return query.query((row, rowNumber) -> toMovement(row)).list();
+    }
+
+    /**
+     * Historial general. Lee {@code product} (módulo {@code catalog}) solo para mostrar el código y el
+     * nombre: lectura permitida por el ADR 0007.
+     */
+    @Override
+    public ResultPage<MovementEntry> findAll(Instant from, Instant to, MovementType type, PageQuery page) {
+        StringBuilder where = new StringBuilder(" WHERE true");
+        Map<String, Object> params = new HashMap<>();
+        if (from != null) {
+            where.append(" AND m.occurred_at >= :from");
+            params.put("from", Timestamp.from(from));
+        }
+        if (to != null) {
+            where.append(" AND m.occurred_at < :to");
+            params.put("to", Timestamp.from(to));
+        }
+        if (type != null) {
+            where.append(" AND m.type = :type");
+            params.put("type", type.name());
+        }
+        long total = jdbc.sql("SELECT count(*) FROM stock_movement m" + where).params(params)
+                .query(Long.class).single();
+        List<MovementEntry> content = jdbc.sql("SELECT m.*, p.code AS product_code, p.name AS product_name"
+                        + " FROM stock_movement m JOIN product p ON p.id = m.product_id" + where
+                        + " ORDER BY m.occurred_at DESC, m.seq DESC LIMIT :limit OFFSET :offset")
+                .params(params)
+                .param("limit", page.size())
+                .param("offset", (long) page.page() * page.size())
+                .query((row, rowNumber) -> new MovementEntry(
+                        toMovement(row), row.getString("product_code"), row.getString("product_name")))
+                .list();
+        return ResultPage.of(content, page, total);
     }
 
     private static StockMovement toMovement(ResultSet row) throws SQLException {

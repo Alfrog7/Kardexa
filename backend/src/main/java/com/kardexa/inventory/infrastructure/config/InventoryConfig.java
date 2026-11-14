@@ -1,5 +1,6 @@
 package com.kardexa.inventory.infrastructure.config;
 
+import com.kardexa.inventory.application.service.StockMovementHistoryService;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase;
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
@@ -30,6 +31,11 @@ class InventoryConfig {
     @Bean
     UserNamesService userNamesService(UserNames userNames) {
         return new UserNamesService(userNames);
+    }
+
+    @Bean
+    StockMovementHistoryService stockMovementHistoryService(StockMovementQueries movements) {
+        return new StockMovementHistoryService(movements);
     }
 
     @Bean

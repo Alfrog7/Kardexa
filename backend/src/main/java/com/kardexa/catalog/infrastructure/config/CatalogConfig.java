@@ -1,5 +1,7 @@
 package com.kardexa.catalog.infrastructure.config;
 
+import com.kardexa.catalog.application.port.out.ProductImageRepository;
+import java.time.Clock;
 import com.kardexa.catalog.application.port.in.FindProductsForSaleUseCase;
 import com.kardexa.catalog.application.port.in.UpdateReferenceCostUseCase;
 import com.kardexa.catalog.application.port.out.CategoryRepository;
@@ -27,8 +29,10 @@ class CatalogConfig {
 
     @Bean
     ProductService productService(
-            ProductRepository productRepository, CategoryRepository categoryRepository, StockLevels stockLevels) {
-        return new ProductService(productRepository, categoryRepository, stockLevels);
+            ProductRepository productRepository, CategoryRepository categoryRepository, StockLevels stockLevels,
+            ProductImageRepository productImageRepository) {
+        return new ProductService(productRepository, categoryRepository, stockLevels, productImageRepository,
+                Clock.systemUTC());
     }
 
     /** Solo se llama dentro de la transacción de una compra (ADR 0009). */

@@ -81,6 +81,17 @@ class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
+    public boolean deleteIfUnused(UUID id) {
+        try {
+            jpa.deleteNow(id);
+            return true;
+        } catch (DataIntegrityViolationException ex) {
+            // Una clave foránea (kárdex, compras o ventas) lo impide: el producto tiene historial.
+            return false;
+        }
+    }
+
+    @Override
     public long maxGeneratedCodeNumber() {
         return jpa.maxGeneratedCodeNumber();
     }
