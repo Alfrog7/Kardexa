@@ -90,6 +90,8 @@ class DashboardApiIntegrationTest {
         UUID noodles = product("A04", "Fideos");
         UUID cookies = product("A05", "Galletas");
 
+        jdbc.update("INSERT INTO product_image (product_id, content_type, data)"
+                + " VALUES (?, 'image/png', decode('89', 'hex'))", sugar);
         UUID first = sale("2026-11-01T15:00:00Z", "44.00", false);
         item(first, 1, rice, "5", "4.00");
         item(first, 2, sugar, "5", "3.00");
@@ -110,6 +112,9 @@ class DashboardApiIntegrationTest {
                 .andExpect(jsonPath("$.topProducts[0].productName").value("Arroz"))
                 .andExpect(jsonPath("$.topProducts[0].quantity").value("5.000"))
                 .andExpect(jsonPath("$.topProducts[0].amount").value("20.00"))
+                .andExpect(jsonPath("$.topProducts[0].imageUrl").doesNotExist())
+                .andExpect(jsonPath("$.topProducts[1].imageUrl")
+                        .value(org.hamcrest.Matchers.startsWith("/api/v1/products/" + sugar + "/image?v=")))
                 .andExpect(jsonPath("$.topProducts[1].productName").value("Azúcar"))
                 .andExpect(jsonPath("$.topProducts[2].productName").value("Leche"))
                 .andExpect(jsonPath("$.topProducts[2].quantity").value("3.000"))

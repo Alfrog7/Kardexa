@@ -79,7 +79,7 @@ class DashboardServiceTest {
     @Test
     @DisplayName("incluye los más vendidos del rango, pidiendo como máximo 10")
     void topProducts() {
-        top = List.of(new TopProduct(UUID.randomUUID(), "A01", "Arroz", Quantity.of("5"), Money.of("20.00")));
+        top = List.of(new TopProduct(UUID.randomUUID(), "A01", "Arroz", Quantity.of("5"), Money.of("20.00"), null));
 
         assertThat(service.get(null, null).topProducts()).isEqualTo(top);
     }

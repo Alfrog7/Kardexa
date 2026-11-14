@@ -30,6 +30,7 @@ export interface TopProduct {
   productName: string
   quantity: string
   amount: string
+  imageUrl?: string
 }
 
 export interface CriticalProduct {

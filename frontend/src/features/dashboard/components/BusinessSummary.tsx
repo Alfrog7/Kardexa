@@ -6,7 +6,9 @@ import { formatMoney } from '@shared/lib/format'
 import { getDashboard, type Dashboard } from '../api/dashboard'
 import { FROM_PARAM, TO_PARAM, formatBusinessDate, rangeFromParams, type DateRange } from '../lib/range'
 import { RangePicker } from './RangePicker'
+import { CriticalStock } from './CriticalStock'
 import { SalesChart } from './SalesChart'
+import { TopProducts } from './TopProducts'
 
 interface Loaded {
   key: string
@@ -123,6 +125,10 @@ export function BusinessSummary({ today }: { today: string }) {
             </li>
           </ul>
           <SalesChart days={shown?.dashboard?.salesByDay ?? []} />
+          <div className="home__panels">
+            <TopProducts products={shown?.dashboard?.topProducts ?? []} />
+            <CriticalStock products={shown?.dashboard?.criticalStock ?? []} />
+          </div>
         </>
       ) : null}
     </section>

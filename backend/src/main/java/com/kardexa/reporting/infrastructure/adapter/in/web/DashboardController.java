@@ -9,6 +9,7 @@ import com.kardexa.reporting.domain.model.SalesSummary;
 import com.kardexa.reporting.domain.model.TopProduct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -77,12 +78,18 @@ class DashboardController {
     }
 
     record TopProductResponse(UUID productId, String productCode, String productName, String quantity,
-            String amount) {
+            String amount, String imageUrl) {
 
         static TopProductResponse from(TopProduct product) {
             return new TopProductResponse(product.productId(), product.productCode(), product.productName(),
-                    product.quantity().toString(), product.amount().toString());
+                    product.quantity().toString(), product.amount().toString(),
+                    imageRoute(product.productId(), product.imageVersion()));
         }
+    }
+
+    /** Misma ruta versionada que usa el catálogo; sin imagen, nula (no llega en el JSON). */
+    private static String imageRoute(UUID productId, Instant version) {
+        return version == null ? null : "/api/v1/products/%s/image?v=%d".formatted(productId, version.toEpochMilli());
     }
 
     record CriticalProductResponse(UUID productId, String productCode, String productName, String categoryName,
@@ -91,9 +98,7 @@ class DashboardController {
         static CriticalProductResponse from(CriticalProduct product) {
             return new CriticalProductResponse(product.productId(), product.productCode(), product.productName(),
                     product.categoryName(), product.stock().toString(), product.minStock().toString(),
-                    product.imageVersion() == null ? null
-                            : "/api/v1/products/%s/image?v=%d".formatted(product.productId(),
-                                    product.imageVersion().toEpochMilli()));
+                    imageRoute(product.productId(), product.imageVersion()));
         }
     }
 }

@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, listPurchases, registerPurchase, voidPurchase, type Purchase } from '../api/purchases'
+import { findProducts, getProductOption, listPurchases, registerPurchase, voidPurchase, type Purchase } from '../api/purchases'
 import { listSuppliers, type Supplier } from '../api/suppliers'
 import { PurchasesPage } from './PurchasesPage'
 
@@ -11,6 +12,7 @@ vi.mock('../api/purchases', async (importOriginal) => ({
   registerPurchase: vi.fn(),
   voidPurchase: vi.fn(),
   findProducts: vi.fn(),
+  getProductOption: vi.fn(),
 }))
 vi.mock('../api/suppliers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/suppliers')>()),
@@ -63,8 +65,21 @@ describe('PurchasesPage', () => {
     )
   })
 
+  it('con ?producto= abre el registro con ese producto ya agregado (enlace del inicio)', async () => {
+    vi.mocked(getProductOption).mockResolvedValue({ id: 'p9', code: 'ARR-9', name: 'Arroz extra' })
+    render(
+      <MemoryRouter initialEntries={['/compras?producto=p9']}>
+        <PurchasesPage />
+      </MemoryRouter>,
+    )
+
+    const dialog = await screen.findByRole('dialog', { name: 'Registrar compra' })
+    expect(getProductOption).toHaveBeenCalledWith('p9')
+    expect((await within(dialog).findAllByText(/Arroz extra/)).length).toBeGreaterThan(0)
+  })
+
   it('lista las compras del mes actual con su total y estado', async () => {
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
 
     const table = await screen.findByRole('table', { name: 'Compras' })
     expect(within(table).getByText('Distribuidora Andina')).toBeInTheDocument()
@@ -75,7 +90,7 @@ describe('PurchasesPage', () => {
   })
 
   it('cambia el rango de fechas y avisa si está invertido', async () => {
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
     await screen.findByRole('table', { name: 'Compras' })
 
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-01' } })
@@ -86,7 +101,7 @@ describe('PurchasesPage', () => {
   })
 
   it('muestra el detalle de una compra con sus productos', async () => {
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
 
     fireEvent.click(await screen.findByRole('button', { name: /Ver compra del 10\/11\/2026/ }))
 
@@ -98,7 +113,7 @@ describe('PurchasesPage', () => {
 
   it('registra una compra con dos productos, calcula el total en vivo y refresca la lista', async () => {
     vi.mocked(registerPurchase).mockResolvedValue(purchase)
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
     await screen.findByRole('table', { name: 'Compras' })
 
     const form = await openForm()
@@ -129,7 +144,7 @@ describe('PurchasesPage', () => {
   })
 
   it('marca un ítem inválido antes de enviar y no llama a la API', async () => {
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
     await screen.findByRole('table', { name: 'Compras' })
 
     const form = await openForm()
@@ -158,7 +173,7 @@ describe('PurchasesPage', () => {
         errors: [{ field: 'items[0].quantityPositive', message: 'La cantidad debe ser mayor que 0.' }],
       }),
     )
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
     await screen.findByRole('table', { name: 'Compras' })
 
     const form = await openForm()
@@ -177,7 +192,7 @@ describe('PurchasesPage', () => {
     vi.mocked(registerPurchase).mockRejectedValue(
       new ApiError({ title: 'Conflicto', status: 409, detail: 'El stock cambió mientras se registraba. Inténtalo otra vez.' }),
     )
-    render(<PurchasesPage />)
+    render(<PurchasesPage />, { wrapper: MemoryRouter })
     await screen.findByRole('table', { name: 'Compras' })
 
     const form = await openForm()
@@ -192,7 +207,7 @@ describe('PurchasesPage', () => {
 
   describe('anular una compra (HU-13)', () => {
     async function openVoidForm() {
-      render(<PurchasesPage />)
+      render(<PurchasesPage />, { wrapper: MemoryRouter })
       fireEvent.click(await screen.findByRole('button', { name: /Ver compra del 10\/11\/2026/ }))
       fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Anular compra' }))
       return within(screen.getByRole('dialog'))
@@ -241,7 +256,7 @@ describe('PurchasesPage', () => {
 
     it('una compra anulada no ofrece la acción', async () => {
       vi.mocked(listPurchases).mockResolvedValue(page([{ ...purchase, status: 'VOIDED', voidReason: 'Duplicada' }]))
-      render(<PurchasesPage />)
+      render(<PurchasesPage />, { wrapper: MemoryRouter })
 
       fireEvent.click(await screen.findByRole('button', { name: /Ver compra del 10\/11\/2026/ }))
 
