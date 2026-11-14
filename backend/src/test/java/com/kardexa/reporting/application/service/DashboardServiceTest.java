@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.kardexa.reporting.application.port.in.GetDashboardUseCase.Dashboard;
 import com.kardexa.reporting.application.port.out.SalesFigures;
 import com.kardexa.reporting.domain.exception.InvalidReportPeriodException;
+import com.kardexa.reporting.domain.model.CriticalProduct;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
 import com.kardexa.reporting.domain.model.TopProduct;
@@ -43,7 +44,8 @@ class DashboardServiceTest {
             return top;
         }
     };
-    private final DashboardService service = new DashboardService(figures, CLOCK);
+    private List<CriticalProduct> critical = List.of();
+    private final DashboardService service = new DashboardService(figures, () -> critical, CLOCK);
 
     @Test
     @DisplayName("sin fechas toma los últimos 30 días hasta hoy en hora de Lima")
@@ -80,6 +82,16 @@ class DashboardServiceTest {
         top = List.of(new TopProduct(UUID.randomUUID(), "A01", "Arroz", Quantity.of("5"), Money.of("20.00")));
 
         assertThat(service.get(null, null).topProducts()).isEqualTo(top);
+    }
+
+    @Test
+    @DisplayName("incluye el stock crítico de hoy")
+    void criticalStock() {
+        critical = List.of(new CriticalProduct(UUID.randomUUID(), "A01", "Arroz", "Abarrotes", Quantity.ZERO,
+                Quantity.of("5"), null));
+
+        assertThat(service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)).criticalStock())
+                .isEqualTo(critical);
     }
 
     @Test

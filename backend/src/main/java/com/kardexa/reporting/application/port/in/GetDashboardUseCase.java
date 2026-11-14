@@ -1,5 +1,6 @@
 package com.kardexa.reporting.application.port.in;
 
+import com.kardexa.reporting.domain.model.CriticalProduct;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
 import com.kardexa.reporting.domain.model.SalesSummary;
@@ -14,15 +15,16 @@ public interface GetDashboardUseCase {
     Dashboard get(LocalDate from, LocalDate to);
 
     /**
-     * Rango aplicado, resumen, ventas de cada día del rango (incluidos los días sin ventas) y los productos más
-     * vendidos.
+     * Rango aplicado, resumen, ventas de cada día del rango (incluidos los días sin ventas), los productos más
+     * vendidos y los productos en stock crítico hoy (estos no dependen del rango).
      */
     record Dashboard(ReportPeriod period, SalesSummary summary, List<DailySales> salesByDay,
-            List<TopProduct> topProducts) {
+            List<TopProduct> topProducts, List<CriticalProduct> criticalStock) {
 
         public Dashboard {
             salesByDay = List.copyOf(salesByDay);
             topProducts = List.copyOf(topProducts);
+            criticalStock = List.copyOf(criticalStock);
         }
     }
 }

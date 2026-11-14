@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** HU-17 · ventas por día, resumen y más vendidos del rango contra PostgreSQL real (ADR 0012). */
+/** HU-17 · ventas por día, resumen, más vendidos y stock crítico contra PostgreSQL real (ADR 0012). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, TestSecurity.class})
@@ -134,6 +134,36 @@ class DashboardApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("stock crítico: activos con stock <= mínimo, primero los agotados; mínimo 0 y stock 0 cuenta")
+    void criticalStock() throws Exception {
+        stocked("C01", "Sobra", "2", "10", true);
+        stocked("C02", "Inactivo", "5", "0", false);
+        UUID low = stocked("C03", "Bajo", "5", "4", true);
+        stocked("C04", "Justo", "3", "3", true);
+        stocked("C05", "Cero y cero", "0", "0", true);
+        UUID out = product("C06", "Agotado");
+        jdbc.update("UPDATE product SET min_stock = 5 WHERE id = ?", out);
+        jdbc.update("INSERT INTO product_image (product_id, content_type, data)"
+                + " VALUES (?, 'image/png', decode('89', 'hex'))", low);
+
+        mvc.perform(get(URL).param("from", "2020-01-01").param("to", "2020-01-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summary.criticalCount").value(4))
+                .andExpect(jsonPath("$.criticalStock.length()").value(4))
+                .andExpect(jsonPath("$.criticalStock[0].productId").value(out.toString()))
+                .andExpect(jsonPath("$.criticalStock[0].productCode").value("C06"))
+                .andExpect(jsonPath("$.criticalStock[0].categoryName").value("Abarrotes"))
+                .andExpect(jsonPath("$.criticalStock[0].stock").value("0.000"))
+                .andExpect(jsonPath("$.criticalStock[0].minStock").value("5.000"))
+                .andExpect(jsonPath("$.criticalStock[0].imageUrl").doesNotExist())
+                .andExpect(jsonPath("$.criticalStock[1].productName").value("Cero y cero"))
+                .andExpect(jsonPath("$.criticalStock[2].productName").value("Bajo"))
+                .andExpect(jsonPath("$.criticalStock[2].imageUrl")
+                        .value(org.hamcrest.Matchers.startsWith("/api/v1/products/" + low + "/image?v=")))
+                .andExpect(jsonPath("$.criticalStock[3].productName").value("Justo"));
+    }
+
+    @Test
     @DisplayName("sin fechas devuelve los últimos 30 días")
     void defaultPeriod() throws Exception {
         mvc.perform(get(URL))
@@ -141,7 +171,9 @@ class DashboardApiIntegrationTest {
                 .andExpect(jsonPath("$.salesByDay.length()").value(30))
                 .andExpect(jsonPath("$.summary.total").value("0.00"))
                 .andExpect(jsonPath("$.summary.averageTicket").value("0.00"))
-                .andExpect(jsonPath("$.topProducts.length()").value(0));
+                .andExpect(jsonPath("$.topProducts.length()").value(0))
+                .andExpect(jsonPath("$.criticalStock.length()").value(0))
+                .andExpect(jsonPath("$.summary.criticalCount").value(0));
     }
 
     @Test
@@ -180,6 +212,13 @@ class DashboardApiIntegrationTest {
         jdbc.update("""
                 INSERT INTO product (id, code, name, category_id, unit, sale_price, min_stock)
                 VALUES (?, ?, ?, ?, 'UNIT', 1, 1)""", id, code, name, category);
+        return id;
+    }
+
+    private UUID stocked(String code, String name, String minStock, String stock, boolean active) {
+        UUID id = product(code, name);
+        jdbc.update("UPDATE product SET min_stock = ?::numeric, active = ? WHERE id = ?", minStock, active, id);
+        jdbc.update("INSERT INTO product_stock (product_id, quantity, version) VALUES (?, ?::numeric, 0)", id, stock);
         return id;
     }
 

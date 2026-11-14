@@ -1,6 +1,7 @@
 package com.kardexa.reporting.infrastructure.config;
 
 import com.kardexa.reporting.application.port.out.SalesFigures;
+import com.kardexa.reporting.application.port.out.StockFigures;
 import com.kardexa.reporting.application.service.DashboardService;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 class ReportingConfig {
 
     @Bean
-    DashboardService dashboardService(SalesFigures sales) {
-        return new DashboardService(sales, Clock.systemUTC());
+    DashboardService dashboardService(SalesFigures sales, StockFigures stock) {
+        return new DashboardService(sales, stock, Clock.systemUTC());
     }
 }
