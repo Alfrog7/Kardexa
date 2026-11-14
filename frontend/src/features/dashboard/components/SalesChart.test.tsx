@@ -73,7 +73,7 @@ describe('SalesChart', () => {
     render(<SalesChart days={month()} />)
 
     const table = screen.getByRole('table', { name: 'Ventas por día' })
-    expect(table).toHaveClass('visually-hidden')
+    expect(table.parentElement).toHaveClass('visually-hidden')
     expect(within(table).getAllByRole('row')).toHaveLength(31)
   })
 

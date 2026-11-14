@@ -225,10 +225,14 @@
   color: var(--color-text-secondary);
 }
 
+.sales-chart__frame {
+  min-width: 0;
+}
+
+/* Ancho y alto en píxeles reales (medidos): el texto queda a 12 px en cualquier pantalla. */
 .sales-chart__svg {
   display: block;
-  width: 100%;
-  height: auto;
+  max-width: 100%;
   overflow: visible;
   font-size: 12px;
 }
