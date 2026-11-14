@@ -5,6 +5,7 @@ import com.kardexa.reporting.application.port.out.SalesFigures;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
 import com.kardexa.reporting.domain.model.SalesSummary;
+import com.kardexa.reporting.domain.model.TopProduct;
 import com.kardexa.shared.domain.BusinessCalendar;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -26,6 +27,6 @@ public class DashboardService implements GetDashboardUseCase {
     public Dashboard get(LocalDate from, LocalDate to) {
         ReportPeriod period = ReportPeriod.resolve(from, to, LocalDate.now(clock.withZone(BusinessCalendar.ZONE)));
         List<DailySales> days = sales.dailySales(period);
-        return new Dashboard(period, SalesSummary.of(days), days);
+        return new Dashboard(period, SalesSummary.of(days), days, sales.topProducts(period, TopProduct.LIMIT));
     }
 }

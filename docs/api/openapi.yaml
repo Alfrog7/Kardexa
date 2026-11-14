@@ -1091,7 +1091,7 @@ components:
 
     Dashboard:
       type: object
-      required: [from, to, summary, salesByDay]
+      required: [from, to, summary, salesByDay, topProducts]
       properties:
         from: { type: string, format: date, description: Fecha inicial aplicada }
         to: { type: string, format: date, description: Fecha final aplicada }
@@ -1115,16 +1115,20 @@ components:
               total: { $ref: '#/components/schemas/Decimal2' }
               count: { type: integer }
         topProducts:
-          description: Se agrega con la HU-17 (#139)
+          description: >-
+            Hasta 10 productos con ventas registradas en el rango, por cantidad de mayor a menor; en empate, por
+            monto y luego por nombre. Código y nombre copiados en la venta más reciente. Vacío sin ventas.
           type: array
           maxItems: 10
           items:
             type: object
-            required: [productId, productName, quantity]
+            required: [productId, productCode, productName, quantity, amount]
             properties:
               productId: { type: string, format: uuid }
+              productCode: { type: string }
               productName: { type: string }
               quantity: { $ref: '#/components/schemas/Decimal3' }
+              amount: { $ref: '#/components/schemas/Decimal2' }
         criticalStock:
           description: Se agrega con la HU-17 (#140)
           type: array
