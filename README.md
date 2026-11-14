@@ -78,6 +78,12 @@ Con el backend corriendo y un `ADMIN` creado, `scripts/datos-demo.py` carga prod
 python scripts/datos-demo.py
 ```
 
+Para que el inicio tenga indicadores con sentido, `--repartir` registra además unas 60 ventas (algunas anuladas) y, como la API solo acepta la hora actual, les cambia la fecha a los 29 días anteriores con `psql` dentro del contenedor `kardexa-postgres` (otro con `--contenedor`). Los movimientos del kárdex conservan la fecha real de registro (RN-03). El script también deja productos en stock crítico y comprueba que el total del inicio cuadre con el historial.
+
+```bash
+python scripts/datos-demo.py --repartir
+```
+
 ### Problemas frecuentes
 
 | Síntoma | Causa | Solución |
