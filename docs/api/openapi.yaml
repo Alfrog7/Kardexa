@@ -420,6 +420,36 @@ paths:
                   totalPages: { type: integer }
         '400': { $ref: '#/components/responses/ValidationError' }
 
+  /stock-movements/export:
+    get:
+      tags: [dashboard]
+      operationId: exportStockMovements
+      summary: Historial general de movimientos en CSV (RF-25, solo ADMIN)
+      description: >-
+        Solo ADMIN (ADR 0012). Sin fechas, los últimos 30 días; como máximo 366. CSV para Excel en español:
+        UTF-8 con BOM, separador `;`, fin de línea CRLF, fechas `AAAA-MM-DD HH:mm` en hora de Lima, punto decimal
+        sin separador de miles y celdas que empiezan con `=`, `+`, `-`, `@`, tabulador o retorno de carro
+        precedidas de `'`. Se escribe por partes, sin paginar.
+        Del más reciente al más antiguo. Columnas: Fecha y hora, Código, Producto, Tipo, Documento, Entrada,
+        Salida, Saldo, Costo, Usuario.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - name: type
+          in: query
+          schema: { $ref: '#/components/schemas/MovementType' }
+      responses:
+        '200':
+          description: Archivo `movimientos-<desde>_<hasta>.csv`
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="movimientos-2026-11-01_2026-11-30.csv"' }
+          content:
+            text/csv:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
   /products/{id}/kardex:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -440,6 +470,35 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Kardex' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /products/{id}/kardex/export:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [dashboard]
+      operationId: exportKardex
+      summary: Kárdex del producto en CSV (RF-25, solo ADMIN)
+      description: >-
+        Solo ADMIN (ADR 0012). Sin fechas, los últimos 30 días; como máximo 366. CSV para Excel en español:
+        UTF-8 con BOM, separador `;`, fin de línea CRLF, fechas `AAAA-MM-DD HH:mm` en hora de Lima, punto decimal
+        sin separador de miles y celdas que empiezan con `=`, `+`, `-`, `@`, tabulador o retorno de carro
+        precedidas de `'`. Se escribe por partes, sin paginar.
+        Columnas: Fecha y hora, Tipo, Documento, Entrada, Salida, Saldo, Costo, Usuario.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Archivo `kardex-<código>-<desde>_<hasta>.csv`
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="kardex-P-0001-2026-11-01_2026-11-30.csv"' }
+          content:
+            text/csv:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /stock-adjustments:

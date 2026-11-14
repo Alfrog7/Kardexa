@@ -67,8 +67,38 @@ export function apiResourceUrl(path: string): string {
 }
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await send(path, init, 'application/json, application/problem+json')
+  if (response.status === 204) {
+    return undefined as T
+  }
+  return (await response.json()) as T
+}
+
+/**
+ * Descarga un archivo de la API con el token de la sesión (ADR 0012: nunca un enlace directo sin sesión). Usa el
+ * nombre de `Content-Disposition` y, si el navegador no lo deja leer, `fallbackName`.
+ */
+export async function apiDownload(path: string, fallbackName: string): Promise<void> {
+  const response = await send(path, {}, 'text/csv, application/problem+json')
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filenameOf(response.headers.get('Content-Disposition')) ?? fallbackName
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+/** `attachment; filename="kardex-P-0001.csv"` → `kardex-P-0001.csv` */
+export function filenameOf(disposition: string | null): string | undefined {
+  return disposition ? /filename="?([^";]+)"?/i.exec(disposition)?.[1] : undefined
+}
+
+async function send(path: string, init: RequestInit, accept: string): Promise<Response> {
   const headers = new Headers(init.headers)
-  headers.set('Accept', 'application/json, application/problem+json')
+  headers.set('Accept', accept)
   // Con FormData (subir archivos) el navegador pone el Content-Type con su separador.
   if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
@@ -95,10 +125,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     }
     throw new ApiError(await readProblem(response))
   }
-  if (response.status === 204) {
-    return undefined as T
-  }
-  return (await response.json()) as T
+  return response
 }
 
 async function readProblem(response: Response): Promise<Problem> {

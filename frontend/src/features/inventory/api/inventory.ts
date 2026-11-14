@@ -1,4 +1,4 @@
-import { apiRequest } from '@shared/api/http'
+import { apiDownload, apiRequest } from '@shared/api/http'
 
 /** Datos del producto que necesita esta pantalla, de `GET /products`. */
 export interface ProductOption {
@@ -91,4 +91,21 @@ export function listMovements(from: string, to: string, type: MovementType | '',
   if (to) params.set('to', to)
   if (type) params.set('type', type)
   return apiRequest<MovementPage>(`/stock-movements?${params}`)
+}
+
+/** `GET /products/{id}/kardex/export`: el kárdex del rango en CSV (HU-18, solo `ADMIN`). */
+export function exportKardex(productId: string, from: string, to: string): Promise<void> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  return apiDownload(`/products/${encodeURIComponent(productId)}/kardex/export?${params}`, `kardex-${from}_${to}.csv`)
+}
+
+/** `GET /stock-movements/export`: el historial con los mismos filtros, en CSV (HU-18, solo `ADMIN`). */
+export function exportMovements(from: string, to: string, type: MovementType | ''): Promise<void> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  if (type) params.set('type', type)
+  return apiDownload(`/stock-movements/export?${params}`, `movimientos-${from}_${to}.csv`)
 }

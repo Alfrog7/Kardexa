@@ -2,7 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
-import { findProducts, getKardex, getProduct, listMovements, registerAdjustment, type Kardex } from '../api/inventory'
+import { SessionContext } from '@shared/auth/session'
+import { exportKardex, exportMovements, findProducts, getKardex, getProduct, listMovements, registerAdjustment, type Kardex } from '../api/inventory'
 import { InventoryPage } from './InventoryPage'
 
 vi.mock('../api/inventory', () => ({
@@ -11,6 +12,8 @@ vi.mock('../api/inventory', () => ({
   getProduct: vi.fn(),
   listMovements: vi.fn(),
   registerAdjustment: vi.fn(),
+  exportKardex: vi.fn(),
+  exportMovements: vi.fn(),
 }))
 
 const aceite = { id: 'p1', code: 'ACE-1', name: 'Aceite 1 L', stock: '13.000' }
@@ -224,5 +227,41 @@ describe('InventoryPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ver kárdex de Aceite 1 L' }))
     expect(await screen.findByText('Saldo final')).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Historial de movimientos' })).not.toBeInTheDocument()
+  })
+
+  it('el historial exporta a CSV con los filtros aplicados', async () => {
+    vi.mocked(exportMovements).mockResolvedValue()
+    render(<InventoryPage />, { wrapper: MemoryRouter })
+
+    fireEvent.change(screen.getByLabelText('Tipo'), { target: { value: 'SALE' } })
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-11-01' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }))
+
+    await waitFor(() => expect(exportMovements).toHaveBeenCalledWith('2026-11-01', expect.any(String), 'SALE'))
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeEnabled()
+  })
+
+  it('el kárdex exporta a CSV el producto y el rango, y muestra el error si falla', async () => {
+    vi.mocked(exportKardex).mockRejectedValueOnce(new ApiError({ title: 'Prohibido', status: 403, detail: 'No tienes permiso.' }))
+    await pickProduct()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }))
+
+    expect(await screen.findByText('No tienes permiso.')).toBeInTheDocument()
+    expect(exportKardex).toHaveBeenCalledWith('p1', expect.any(String), expect.any(String))
+  })
+
+  it('el EMPLEADO no ve «Exportar CSV»', async () => {
+    const user = { id: '2', fullName: 'Luis Rojas', email: 'luis@correo.com', role: 'EMPLOYEE' as const, active: true }
+    render(
+      <SessionContext.Provider value={{ user, expired: false, start: vi.fn(), end: vi.fn() }}>
+        <MemoryRouter>
+          <InventoryPage />
+        </MemoryRouter>
+      </SessionContext.Provider>,
+    )
+
+    await screen.findByText('Elige un producto para ver su kárdex.')
+    expect(screen.queryByRole('button', { name: 'Exportar CSV' })).not.toBeInTheDocument()
   })
 })
