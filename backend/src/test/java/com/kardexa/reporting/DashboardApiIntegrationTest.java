@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** HU-17 · total vendido por día y resumen del rango contra PostgreSQL real (ADR 0012). */
+/** HU-17 · ventas por día, resumen y más vendidos del rango contra PostgreSQL real (ADR 0012). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, TestSecurity.class})
@@ -41,12 +41,16 @@ class DashboardApiIntegrationTest {
 
     private int number;
 
+    private UUID category;
+
     @BeforeEach
     void setUp() {
         jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
                 + " product_stock, product_image, product, category");
         TestSecurity.insertAdmin(jdbc);
         number = 0;
+        category = UUID.randomUUID();
+        jdbc.update("INSERT INTO category (id, name) VALUES (?, 'Abarrotes')", category);
     }
 
     @Test
@@ -78,13 +82,66 @@ class DashboardApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("más vendidos: por cantidad, desempate por monto y nombre; sin anuladas ni ventas fuera del rango")
+    void topProducts() throws Exception {
+        UUID rice = product("A01", "Arroz");
+        UUID sugar = product("A02", "Azúcar");
+        UUID milk = product("A03", "Leche");
+        UUID noodles = product("A04", "Fideos");
+        UUID cookies = product("A05", "Galletas");
+
+        UUID first = sale("2026-11-01T15:00:00Z", "44.00", false);
+        item(first, 1, rice, "5", "4.00");
+        item(first, 2, sugar, "5", "3.00");
+        item(first, 3, milk, "2", "4.50");
+        item(sale("2026-11-02T03:00:00Z", "45.00", true), 1, milk, "10", "4.50");
+        UUID second = sale("2026-11-02T05:10:00Z", "22.50", false);
+        item(second, 1, milk, "1", "4.50");
+        item(second, 2, cookies, "3", "3.00");
+        item(second, 3, noodles, "3", "3.00");
+        // 2026-11-04 00:30 en Lima: fuera del rango.
+        item(sale("2026-11-04T05:30:00Z", "400.00", false), 1, rice, "100", "4.00");
+
+        mvc.perform(get(URL).param("from", "2026-11-01").param("to", "2026-11-03"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topProducts.length()").value(5))
+                .andExpect(jsonPath("$.topProducts[0].productId").value(rice.toString()))
+                .andExpect(jsonPath("$.topProducts[0].productCode").value("A01"))
+                .andExpect(jsonPath("$.topProducts[0].productName").value("Arroz"))
+                .andExpect(jsonPath("$.topProducts[0].quantity").value("5.000"))
+                .andExpect(jsonPath("$.topProducts[0].amount").value("20.00"))
+                .andExpect(jsonPath("$.topProducts[1].productName").value("Azúcar"))
+                .andExpect(jsonPath("$.topProducts[2].productName").value("Leche"))
+                .andExpect(jsonPath("$.topProducts[2].quantity").value("3.000"))
+                .andExpect(jsonPath("$.topProducts[2].amount").value("13.50"))
+                .andExpect(jsonPath("$.topProducts[3].productName").value("Fideos"))
+                .andExpect(jsonPath("$.topProducts[4].productName").value("Galletas"));
+    }
+
+    @Test
+    @DisplayName("más vendidos: como máximo 10 productos")
+    void topProductsLimit() throws Exception {
+        for (int i = 1; i <= 11; i++) {
+            item(sale("2026-11-01T15:00:00Z", "1.00", false), 1, product("P%02d".formatted(i), "Producto " + i),
+                    String.valueOf(i), "1.00");
+        }
+
+        mvc.perform(get(URL).param("from", "2026-11-01").param("to", "2026-11-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topProducts.length()").value(10))
+                .andExpect(jsonPath("$.topProducts[0].productCode").value("P11"))
+                .andExpect(jsonPath("$.topProducts[9].productCode").value("P02"));
+    }
+
+    @Test
     @DisplayName("sin fechas devuelve los últimos 30 días")
     void defaultPeriod() throws Exception {
         mvc.perform(get(URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.salesByDay.length()").value(30))
                 .andExpect(jsonPath("$.summary.total").value("0.00"))
-                .andExpect(jsonPath("$.summary.averageTicket").value("0.00"));
+                .andExpect(jsonPath("$.summary.averageTicket").value("0.00"))
+                .andExpect(jsonPath("$.topProducts.length()").value(0));
     }
 
     @Test
@@ -105,14 +162,32 @@ class DashboardApiIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private void sale(String soldAt, String total, boolean voided) {
+    private UUID sale(String soldAt, String total, boolean voided) {
         number++;
+        UUID id = UUID.randomUUID();
         Timestamp at = Timestamp.from(Instant.parse(soldAt));
         jdbc.update("""
                 INSERT INTO sale (id, number, status, total, seller_id, sold_at, void_reason, voided_at, voided_by)
                 VALUES (?, ?, ?, ?::numeric, ?, ?, ?, ?, ?)""",
-                UUID.randomUUID(), "V-%06d".formatted(number), voided ? "VOIDED" : "REGISTERED", total,
+                id, "V-%06d".formatted(number), voided ? "VOIDED" : "REGISTERED", total,
                 TestSecurity.ADMIN_ID, at, voided ? "Error de digitación" : null, voided ? at : null,
                 voided ? TestSecurity.ADMIN_ID : null);
+        return id;
+    }
+
+    private UUID product(String code, String name) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO product (id, code, name, category_id, unit, sale_price, min_stock)
+                VALUES (?, ?, ?, ?, 'UNIT', 1, 1)""", id, code, name, category);
+        return id;
+    }
+
+    private void item(UUID sale, int line, UUID product, String quantity, String price) {
+        jdbc.update("""
+                INSERT INTO sale_item (sale_id, line_no, product_id, product_code, product_name, quantity, unit_price,
+                                       subtotal)
+                SELECT ?, ?, p.id, p.code, p.name, ?::numeric, ?::numeric, ?::numeric * ?::numeric
+                FROM product p WHERE p.id = ?""", sale, line, quantity, price, quantity, price, product);
     }
 }

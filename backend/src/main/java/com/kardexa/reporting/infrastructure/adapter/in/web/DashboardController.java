@@ -5,11 +5,13 @@ import com.kardexa.reporting.application.port.in.GetDashboardUseCase.Dashboard;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
 import com.kardexa.reporting.domain.model.SalesSummary;
+import com.kardexa.reporting.domain.model.TopProduct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,12 +48,14 @@ class DashboardController {
         }
     }
 
-    record DashboardResponse(LocalDate from, LocalDate to, SummaryResponse summary, List<DayResponse> salesByDay) {
+    record DashboardResponse(LocalDate from, LocalDate to, SummaryResponse summary, List<DayResponse> salesByDay,
+            List<TopProductResponse> topProducts) {
 
         static DashboardResponse from(Dashboard dashboard) {
             return new DashboardResponse(dashboard.period().from(), dashboard.period().to(),
                     SummaryResponse.from(dashboard.summary()),
-                    dashboard.salesByDay().stream().map(DayResponse::from).toList());
+                    dashboard.salesByDay().stream().map(DayResponse::from).toList(),
+                    dashboard.topProducts().stream().map(TopProductResponse::from).toList());
         }
     }
 
@@ -66,6 +70,15 @@ class DashboardController {
 
         static DayResponse from(DailySales day) {
             return new DayResponse(day.date(), day.total().toString(), day.count());
+        }
+    }
+
+    record TopProductResponse(UUID productId, String productCode, String productName, String quantity,
+            String amount) {
+
+        static TopProductResponse from(TopProduct product) {
+            return new TopProductResponse(product.productId(), product.productCode(), product.productName(),
+                    product.quantity().toString(), product.amount().toString());
         }
     }
 }

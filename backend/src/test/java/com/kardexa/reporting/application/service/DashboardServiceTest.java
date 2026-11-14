@@ -8,13 +8,16 @@ import com.kardexa.reporting.application.port.out.SalesFigures;
 import com.kardexa.reporting.domain.exception.InvalidReportPeriodException;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
+import com.kardexa.reporting.domain.model.TopProduct;
 import com.kardexa.shared.domain.Money;
+import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,9 +29,19 @@ class DashboardServiceTest {
 
     private final List<ReportPeriod> asked = new ArrayList<>();
     private List<DailySales> days = List.of();
-    private final SalesFigures figures = period -> {
-        asked.add(period);
-        return days;
+    private List<TopProduct> top = List.of();
+    private final SalesFigures figures = new SalesFigures() {
+        @Override
+        public List<DailySales> dailySales(ReportPeriod period) {
+            asked.add(period);
+            return days;
+        }
+
+        @Override
+        public List<TopProduct> topProducts(ReportPeriod period, int limit) {
+            assertThat(limit).isEqualTo(TopProduct.LIMIT);
+            return top;
+        }
     };
     private final DashboardService service = new DashboardService(figures, CLOCK);
 
@@ -59,6 +72,14 @@ class DashboardServiceTest {
         assertThat(dashboard.summary().count()).isEqualTo(3);
         assertThat(dashboard.summary().averageTicket()).isEqualTo(Money.of("6.67"));
         assertThat(dashboard.salesByDay()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("incluye los más vendidos del rango, pidiendo como máximo 10")
+    void topProducts() {
+        top = List.of(new TopProduct(UUID.randomUUID(), "A01", "Arroz", Quantity.of("5"), Money.of("20.00")));
+
+        assertThat(service.get(null, null).topProducts()).isEqualTo(top);
     }
 
     @Test

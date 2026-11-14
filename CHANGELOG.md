@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Agregado
 
+- **Más vendidos en el inicio (API):** `GET /api/v1/dashboard` incluye `topProducts`, los 10 productos con más cantidad vendida en el rango, con código, nombre, cantidad y monto; en empate manda el monto y luego el nombre. Las ventas anuladas no cuentan y un producto inhabilitado después sigue apareciendo (#139).
 - **Ventas por día en el inicio (API):** `GET /api/v1/dashboard` (solo `ADMIN`) devuelve el total y el número de ventas de cada día de Lima del rango, con los días sin ventas en 0, y un resumen con total, número de ventas y ticket promedio; las anuladas no cuentan. Sin fechas, los últimos 30 días; como máximo 366 (#138).
 - **ADR 0012 · Indicadores y reportes:** el módulo `reporting` lee ventas, stock y catálogo con consultas agregadas de solo lectura; días en hora de Lima, rango máximo de 366 días, ventas anuladas excluidas y CSV con `;`, UTF-8 con BOM y fórmulas neutralizadas, solo para `ADMIN` (#137).
 - **Productos en tarjetas, lista o tabla:** botones para cambiar de vista (se recuerda la elegida) y, en cada producto, botones Ver, Editar, Ajustar stock y Eliminar. «Ver» abre la ficha con los datos, el estado y el acceso al historial.
