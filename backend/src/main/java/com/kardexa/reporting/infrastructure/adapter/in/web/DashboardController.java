@@ -2,6 +2,7 @@ package com.kardexa.reporting.infrastructure.adapter.in.web;
 
 import com.kardexa.reporting.application.port.in.GetDashboardUseCase;
 import com.kardexa.reporting.application.port.in.GetDashboardUseCase.Dashboard;
+import com.kardexa.reporting.domain.model.CriticalProduct;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
 import com.kardexa.reporting.domain.model.SalesSummary;
@@ -49,20 +50,22 @@ class DashboardController {
     }
 
     record DashboardResponse(LocalDate from, LocalDate to, SummaryResponse summary, List<DayResponse> salesByDay,
-            List<TopProductResponse> topProducts) {
+            List<TopProductResponse> topProducts, List<CriticalProductResponse> criticalStock) {
 
         static DashboardResponse from(Dashboard dashboard) {
             return new DashboardResponse(dashboard.period().from(), dashboard.period().to(),
-                    SummaryResponse.from(dashboard.summary()),
+                    SummaryResponse.from(dashboard.summary(), dashboard.criticalStock().size()),
                     dashboard.salesByDay().stream().map(DayResponse::from).toList(),
-                    dashboard.topProducts().stream().map(TopProductResponse::from).toList());
+                    dashboard.topProducts().stream().map(TopProductResponse::from).toList(),
+                    dashboard.criticalStock().stream().map(CriticalProductResponse::from).toList());
         }
     }
 
-    record SummaryResponse(String total, long count, String averageTicket) {
+    record SummaryResponse(String total, long count, String averageTicket, int criticalCount) {
 
-        static SummaryResponse from(SalesSummary summary) {
-            return new SummaryResponse(summary.total().toString(), summary.count(), summary.averageTicket().toString());
+        static SummaryResponse from(SalesSummary summary, int criticalCount) {
+            return new SummaryResponse(summary.total().toString(), summary.count(), summary.averageTicket().toString(),
+                    criticalCount);
         }
     }
 
@@ -79,6 +82,18 @@ class DashboardController {
         static TopProductResponse from(TopProduct product) {
             return new TopProductResponse(product.productId(), product.productCode(), product.productName(),
                     product.quantity().toString(), product.amount().toString());
+        }
+    }
+
+    record CriticalProductResponse(UUID productId, String productCode, String productName, String categoryName,
+            String stock, String minStock, String imageUrl) {
+
+        static CriticalProductResponse from(CriticalProduct product) {
+            return new CriticalProductResponse(product.productId(), product.productCode(), product.productName(),
+                    product.categoryName(), product.stock().toString(), product.minStock().toString(),
+                    product.imageVersion() == null ? null
+                            : "/api/v1/products/%s/image?v=%d".formatted(product.productId(),
+                                    product.imageVersion().toEpochMilli()));
         }
     }
 }

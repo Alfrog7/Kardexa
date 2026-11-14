@@ -1091,16 +1091,17 @@ components:
 
     Dashboard:
       type: object
-      required: [from, to, summary, salesByDay, topProducts]
+      required: [from, to, summary, salesByDay, topProducts, criticalStock]
       properties:
         from: { type: string, format: date, description: Fecha inicial aplicada }
         to: { type: string, format: date, description: Fecha final aplicada }
         summary:
           type: object
-          required: [total, count, averageTicket]
+          required: [total, count, averageTicket, criticalCount]
           properties:
             total: { $ref: '#/components/schemas/Decimal2' }
             count: { type: integer, format: int64 }
+            criticalCount: { type: integer, description: Productos en stock crítico hoy }
             averageTicket:
               allOf: [{ $ref: '#/components/schemas/Decimal2' }]
               description: Total / número de ventas, half-up; 0 sin ventas
@@ -1130,9 +1131,21 @@ components:
               quantity: { $ref: '#/components/schemas/Decimal3' }
               amount: { $ref: '#/components/schemas/Decimal2' }
         criticalStock:
-          description: Se agrega con la HU-17 (#140)
+          description: >-
+            Productos activos con stock <= mínimo hoy (RN-09; no depende del rango). Primero los de stock 0, luego
+            por stock - mínimo y por nombre.
           type: array
-          items: { $ref: '#/components/schemas/Product' }
+          items:
+            type: object
+            required: [productId, productCode, productName, categoryName, stock, minStock]
+            properties:
+              productId: { type: string, format: uuid }
+              productCode: { type: string }
+              productName: { type: string }
+              categoryName: { type: string }
+              stock: { $ref: '#/components/schemas/Decimal3' }
+              minStock: { $ref: '#/components/schemas/Decimal3' }
+              imageUrl: { type: string, description: Ruta de la imagen con su versión; no llega si no tiene }
 
     PageMeta:
       type: object
