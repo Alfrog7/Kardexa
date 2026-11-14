@@ -83,13 +83,87 @@
   text-wrap: pretty;
 }
 
-.home__soon {
+/* Resumen del negocio (HU-17): rango arriba y cuatro tarjetas. */
+.home__summary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.home__summary-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.home__summary-header h2 {
   margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.range-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.range-picker__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.range-picker__preset[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.range-picker__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.home__period {
+  margin: 0;
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__card {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.home__card-label {
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+}
+
+.home__card-value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.home__card--alert .home__card-value {
+  color: var(--color-danger);
+}
+
+.home__card-link {
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 40rem) {

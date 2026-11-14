@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Agregado
 
+- **Inicio con indicadores:** el `ADMIN` ve total vendido, número de ventas, ticket promedio y productos en stock crítico, con un selector de rango (Hoy, Últimos 7 días, Últimos 30 días, Este mes o fechas propias) que se guarda en la URL; cada tarjeta lleva a Ventas o a Productos ya filtrado por stock crítico (`?critico=1`). El `EMPLEADO` ve accesos a Registrar venta, Productos e Inventario y no pide indicadores (#141).
 - **Stock crítico en el inicio (API):** `GET /api/v1/dashboard` incluye `criticalStock`, los productos activos con stock menor o igual que su mínimo (código, nombre, categoría, stock, mínimo e imagen), primero los agotados, y `summary.criticalCount` para la tarjeta. No depende del rango; los inhabilitados no aparecen (#140).
 - **Más vendidos en el inicio (API):** `GET /api/v1/dashboard` incluye `topProducts`, los 10 productos con más cantidad vendida en el rango, con código, nombre, cantidad y monto; en empate manda el monto y luego el nombre. Las ventas anuladas no cuentan y un producto inhabilitado después sigue apareciendo (#139).
 - **Ventas por día en el inicio (API):** `GET /api/v1/dashboard` (solo `ADMIN`) devuelve el total y el número de ventas de cada día de Lima del rango, con los días sin ventas en 0, y un resumen con total, número de ventas y ticket promedio; las anuladas no cuentan. Sin fechas, los últimos 30 días; como máximo 366 (#138).
