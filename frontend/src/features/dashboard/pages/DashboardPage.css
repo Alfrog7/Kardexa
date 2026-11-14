@@ -166,6 +166,86 @@
   font-size: var(--font-size-sm);
 }
 
+/* Gráfico de ventas por día: SVG propio, colores del tema (el pulido visual va en la Fase 8). */
+.sales-chart {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.sales-chart__caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  font-weight: 600;
+}
+
+.sales-chart__detail {
+  font-weight: 400;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sales-chart__detail::first-letter {
+  text-transform: uppercase;
+}
+
+.sales-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-size: 11px;
+}
+
+.sales-chart__tick line {
+  stroke: var(--color-border);
+}
+
+.sales-chart__tick text,
+.sales-chart__date {
+  fill: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-chart__axis {
+  stroke: var(--color-text-muted);
+}
+
+.sales-chart__hit {
+  fill: transparent;
+}
+
+.sales-chart__bar {
+  fill: var(--color-primary);
+  opacity: 0.75;
+  transition: opacity 120ms var(--ease-out);
+}
+
+.sales-chart__bar--active,
+.sales-chart__bar:focus-visible {
+  opacity: 1;
+  outline: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+.sales-chart__table summary {
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sales-chart__table .data-table-card {
+  margin-top: var(--space-3);
+}
+
 @media (max-width: 40rem) {
   .home__shortcut {
     grid-template-columns: minmax(0, 1fr) auto;
