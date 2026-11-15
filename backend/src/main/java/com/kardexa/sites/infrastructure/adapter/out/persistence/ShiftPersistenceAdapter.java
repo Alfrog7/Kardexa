@@ -4,6 +4,7 @@ import com.kardexa.shared.domain.Quantity;
 import com.kardexa.sites.application.port.out.ShiftRepository;
 import com.kardexa.sites.domain.exception.ShiftAlreadyClosedException;
 import com.kardexa.sites.domain.exception.ShiftAlreadyOpenException;
+import com.kardexa.sites.domain.model.Payments;
 import com.kardexa.sites.domain.model.Shift;
 import com.kardexa.sites.domain.model.Shift.Item;
 import java.math.BigDecimal;
@@ -88,10 +89,12 @@ class ShiftPersistenceAdapter implements ShiftRepository {
                     .param("price", item.unitPrice())
                     .update();
         }
+        Payments payments = shift.payments();
         int updated = jdbc.sql("""
                 UPDATE shift SET status = 'CLOSED', closed_at = :closedAt, closed_by = :closedBy,
                        registered_sales = :registered, counted_sales = :counted, expected_amount = :expected,
-                       note = :note
+                       note = :note, cash_amount = :cash, yape_amount = :yape, plin_amount = :plin,
+                       transfer_amount = :transfer, received_amount = :received, difference = :difference
                 WHERE id = :id AND status = 'OPEN'""")
                 .param("id", shift.id())
                 .param("closedAt", Timestamp.from(shift.closedAt()))
@@ -100,6 +103,12 @@ class ShiftPersistenceAdapter implements ShiftRepository {
                 .param("counted", shift.countedSales())
                 .param("expected", shift.expectedAmount())
                 .param("note", shift.note(), java.sql.Types.VARCHAR)
+                .param("cash", payments == null ? null : payments.cash(), java.sql.Types.NUMERIC)
+                .param("yape", payments == null ? null : payments.yape(), java.sql.Types.NUMERIC)
+                .param("plin", payments == null ? null : payments.plin(), java.sql.Types.NUMERIC)
+                .param("transfer", payments == null ? null : payments.transfer(), java.sql.Types.NUMERIC)
+                .param("received", shift.receivedAmount(), java.sql.Types.NUMERIC)
+                .param("difference", shift.difference(), java.sql.Types.NUMERIC)
                 .update();
         if (updated == 0) {
             throw new ShiftAlreadyClosedException();
@@ -113,7 +122,7 @@ class ShiftPersistenceAdapter implements ShiftRepository {
                 .list();
         return new Shift(shift.id(), shift.siteId(), shift.responsibleId(), shift.responsibleName(), shift.status(),
                 shift.openedAt(), shift.closedAt(), shift.closedBy(), shift.registeredSales(), shift.countedSales(),
-                shift.expectedAmount(), shift.note(), items);
+                shift.expectedAmount(), shift.note(), shift.payments(), shift.difference(), items);
     }
 
     private Shift toShift(ResultSet row, int rowNumber) throws SQLException {
@@ -131,7 +140,17 @@ class ShiftPersistenceAdapter implements ShiftRepository {
                 row.getBigDecimal("counted_sales"),
                 row.getBigDecimal("expected_amount"),
                 row.getString("note"),
+                paymentsOf(row),
+                row.getBigDecimal("difference"),
                 List.of());
+    }
+
+    private Payments paymentsOf(ResultSet row) throws SQLException {
+        BigDecimal cash = row.getBigDecimal("cash_amount");
+        return cash == null
+                ? null
+                : new Payments(cash, row.getBigDecimal("yape_amount"), row.getBigDecimal("plin_amount"),
+                        row.getBigDecimal("transfer_amount"));
     }
 
     private Item toItem(ResultSet row, int rowNumber) throws SQLException {

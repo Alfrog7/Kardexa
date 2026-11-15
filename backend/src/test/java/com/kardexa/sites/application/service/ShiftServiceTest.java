@@ -102,7 +102,7 @@ class ShiftServiceTest {
     }
 
     private CloseShiftCommand closing(UUID user, boolean admin, Shift shift, Count... counts) {
-        return new CloseShiftCommand(shift.id(), user, admin, List.of(counts), null);
+        return new CloseShiftCommand(shift.id(), user, admin, List.of(counts), null, null);
     }
 
     @Test
@@ -137,6 +137,33 @@ class ShiftServiceTest {
                     assertThat(item.openingStock()).isEqualTo(Quantity.of("40"));
                     assertThat(item.leftover()).isEqualTo(Quantity.of("5"));
                 });
+    }
+
+    @Test
+    @DisplayName("con los pagos anotados la diferencia es recibido − esperado, y negativa si falta")
+    void computesDifferenceFromPayments() {
+        Shift shift = openShift();
+        var counts = List.of(new Count(PAN, Quantity.of("5")), new Count(BOCADILLO, Quantity.of("10")));
+        var payments = new com.kardexa.sites.domain.model.Payments(
+                new BigDecimal("20"), new BigDecimal("5.50"), BigDecimal.ZERO, new BigDecimal("2"));
+
+        Shift closed = service.close(new CloseShiftCommand(shift.id(), LUIS, false, counts, "Faltó un sencillo", payments));
+
+        // Esperado 29.50; recibido 20 + 5.50 + 0 + 2 = 27.50.
+        assertThat(closed.receivedAmount()).isEqualByComparingTo("27.50");
+        assertThat(closed.difference()).isEqualByComparingTo("-2.00");
+        assertThat(closed.payments().yape()).isEqualByComparingTo("5.50");
+    }
+
+    @Test
+    @DisplayName("los montos no pueden ser negativos ni tener más de 2 decimales")
+    void rejectsInvalidAmounts() {
+        assertThatThrownBy(() -> new com.kardexa.sites.domain.model.Payments(
+                new BigDecimal("-1"), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new com.kardexa.sites.domain.model.Payments(
+                new BigDecimal("1.005"), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

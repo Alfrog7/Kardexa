@@ -1,6 +1,7 @@
 package com.kardexa.sites.application.port.in;
 
 import com.kardexa.shared.domain.Quantity;
+import com.kardexa.sites.domain.model.Payments;
 import com.kardexa.sites.domain.model.Shift;
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +17,10 @@ public interface CloseShiftUseCase {
     /**
      * @param userId quien cierra; solo el responsable o un administrador ({@code admin})
      * @param counts el sobrante contado por producto (0 es válido); un producto solo una vez
+     * @param payments lo recibido por medio de pago; opcional (HU-23)
      */
-    record CloseShiftCommand(UUID shiftId, UUID userId, boolean admin, List<Count> counts, String note) {
+    record CloseShiftCommand(UUID shiftId, UUID userId, boolean admin, List<Count> counts, String note,
+            Payments payments) {
 
         public CloseShiftCommand {
             counts = List.copyOf(counts);

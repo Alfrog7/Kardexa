@@ -114,7 +114,7 @@ public class ShiftService implements OpenShiftUseCase, GetCurrentShiftUseCase, C
         if (!sold.isEmpty()) {
             ledger.recordSold(shift.id(), shift.siteId(), command.userId(), sold);
         }
-        Shift closed = shift.closed(command.userId(), now, registered, command.note(), closedItems);
+        Shift closed = shift.closed(command.userId(), now, registered, command.note(), command.payments(), closedItems);
         shifts.saveClosed(closed);
         return shifts.findById(closed.id()).orElse(closed);
     }

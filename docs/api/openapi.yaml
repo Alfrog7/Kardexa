@@ -1332,6 +1332,16 @@ components:
               productId: { type: string, format: uuid }
               leftover: { $ref: '#/components/schemas/Decimal3' }
         note: { type: string, maxLength: 255 }
+        payments: { $ref: '#/components/schemas/Payments', description: Lo recibido por medio de pago; opcional (HU-23) }
+    Payments:
+      type: object
+      required: [cash, yape, plin, transfer]
+      description: Montos no negativos con hasta 2 decimales; 0 si no hubo.
+      properties:
+        cash: { type: number, minimum: 0 }
+        yape: { type: number, minimum: 0 }
+        plin: { type: number, minimum: 0 }
+        transfer: { type: number, minimum: 0 }
     Shift:
       type: object
       properties:
@@ -1346,6 +1356,9 @@ components:
         countedSales: { type: number, nullable: true, description: Lo vendido por conteo × precio }
         expectedAmount: { type: number, nullable: true, description: registeredSales + countedSales }
         note: { type: string, nullable: true }
+        payments: { $ref: '#/components/schemas/Payments', nullable: true }
+        receivedAmount: { type: number, nullable: true, description: Suma de los pagos }
+        difference: { type: number, nullable: true, description: 'receivedAmount − expectedAmount, calculado en el servidor (negativo falta, positivo sobra)' }
         items:
           type: array
           items:
