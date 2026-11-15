@@ -82,7 +82,7 @@
 | RN-02 | Saldo del movimiento = saldo anterior + entrada − salida. El stock actual es el saldo del último movimiento. |
 | RN-03 | Los movimientos de kárdex son **inmutables**: no se editan ni se borran. Un error se corrige con un movimiento inverso. |
 | RN-04 | Todo movimiento registra fecha y hora, usuario y documento de origen (compra, venta, anulación o ajuste). |
-| RN-05 | Solo el rol `ADMIN` registra ajustes, compras y anulaciones. Ajustes y anulaciones exigen un motivo. |
+| RN-05 | Solo el rol `ADMIN` registra compras y anulaciones; los ajustes de stock los registran `ADMIN` y `EMPLOYEE` (ADR 0013). Ajustes y anulaciones exigen un motivo. |
 | RN-06 | El precio de venta y el costo se **copian** en el detalle del documento; cambiar el precio del producto no altera documentos pasados. |
 | RN-07 | El número de comprobante es **correlativo y único** (`V-000001`, `V-000002`…) y no se reutiliza aunque la venta se anule. |
 | RN-08 | Una compra actualiza el **costo referencial** del producto con el último costo unitario comprado. |

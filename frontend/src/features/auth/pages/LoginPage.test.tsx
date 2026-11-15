@@ -102,7 +102,7 @@ describe('ingreso y sesión (HU-02)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Ingresa a tu negocio' })).toBeInTheDocument()
   })
 
-  it('un EMPLEADO no ve las acciones de administración', async () => {
+  it('un EMPLEADO puede crear productos, igual que el administrador', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Response.json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })),
@@ -110,6 +110,6 @@ describe('ingreso y sesión (HU-02)', () => {
     renderApp('/productos', employee)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Nuevo producto' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Nuevo producto' })).toBeInTheDocument()
   })
 })

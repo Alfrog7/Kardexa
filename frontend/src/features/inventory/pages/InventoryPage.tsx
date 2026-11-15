@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ApiError } from '@shared/api/http'
-import { useCanManage } from '@shared/auth/session'
+import { useCanEdit, useCanManage } from '@shared/auth/session'
 import { businessDate, formatDateTime, formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
@@ -20,6 +20,7 @@ import { AdjustmentForm } from '../components/AdjustmentForm'
 import { MovementHistory } from '../components/MovementHistory'
 import { MOVEMENT_LABELS } from '../components/movementLabels'
 import { ProductPicker } from '../components/ProductPicker'
+import { ReceiptForm } from '../components/ReceiptForm'
 import './InventoryPage.css'
 
 /** La API del kárdex no pagina: se empieza por un rango acotado. */
@@ -51,12 +52,14 @@ export function InventoryPage() {
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<KardexResult>()
   const canManage = useCanManage()
+  const canAdjust = useCanEdit()
   const [adjusting, setAdjusting] = useState(false)
+  const [receiving, setReceiving] = useState(false)
   const [notice, setNotice] = useState<string>()
   const dismissNotice = useCallback(() => setNotice(undefined), [])
 
   // Desde Productos se llega con ?producto=<id>: se carga ese producto y, con &ajustar=1, se abre el ajuste.
-  const openAdjustment = searchParams.get('ajustar') === '1' && canManage
+  const openAdjustment = searchParams.get('ajustar') === '1' && canAdjust
   useEffect(() => {
     if (!linkedId) return
     const request = { active: true }
@@ -125,12 +128,18 @@ export function InventoryPage() {
     <section className="page">
       <header className="page__header page__header--spread">
         <h1>Inventario</h1>
-        {product && canManage ? (
-          <button className="button" type="button" onClick={() => setAdjusting(true)}>
-            <Icon name="sliders" />
-            Registrar ajuste
+        <div className="inventory__actions">
+          <button className="button button--secondary" type="button" onClick={() => setReceiving(true)}>
+            <Icon name="plus" />
+            Registrar entrada
           </button>
-        ) : null}
+          {product && canAdjust ? (
+            <button className="button" type="button" onClick={() => setAdjusting(true)}>
+              <Icon name="sliders" />
+              Registrar ajuste
+            </button>
+          ) : null}
+        </div>
       </header>
 
       {adjusting && product ? (
@@ -139,11 +148,24 @@ export function InventoryPage() {
         </Dialog>
       ) : null}
 
+      {receiving ? (
+        <Dialog title="Registrar entrada de mercadería" onClose={() => setReceiving(false)}>
+          <ReceiptForm
+            onRegistered={(count) => {
+              setReceiving(false)
+              setNotice(count === 1 ? 'Entrada registrada: 1 producto.' : `Entrada registrada: ${count} productos.`)
+              setAttempt((value) => value + 1)
+            }}
+          />
+        </Dialog>
+      ) : null}
+
       {notice ? <Toast message={notice} onDismiss={dismissNotice} /> : null}
 
       <p className="inventory__help muted">
-        El stock sube con las <strong>compras</strong> y baja con las <strong>ventas</strong>. Para una merma, un
-        conteo físico o una corrección, elige el producto y usa «Registrar ajuste».
+        El stock sube con las <strong>compras</strong> y las <strong>entradas</strong> de mercadería, y baja con las
+        <strong>ventas</strong>. Para una merma, un conteo físico o una corrección, elige el producto y usa «Registrar
+        ajuste».
       </p>
 
       {product ? (

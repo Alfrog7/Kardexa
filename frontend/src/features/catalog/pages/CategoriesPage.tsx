@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
-import { useCanManage } from '@shared/auth/session'
+import { useCanEdit } from '@shared/auth/session'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
 import { createCategory, listCategories, updateCategory, type Category } from '../api/categories'
@@ -26,7 +26,7 @@ function messageOf(error: unknown): string {
 
 /** Gestión de categorías (HU-05): listar, crear, renombrar, desactivar y reactivar. */
 export function CategoriesPage() {
-  const canManage = useCanManage()
+  const canManage = useCanEdit()
   const [categories, setCategories] = useState<Category[]>()
   const [loadError, setLoadError] = useState<string>()
   const [actionError, setActionError] = useState<string>()

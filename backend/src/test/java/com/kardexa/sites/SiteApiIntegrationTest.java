@@ -52,7 +52,7 @@ class SiteApiIntegrationTest {
     @BeforeEach
     void cleanDatabase() {
         // Otras clases de test comparten la base: sus filas por sede impedirían borrar las sedes.
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock");
+        jdbc.execute("TRUNCATE shift_item, shift, sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock");
         jdbc.update("UPDATE app_user SET site_id = NULL");
         jdbc.update("DELETE FROM site WHERE id <> ?", Site.MAIN_SITE_ID);
     }

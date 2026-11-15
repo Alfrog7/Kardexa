@@ -17,13 +17,14 @@ public interface RecordStockMovementsUseCase {
 
     void record(RecordStockMovementsCommand command);
 
-    /** El tipo de documento decide la dirección: compras, entradas y anulaciones de venta suman; el resto resta. */
+    /** El tipo de documento decide la dirección: compras, entradas y anulaciones de venta suman; ventas y cierres de turno restan. */
     enum DocumentMovement {
         PURCHASE,
         PURCHASE_VOID,
         SALE,
         SALE_VOID,
-        RECEIPT
+        RECEIPT,
+        SHIFT_CLOSE
     }
 
     /** Una línea por producto; un producto no puede repetirse en el mismo documento. */

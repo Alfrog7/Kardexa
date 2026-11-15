@@ -14,6 +14,8 @@ const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 
 interface ProductDetailProps {
   product: Product
+  /** Puede cambiar la imagen y editar; el costo de referencia solo lo ve quien administra. */
+  canEdit: boolean
   canManage: boolean
   onEdit: () => void
   /** La imagen cambió: la página actualiza su lista con el producto devuelto. */
@@ -21,7 +23,7 @@ interface ProductDetailProps {
 }
 
 /** Ficha del producto: imagen, datos, estado y accesos a editar y al historial. */
-export function ProductDetail({ product, canManage, onEdit, onChanged }: ProductDetailProps) {
+export function ProductDetail({ product, canEdit, canManage, onEdit, onChanged }: ProductDetailProps) {
   const input = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string>()
   const [busy, setBusy] = useState(false)
@@ -57,7 +59,7 @@ export function ProductDetail({ product, canManage, onEdit, onChanged }: Product
     <div className="product-detail">
       <div className="product-detail__media">
         <ProductThumb product={product} size="lg" />
-        {canManage ? (
+        {canEdit ? (
           <div className="product-detail__image-actions">
             <input
               ref={input}
@@ -133,7 +135,7 @@ export function ProductDetail({ product, canManage, onEdit, onChanged }: Product
           <Icon name="history" size={18} />
           Ver historial de stock
         </Link>
-        {canManage ? (
+        {canEdit ? (
           <button className="button" type="button" onClick={onEdit}>
             <Icon name="pencil" size={18} />
             Editar

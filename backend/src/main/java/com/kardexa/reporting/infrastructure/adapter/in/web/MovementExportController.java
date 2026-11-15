@@ -35,7 +35,8 @@ class MovementExportController {
             "ADJUSTMENT", "Ajuste",
             "PURCHASE_VOID", "Anulación de compra",
             "SALE_VOID", "Anulación de venta",
-            "RECEIPT", "Entrada");
+            "RECEIPT", "Entrada",
+            "SHIFT_CLOSE", "Cierre de turno");
 
     private final ExportMovementsUseCase export;
 
@@ -115,7 +116,7 @@ class MovementExportController {
     record HistoryExportParams(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @Pattern(regexp = "PURCHASE|SALE|ADJUSTMENT|PURCHASE_VOID|SALE_VOID|RECEIPT", message = "Tipo de movimiento desconocido.")
+            @Pattern(regexp = "PURCHASE|SALE|ADJUSTMENT|PURCHASE_VOID|SALE_VOID|RECEIPT|SHIFT_CLOSE", message = "Tipo de movimiento desconocido.")
             String type,
             UUID siteId) {
 

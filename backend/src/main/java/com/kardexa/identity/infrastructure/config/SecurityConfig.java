@@ -91,13 +91,13 @@ class SecurityConfig {
                     auth.requestMatchers(API + "/dashboard", API + "/dashboard/**").hasRole("ADMIN");
                     // RN-05: registrar y consultar ventas es de todos; anularlas, solo del ADMIN (ADR 0010).
                     auth.requestMatchers(HttpMethod.POST, API + "/sales/*/void").hasRole("ADMIN");
-                    // RN-05: crear, editar y ajustar el stock es solo de ADMIN; consultar, de cualquiera con sesión.
+                    // RN-05 (ajustada con la HU-20): la trabajadora crea y edita productos y categorías y ajusta el
+                    // stock, como el ADMIN; el stock queda con su nombre en el kárdex. Eliminar productos y categorías
+                    // y toda escritura de proveedores siguen siendo del ADMIN.
+                    auth.requestMatchers(HttpMethod.DELETE,
+                            API + "/categories/**", API + "/products/**").hasRole("ADMIN");
                     for (HttpMethod method : List.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE)) {
-                        auth.requestMatchers(method,
-                                API + "/categories", API + "/categories/**",
-                                API + "/products", API + "/products/**",
-                                API + "/stock-adjustments", API + "/stock-adjustments/**",
-                                API + "/suppliers", API + "/suppliers/**").hasRole("ADMIN");
+                        auth.requestMatchers(method, API + "/suppliers", API + "/suppliers/**").hasRole("ADMIN");
                     }
                     auth.anyRequest().authenticated();
                 })

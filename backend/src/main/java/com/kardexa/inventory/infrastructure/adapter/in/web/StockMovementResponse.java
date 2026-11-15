@@ -40,6 +40,7 @@ record StockMovementResponse(
             case PURCHASE -> "Compra";
             case SALE -> "Venta";
             case RECEIPT -> "Entrada";
+            case SHIFT -> "Cierre de turno";
         };
     }
 }

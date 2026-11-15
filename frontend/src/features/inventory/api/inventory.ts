@@ -10,7 +10,7 @@ export interface ProductOption {
 }
 
 export type Direction = 'IN' | 'OUT'
-export type MovementType = 'PURCHASE' | 'SALE' | 'ADJUSTMENT' | 'PURCHASE_VOID' | 'SALE_VOID' | 'RECEIPT'
+export type MovementType = 'PURCHASE' | 'SALE' | 'ADJUSTMENT' | 'PURCHASE_VOID' | 'SALE_VOID' | 'RECEIPT' | 'SHIFT_CLOSE'
 export type AdjustmentReason = 'SHRINKAGE' | 'PHYSICAL_COUNT' | 'CORRECTION'
 
 /** Esquema `StockMovement` de docs/api/openapi.yaml. Los decimales llegan como string. */
@@ -60,6 +60,29 @@ export function getKardex(productId: string, from: string, to: string): Promise<
   if (from) params.set('from', from)
   if (to) params.set('to', to)
   return apiRequest<Kardex>(`/products/${productId}/kardex?${params}`)
+}
+
+/** Esquema `ReceiptRequest`: lo que llegó a la sede, sin costo ni proveedor (HU-21). */
+export interface ReceiptRequest {
+  items: { productId: string; quantity: string }[]
+}
+
+/** Producto de la lista rápida de entradas (el stock es el de la sede). */
+export interface ReceiptProduct {
+  id: string
+  code: string
+  name: string
+  stock: string
+}
+
+/** Los productos activos para marcar lo que llegó (máximo 100: el tope de la API). */
+export async function listReceiptProducts(): Promise<ReceiptProduct[]> {
+  const page = await apiRequest<{ content: ReceiptProduct[] }>('/products?size=100')
+  return page.content
+}
+
+export function registerReceipt(request: ReceiptRequest): Promise<void> {
+  return apiRequest<void>('/receipts', { method: 'POST', body: JSON.stringify(request) })
 }
 
 export function registerAdjustment(request: StockAdjustmentRequest): Promise<StockMovement> {

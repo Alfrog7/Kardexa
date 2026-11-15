@@ -48,7 +48,7 @@ class SaleExportApiIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
+        jdbc.execute("TRUNCATE shift_item, shift, sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
                 + " product_stock, product_image, product, category");
         TestSecurity.insertAdmin(jdbc);
         jdbc.update("""
