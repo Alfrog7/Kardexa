@@ -600,7 +600,7 @@ paths:
       tags: [sites]
       operationId: listSites
       summary: Lista las sedes, habilitadas e inhabilitadas, por nombre (RF-26, solo ADMIN)
-      description: La lectura de su propia sede para el EMPLEADO llega con la HU-20.
+      description: El EMPLEADO lee solo la suya en `/sites/mine`.
       responses:
         '200':
           description: Sedes
@@ -628,6 +628,19 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+
+  /sites/mine:
+    get:
+      tags: [sites]
+      operationId: getMySite
+      summary: La sede de quien consulta (HU-20)
+      description: El EMPLEADO recibe la de su token; el ADMIN, la Sede principal. Cualquier usuario con sesión.
+      responses:
+        '200':
+          description: Sede
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Site' }
 
   /sites/{id}:
     parameters:

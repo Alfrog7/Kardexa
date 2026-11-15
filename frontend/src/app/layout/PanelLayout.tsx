@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { ChangePasswordForm } from '@features/auth'
+import { getMySite } from '@features/sites'
 import { useSession } from '@shared/auth/session'
 import { useActiveSite } from '@shared/site/activeSite'
 import { Dialog } from '@shared/ui/Dialog'
@@ -39,9 +40,17 @@ export function PanelLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [notice, setNotice] = useState<string>()
+  const [mySite, setMySite] = useState<string>()
   const accountRef = useRef<HTMLDivElement>(null)
   const dismissNotice = useCallback(() => setNotice(undefined), [])
   const visibleNavigation = navigation.filter((item) => !('adminOnly' in item) || user?.role === 'ADMIN')
+
+  useEffect(() => {
+    if (user?.role !== 'EMPLOYEE') return
+    getMySite()
+      .then((site) => setMySite(site.name))
+      .catch(() => setMySite(undefined))
+  }, [user?.role])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -115,6 +124,15 @@ export function PanelLayout() {
               <span className="panel__site-name">{activeSite.name}</span>
             </span>
           </NavLink>
+        ) : null}
+        {user?.role === 'EMPLOYEE' && mySite ? (
+          <div className="panel__site" title={`Sede: ${mySite}`}>
+            <Icon name="store" />
+            <span className="panel__label">
+              <span className="panel__site-hint">Sede</span>
+              <span className="panel__site-name">{mySite}</span>
+            </span>
+          </div>
         ) : null}
         <nav aria-label="Módulos">
           <ul className="panel__nav">

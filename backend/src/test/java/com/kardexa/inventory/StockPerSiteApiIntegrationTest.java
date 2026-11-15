@@ -166,21 +166,22 @@ class StockPerSiteApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("un EMPLOYEE opera en la Sede principal e ignora el siteId que pida (hasta la HU-20)")
-    void employeeIgnoresRequestedSite() throws Exception {
+    @DisplayName("un EMPLOYEE sin sede en el token opera en la Sede principal y no puede pedir otra")
+    void employeeWithoutSiteUsesMainSite() throws Exception {
         adjustIn(MainSite.ID.toString(), "9");
         String employee = "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE);
 
         ResultActions sale = mvc.perform(post("/api/v1/sales").header("Authorization", employee)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"siteId\": \"%s\", \"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}"
-                        .formatted(galeno, productId)));
+                .content("{\"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}".formatted(productId)));
 
         sale.andExpect(status().isCreated()).andExpect(jsonPath("$.siteId").value(MainSite.ID.toString()));
         assertThat(stockOf(MainSite.ID.toString())).isEqualTo("7.000");
         assertThat(stockOf(galeno)).isEqualTo("10.000");
         mvc.perform(get("/api/v1/stock-movements").param("siteId", galeno).header("Authorization", employee))
-                .andExpect(jsonPath("$.totalElements").value(2)); // solo ve la suya: la principal
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/stock-movements").header("Authorization", employee))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
@@ -188,10 +189,19 @@ class StockPerSiteApiIntegrationTest {
     void employeeOperatesInItsSite() throws Exception {
         String employee = "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE, java.util.UUID.fromString(monserrate));
 
+        // Pedir otra sede responde 404, como si no existiera (RF-21).
         mvc.perform(post("/api/v1/sales").header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"siteId\": \"%s\", \"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}"
                                 .formatted(galeno, productId)))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/stock-movements?siteId=" + galeno).header("Authorization", employee))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(post("/api/v1/sales").header("Authorization", employee)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}"
+                                .formatted(productId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.siteId").value(monserrate));
 

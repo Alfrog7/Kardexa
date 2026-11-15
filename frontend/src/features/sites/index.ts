@@ -1,3 +1,4 @@
 // API pública de la funcionalidad: otras partes de la app solo importan desde aquí (ADR 0005).
 export { SitePickerPage } from './pages/SitePickerPage'
 export { SitesPage } from './pages/SitesPage'
+export { getMySite } from './api/sites'
