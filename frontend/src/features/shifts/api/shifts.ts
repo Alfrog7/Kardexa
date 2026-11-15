@@ -10,6 +10,14 @@ export interface ShiftItem {
   unitPrice: number | null
 }
 
+/** Lo recibido por medio de pago al cerrar (esquema `Payments`). */
+export interface Payments {
+  cash: number
+  yape: number
+  plin: number
+  transfer: number
+}
+
 export interface Shift {
   id: string
   siteId: string
@@ -22,6 +30,10 @@ export interface Shift {
   countedSales: number | null
   expectedAmount: number | null
   note: string | null
+  payments: Payments | null
+  receivedAmount: number | null
+  /** Recibido − esperado, calculado en el servidor: negativo falta, positivo sobra. */
+  difference: number | null
   items: ShiftItem[]
 }
 
@@ -49,9 +61,17 @@ export function openShift(): Promise<Shift> {
   return apiRequest<Shift>('/shifts', { method: 'POST', body: '{}' })
 }
 
-/** Cierra el turno con el sobrante contado de cada producto (0 es válido). */
-export function closeShift(id: string, counts: { productId: string; leftover: string }[]): Promise<Shift> {
-  return apiRequest<Shift>(`/shifts/${id}/close`, { method: 'POST', body: JSON.stringify({ counts }) })
+/** Cierra el turno con el sobrante contado de cada producto (0 es válido), lo recibido por medio y una observación. */
+export function closeShift(
+  id: string,
+  counts: { productId: string; leftover: string }[],
+  payments?: Payments,
+  note?: string,
+): Promise<Shift> {
+  return apiRequest<Shift>(`/shifts/${id}/close`, {
+    method: 'POST',
+    body: JSON.stringify({ counts, payments, note: note?.trim() ? note.trim() : undefined }),
+  })
 }
 
 /** Los productos con stock en la sede (máximo 100: el tope de la API), para contar lo que sobró. */

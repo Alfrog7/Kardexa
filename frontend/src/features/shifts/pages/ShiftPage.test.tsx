@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
 import { SessionProvider } from '@shared/auth/SessionProvider'
@@ -25,6 +26,9 @@ const open: Shift = {
   countedSales: null,
   expectedAmount: null,
   note: null,
+  payments: null,
+  receivedAmount: null,
+  difference: null,
   items: [],
 }
 
@@ -35,6 +39,9 @@ const closed: Shift = {
   registeredSales: 12,
   countedSales: 17.5,
   expectedAmount: 29.5,
+  payments: { cash: 20, yape: 5.5, plin: 0, transfer: 2 },
+  receivedAmount: 27.5,
+  difference: -2,
   items: [
     { productId: 'pan', productName: 'Pan francés', openingStock: '40.000', leftover: '5.000', soldByCount: '35.000', unitPrice: 0.5 },
   ],
@@ -48,11 +55,20 @@ const products = [
 const luis = { id: 'u1', fullName: 'Luis Soto', email: 'luis@correo.com', role: 'EMPLOYEE' as const, active: true }
 const marta = { ...luis, id: 'u2', fullName: 'Marta Díaz', email: 'marta@correo.com' }
 
+function fillPayments(cash = '20', yape = '5,50') {
+  fireEvent.change(screen.getByLabelText('Efectivo'), { target: { value: cash } })
+  fireEvent.change(screen.getByLabelText('Yape'), { target: { value: yape } })
+  fireEvent.change(screen.getByLabelText('Plin'), { target: { value: '0' } })
+  fireEvent.change(screen.getByLabelText('Transferencia'), { target: { value: '2' } })
+}
+
 function renderPage(user = luis) {
   render(
-    <SessionProvider initialSession={{ token: 't', user }}>
-      <ShiftPage />
-    </SessionProvider>,
+    <MemoryRouter>
+      <SessionProvider initialSession={{ token: 't', user }}>
+        <ShiftPage />
+      </SessionProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -80,7 +96,7 @@ describe('ShiftPage', () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Revisa «Bocadillo»')
     expect(closeShift).not.toHaveBeenCalled()
@@ -92,18 +108,27 @@ describe('ShiftPage', () => {
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
     fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0,5' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    fillPayments()
+    fireEvent.click(await screen.findByRole('button', { name: 'Cerrar turno' }))
     expect(closeShift).not.toHaveBeenCalled()
     fireEvent.click(await screen.findByRole('button', { name: 'Sí, cerrar turno' }))
 
     await waitFor(() =>
-      expect(closeShift).toHaveBeenCalledWith('t1', [
-        { productId: 'pan', leftover: '5' },
-        { productId: 'boc', leftover: '0.5' },
-      ]),
+      expect(closeShift).toHaveBeenCalledWith(
+        't1',
+        [
+          { productId: 'pan', leftover: '5' },
+          { productId: 'boc', leftover: '0.5' },
+        ],
+        { cash: 20, yape: 5.5, plin: 0, transfer: 2 },
+        '',
+      ),
     )
     expect(await screen.findByText('Debes tener en caja')).toBeInTheDocument()
     expect(screen.getByText('S/ 29.50')).toBeInTheDocument()
+    expect(screen.getByText('Total recibido')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Falta S/ 2.00')
     expect(screen.getByText('35 vendidos')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Marcar nuevo ingreso' })).toBeInTheDocument()
   })
@@ -116,7 +141,9 @@ describe('ShiftPage', () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
     fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    fillPayments()
+    fireEvent.click(await screen.findByRole('button', { name: 'Cerrar turno' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Sí, cerrar turno' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('supera el stock')
@@ -128,7 +155,9 @@ describe('ShiftPage', () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
     fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    fillPayments()
+    fireEvent.click(await screen.findByRole('button', { name: 'Cerrar turno' }))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Todavía no' }))
 
@@ -152,7 +181,21 @@ describe('ShiftPage', () => {
     renderPage(marta)
 
     expect(await screen.findByText(/Solo esa persona o un administrador pueden cerrarlo/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Cerrar turno' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Continuar' })).not.toBeInTheDocument()
+  })
+
+  it('no pasa a cerrar si falta un monto: el error nombra el medio de pago', async () => {
+    vi.mocked(getCurrentShift).mockResolvedValue(open)
+    renderPage()
+    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    fireEvent.change(await screen.findByLabelText('Efectivo'), { target: { value: '20' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar turno' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Revisa «Yape»')
+    expect(screen.queryByRole('button', { name: 'Sí, cerrar turno' })).not.toBeInTheDocument()
   })
 
   it('avisa si ya hay un turno abierto en la sede al marcar el ingreso', async () => {
