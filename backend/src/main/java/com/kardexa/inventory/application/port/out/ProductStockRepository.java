@@ -10,13 +10,14 @@ import java.util.UUID;
 /** Tabla {@code product_stock}: stock actual de cada producto, con bloqueo optimista (ADR 0006). */
 public interface ProductStockRepository {
 
-    Optional<Quantity> findQuantity(UUID productId);
+    Optional<Quantity> findQuantity(UUID productId, UUID siteId);
+
 
     /** Stock de los productos que tienen fila; los que no la tienen no aparecen en el mapa. */
-    Map<UUID, Quantity> findQuantities(Collection<UUID> productIds);
+    Map<UUID, Quantity> findQuantities(Collection<UUID> productIds, UUID siteId);
 
     /** Stock con su versión, para modificarlo. Sin fila devuelve {@link ProductStock#empty}. */
-    ProductStock load(UUID productId);
+    ProductStock load(UUID productId, UUID siteId);
 
     /**
      * Guarda el stock solo si su versión sigue siendo la que se leyó.

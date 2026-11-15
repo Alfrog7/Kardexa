@@ -1,6 +1,7 @@
 package com.kardexa.sites;
 
 import static org.hamcrest.Matchers.endsWith;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +15,7 @@ import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import com.kardexa.identity.application.port.out.TokenIssuer;
 import com.kardexa.identity.domain.model.Role;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.sites.domain.model.Site;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,9 @@ class SiteApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
+        // Otras clases de test comparten la base: sus filas por sede impedirían borrar las sedes.
+        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, stock_movement, stock_adjustment, product_stock");
+        jdbc.update("UPDATE app_user SET site_id = NULL");
         jdbc.update("DELETE FROM site WHERE id <> ?", Site.MAIN_SITE_ID);
     }
 
@@ -125,6 +130,37 @@ class SiteApiIntegrationTest {
         send(patch(URL + "/" + galeno), "{\"active\": true}").andExpect(jsonPath("$.active").value(true));
         send(patch(URL + "/" + galeno), "{}").andExpect(status().isBadRequest());
         send(patch(URL + "/" + UUID.randomUUID()), "{\"active\": false}").andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("elimina una sede sin uso; con trabajadores o la Sede principal responde 409")
+    void deletesOnlyUnusedSites() throws Exception {
+        String galeno = idOf(create("Galeno", null));
+        String monserrate = idOf(create("Monserrate", null));
+        TestSecurity.insertAdmin(jdbc);
+        jdbc.update("DELETE FROM app_user WHERE email = 'luis@sede.test'");
+        jdbc.update("INSERT INTO app_user (id, full_name, email, password_hash, role, site_id) VALUES"
+                + " (gen_random_uuid(), 'Luis Soto', 'luis@sede.test', 'x', 'EMPLOYEE', ?::uuid)", monserrate);
+
+        mvc.perform(delete(URL + "/" + monserrate)).andExpect(status().isConflict());
+        mvc.perform(delete(URL + "/" + MainSite.ID)).andExpect(status().isConflict());
+        mvc.perform(delete(URL + "/" + galeno)).andExpect(status().isNoContent());
+        mvc.perform(delete(URL + "/" + galeno)).andExpect(status().isNotFound());
+        mvc.perform(get(URL)).andExpect(jsonPath("$.length()").value(2));
+        jdbc.update("DELETE FROM app_user WHERE email = 'luis@sede.test'");
+    }
+
+    @Test
+    @DisplayName("el negocio conserva al menos una sede habilitada")
+    void keepsOneActiveSite() throws Exception {
+        String galeno = idOf(create("Galeno", null));
+
+        send(patch(URL + "/" + MainSite.ID), "{\"active\": false}").andExpect(status().isOk());
+        send(patch(URL + "/" + galeno), "{\"active\": false}")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("al menos una sede")));
+        send(patch(URL + "/" + MainSite.ID), "{\"active\": true}").andExpect(jsonPath("$.active").value(true));
+        send(patch(URL + "/" + galeno), "{\"active\": false}").andExpect(status().isOk());
     }
 
     @Test

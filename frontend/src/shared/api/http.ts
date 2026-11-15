@@ -5,6 +5,8 @@
  * - Convierte las respuestas `application/problem+json` (RFC 9457) en un {@link ApiError} tipado.
  */
 
+import { getActiveSite } from '@shared/site/activeSite'
+
 export interface FieldError {
   field: string
   message: string
@@ -96,7 +98,33 @@ export function filenameOf(disposition: string | null): string | undefined {
   return disposition ? /filename="?([^";]+)"?/i.exec(disposition)?.[1] : undefined
 }
 
-async function send(path: string, init: RequestInit, accept: string): Promise<Response> {
+/** Consultas que dependen de la sede (ADR 0013): reciben `siteId` en la URL. */
+const SITE_READS = ['/products', '/stock-movements', '/sales', '/purchases', '/dashboard']
+/** Operaciones que se registran en una sede: reciben `siteId` en el cuerpo. */
+const SITE_WRITES = ['/sales', '/purchases', '/stock-adjustments']
+
+/**
+ * Aplica la sede elegida por el administrador: añade `siteId` a las consultas y a los registros de ventas, compras
+ * y ajustes. Sin sede elegida, o con «todas», no toca nada (la API usa la Sede principal en los registros y
+ * junta todas las sedes en las consultas). El empleado nunca elige: su sede la decide la API.
+ */
+function withSite(path: string, init: RequestInit): { path: string; init: RequestInit } {
+  const siteId = getActiveSite()?.id
+  if (!siteId) return { path, init }
+  const method = (init.method ?? 'GET').toUpperCase()
+  const route = path.split('?')[0] ?? path
+  if (method === 'GET' && SITE_READS.some((prefix) => route === prefix || route.startsWith(`${prefix}/`))) {
+    if (/[?&]siteId=/.test(path)) return { path, init }
+    return { path: `${path}${path.includes('?') ? '&' : '?'}siteId=${siteId}`, init }
+  }
+  if (method === 'POST' && SITE_WRITES.includes(route) && typeof init.body === 'string') {
+    return { path, init: { ...init, body: JSON.stringify({ siteId, ...(JSON.parse(init.body) as object) }) } }
+  }
+  return { path, init }
+}
+
+async function send(rawPath: string, rawInit: RequestInit, accept: string): Promise<Response> {
+  const { path, init } = withSite(rawPath, rawInit)
   const headers = new Headers(init.headers)
   headers.set('Accept', accept)
   // Con FormData (subir archivos) el navegador pone el Content-Type con su separador.

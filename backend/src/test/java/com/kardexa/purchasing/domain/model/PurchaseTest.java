@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.kardexa.purchasing.domain.exception.InvalidPurchaseException;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Instant;
@@ -24,7 +25,7 @@ class PurchaseTest {
     }
 
     private static Purchase purchase(String document, List<PurchaseItem> items) {
-        return Purchase.register(SUPPLIER, document, DATE, items, UUID.randomUUID(), Instant.now());
+        return Purchase.register(SUPPLIER, MainSite.ID, document, DATE, items, UUID.randomUUID(), Instant.now());
     }
 
     @Test

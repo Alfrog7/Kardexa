@@ -46,7 +46,7 @@ public class RegisterPurchaseService implements RegisterPurchaseUseCase {
         if (!supplier.isActive()) {
             throw new InactiveSupplierException(supplier.businessName());
         }
-        Purchase purchase = Purchase.register(supplier.id(), command.supplierDocument(), command.purchaseDate(),
+        Purchase purchase = Purchase.register(supplier.id(), command.siteId(), command.supplierDocument(), command.purchaseDate(),
                 command.items().stream()
                         .map(i -> new PurchaseItem(i.productId(), i.quantity(), i.unitCost()))
                         .toList(),

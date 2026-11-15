@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase.CreateSiteCommand;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase.UpdateSiteCommand;
 import com.kardexa.sites.domain.exception.DuplicateSiteNameException;
+import com.kardexa.sites.domain.exception.LastActiveSiteException;
 import com.kardexa.sites.domain.exception.SiteNotFoundException;
 import com.kardexa.sites.domain.model.Site;
 import java.util.UUID;
@@ -67,10 +68,34 @@ class SiteServiceTest {
     @DisplayName("criterio 2: inhabilitar conserva la sede y se puede volver a habilitar")
     void changesStatus() {
         Site site = create("Galeno");
+        create("Monserrate");
 
         assertThat(service.changeStatus(site.id(), false).isActive()).isFalse();
-        assertThat(service.list()).hasSize(1);
+        assertThat(service.list()).hasSize(2);
         assertThat(service.changeStatus(site.id(), true).isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("la última sede habilitada no se puede inhabilitar")
+    void keepsOneActiveSite() {
+        Site galeno = create("Galeno");
+        Site monserrate = create("Monserrate");
+        service.changeStatus(galeno.id(), false);
+
+        assertThatThrownBy(() -> service.changeStatus(monserrate.id(), false))
+                .isInstanceOf(LastActiveSiteException.class);
+        assertThat(service.changeStatus(galeno.id(), false).isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("elimina una sede, pero no la última habilitada ni la Sede principal")
+    void deletesSites() {
+        Site galeno = create("Galeno");
+        Site monserrate = create("Monserrate");
+
+        service.delete(galeno.id());
+        assertThat(service.list()).extracting(Site::name).containsExactly("Monserrate");
+        assertThatThrownBy(() -> service.delete(monserrate.id())).isInstanceOf(LastActiveSiteException.class);
     }
 
     @Test

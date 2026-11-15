@@ -26,5 +26,5 @@ public interface SaleRepository {
     Optional<SaleView> findView(UUID id);
 
     /** Vendidas en {@code [from, to)}; los filtros nulos no se aplican. De la más reciente a la más antigua. */
-    ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, PageQuery page);
+    ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, UUID siteId, PageQuery page);
 }

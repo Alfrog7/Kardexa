@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
 import com.kardexa.inventory.domain.model.ProductStock;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,12 +24,12 @@ class StockQueryServiceTest {
 
     private final StockQueryService service = new StockQueryService(new ProductStockRepository() {
         @Override
-        public Optional<Quantity> findQuantity(UUID productId) {
+        public Optional<Quantity> findQuantity(UUID productId, UUID siteId) {
             return Optional.ofNullable(rows.get(productId));
         }
 
         @Override
-        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds) {
+        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds, UUID siteId) {
             batchQueries.add(List.copyOf(productIds));
             Map<UUID, Quantity> found = new HashMap<>();
             productIds.stream().filter(rows::containsKey).forEach(id -> found.put(id, rows.get(id)));
@@ -36,7 +37,7 @@ class StockQueryServiceTest {
         }
 
         @Override
-        public ProductStock load(UUID productId) {
+        public ProductStock load(UUID productId, UUID siteId) {
             throw new UnsupportedOperationException("La consulta no modifica el stock");
         }
 
@@ -49,7 +50,7 @@ class StockQueryServiceTest {
     @Test
     @DisplayName("un producto sin movimientos tiene stock 0")
     void zeroWithoutRow() {
-        assertThat(service.currentStock(UUID.randomUUID())).isEqualTo(Quantity.ZERO);
+        assertThat(service.currentStock(UUID.randomUUID(), MainSite.ID)).isEqualTo(Quantity.ZERO);
     }
 
     @Test
@@ -59,7 +60,7 @@ class StockQueryServiceTest {
         UUID withoutStock = UUID.randomUUID();
         rows.put(withStock, Quantity.of("4.5"));
 
-        Map<UUID, Quantity> stock = service.currentStock(List.of(withStock, withoutStock));
+        Map<UUID, Quantity> stock = service.currentStock(List.of(withStock, withoutStock), MainSite.ID);
 
         assertThat(stock).containsExactly(
                 Map.entry(withStock, Quantity.of("4.5")), Map.entry(withoutStock, Quantity.ZERO));
@@ -69,7 +70,7 @@ class StockQueryServiceTest {
     @Test
     @DisplayName("una lista vacía no consulta la base")
     void emptyBatch() {
-        assertThat(service.currentStock(List.of())).isEmpty();
+        assertThat(service.currentStock(List.of(), MainSite.ID)).isEmpty();
         assertThat(batchQueries).isEmpty();
     }
 }

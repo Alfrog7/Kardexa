@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type Session } from '@shared/auth/session'
 import { SessionProvider } from '@shared/auth/SessionProvider'
+import { setActiveSite } from '@shared/site/activeSite'
 import { appRoutes } from './router'
 
 const adminSession: Session = {
@@ -20,6 +21,8 @@ function renderAt(path: string, session: Session | null = adminSession) {
 }
 
 describe('rutas del panel', () => {
+  beforeEach(() => setActiveSite({ id: 'sede-1', name: 'Galeno' }))
+
   it('muestra el inicio dentro del layout con la navegación de módulos', () => {
     renderAt('/')
 
@@ -109,9 +112,37 @@ describe('rutas del panel', () => {
     renderAt('/ingresar', null)
 
     expect(screen.queryByRole('navigation', { name: 'Módulos' })).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Correo')).toHaveAttribute('type', 'email')
+    expect(screen.getByLabelText('Usuario')).toHaveAttribute('type', 'email')
     expect(screen.getByLabelText('Contraseña')).toHaveAttribute('type', 'password')
     expect(screen.getByRole('button', { name: 'Ingresar' })).toBeEnabled()
+  })
+
+  it('el administrador sin sede elegida pasa por la elección de sede', () => {
+    setActiveSite(undefined)
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+    renderAt('/')
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¿Con qué sede quieres trabajar')
+    expect(screen.queryByRole('navigation', { name: 'Módulos' })).not.toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
+  it('el administrador ve su sede en el panel y puede cambiarla', () => {
+    renderAt('/')
+
+    const site = screen.getByRole('link', { name: /Galeno/ })
+    expect(site).toHaveAttribute('href', '/elegir-sede')
+  })
+
+  it('el empleado no elige sede: entra directo al panel', () => {
+    setActiveSite(undefined)
+    renderAt('/', {
+      token: 't',
+      user: { id: '2', fullName: 'Luis Soto', email: 'luis@correo.com', role: 'EMPLOYEE', active: true },
+    })
+
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Sede/ })).not.toBeInTheDocument()
   })
 
   it('responde a rutas desconocidas con una página 404', () => {

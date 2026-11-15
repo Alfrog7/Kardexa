@@ -16,5 +16,5 @@ public interface RegisterSaleUseCase {
     record ItemCommand(UUID productId, Quantity quantity) {}
 
     /** {@code sellerId} es quien registra la venta. */
-    record RegisterSaleCommand(List<ItemCommand> items, UUID sellerId) {}
+    record RegisterSaleCommand(List<ItemCommand> items, UUID sellerId, UUID siteId) {}
 }

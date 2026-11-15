@@ -13,6 +13,7 @@ import com.kardexa.sales.domain.model.Sale;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Quantity;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -52,23 +53,28 @@ class SaleController {
     private final RegisterSaleUseCase registerSale;
     private final ListSalesUseCase listSales;
     private final VoidSaleUseCase voidSale;
+    private final SiteScope siteScope;
 
-    SaleController(RegisterSaleUseCase registerSale, ListSalesUseCase listSales, VoidSaleUseCase voidSale) {
+    SaleController(RegisterSaleUseCase registerSale, ListSalesUseCase listSales, VoidSaleUseCase voidSale,
+            SiteScope siteScope) {
         this.registerSale = registerSale;
         this.listSales = listSales;
         this.voidSale = voidSale;
+        this.siteScope = siteScope;
     }
 
     /** HU-16: el EMPLEADO solo recibe sus ventas, aunque envíe otro {@code sellerId}. */
     @GetMapping
     SalePageResponse list(@AuthenticationPrincipal Jwt jwt, @Valid @ParameterObject SaleParams params) {
-        return SalePageResponse.from(listSales.list(new SaleFilter(params.from(), params.to(), params.sellerId()),
+        return SalePageResponse.from(listSales.list(
+                new SaleFilter(params.from(), params.to(), params.sellerId(), siteScope.filter(jwt, params.siteId())),
                 viewer(jwt), PageQuery.of(params.page(), params.size())));
     }
 
     @PostMapping
     ResponseEntity<SaleResponse> register(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SaleRequest request) {
-        Sale sale = registerSale.register(request.toCommand(UUID.fromString(jwt.getSubject())));
+        Sale sale = registerSale.register(
+                request.toCommand(UUID.fromString(jwt.getSubject()), siteScope.single(jwt, request.siteId())));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(sale.id())
@@ -106,6 +112,7 @@ class SaleController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             UUID sellerId,
+            UUID siteId,
             @Min(value = 0, message = "Debe ser 0 o mayor.")
             Integer page,
             @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
@@ -121,7 +128,8 @@ class SaleController {
     /** Esquema {@code SaleRequest}. El precio no viaja: lo pone el catálogo (RN-06). */
     record SaleRequest(
             @NotEmpty(message = "La venta debe tener al menos un producto.")
-            List<@Valid @NotNull(message = "El ítem no puede estar vacío.") SaleItemRequest> items) {
+            List<@Valid @NotNull(message = "El ítem no puede estar vacío.") SaleItemRequest> items,
+            UUID siteId) {
 
         /** RNF-04: un producto repetido rechaza la venta entera antes de tocar el stock. */
         @AssertTrue(message = "Un producto no puede repetirse en la misma venta.")
@@ -134,8 +142,8 @@ class SaleController {
             return ids.stream().distinct().count() == ids.size();
         }
 
-        RegisterSaleCommand toCommand(UUID sellerId) {
-            return new RegisterSaleCommand(items.stream().map(SaleItemRequest::toCommand).toList(), sellerId);
+        RegisterSaleCommand toCommand(UUID sellerId, UUID site) {
+            return new RegisterSaleCommand(items.stream().map(SaleItemRequest::toCommand).toList(), sellerId, site);
         }
     }
 
@@ -164,6 +172,7 @@ class SaleController {
             Instant soldAt,
             UUID sellerId,
             String seller,
+            UUID siteId,
             String status,
             String voidReason,
             String total,
@@ -171,7 +180,7 @@ class SaleController {
 
         static SaleResponse from(SaleView view) {
             return new SaleResponse(view.id(), view.number(), view.soldAt(), view.sellerId(), view.sellerName(),
-                    view.status().name(), view.voidReason(), view.total().toString(),
+                    view.siteId(), view.status().name(), view.voidReason(), view.total().toString(),
                     view.items().stream().map(ItemResponse::from).toList());
         }
     }

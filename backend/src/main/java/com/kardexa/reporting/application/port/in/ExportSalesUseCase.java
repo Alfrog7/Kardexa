@@ -13,5 +13,5 @@ public interface ExportSalesUseCase {
     ReportPeriod period(LocalDate from, LocalDate to);
 
     /** {@code sellerId} y {@code status} son opcionales. */
-    void sales(ReportPeriod period, UUID sellerId, String status, Consumer<SaleRow> sink);
+    void sales(ReportPeriod period, UUID sellerId, UUID siteId, String status, Consumer<SaleRow> sink);
 }

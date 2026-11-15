@@ -16,7 +16,19 @@ public interface ManageUsersUseCase {
     /** Cambia solo lo que llega con valor; {@code null} deja el dato como está. */
     User update(UpdateUserCommand command);
 
-    record CreateUserCommand(String fullName, String email, String password, Role role) {}
+    /** {@code siteId} nulo en un empleado: la «Sede principal». El administrador no lleva sede. */
+    record CreateUserCommand(String fullName, String email, String password, Role role, UUID siteId) {
 
-    record UpdateUserCommand(UUID id, String fullName, Role role, Boolean active) {}
+        public CreateUserCommand(String fullName, String email, String password, Role role) {
+            this(fullName, email, password, role, null);
+        }
+    }
+
+    /** {@code siteId} nulo deja la sede como está. */
+    record UpdateUserCommand(UUID id, String fullName, Role role, Boolean active, UUID siteId) {
+
+        public UpdateUserCommand(UUID id, String fullName, Role role, Boolean active) {
+            this(id, fullName, role, active, null);
+        }
+    }
 }

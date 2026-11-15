@@ -15,6 +15,7 @@ import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.StockAdjustment;
 import com.kardexa.inventory.domain.model.StockMovement;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Instant;
 import java.util.UUID;
@@ -29,9 +30,9 @@ class RetryingAdjustStockTest {
 
     private static final UUID PRODUCT = UUID.randomUUID();
     private static final AdjustStockCommand COMMAND = new AdjustStockCommand(
-            PRODUCT, Direction.IN, Quantity.of("1"), AdjustmentReason.CORRECTION, null);
+            PRODUCT, MainSite.ID, Direction.IN, Quantity.of("1"), AdjustmentReason.CORRECTION, null);
     private static final StockMovement MOVEMENT = StockMovement.fromAdjustment(
-            StockAdjustment.create(PRODUCT, Direction.IN, Quantity.of("1"), AdjustmentReason.CORRECTION, null, Instant.EPOCH),
+            StockAdjustment.create(PRODUCT, MainSite.ID, Direction.IN, Quantity.of("1"), AdjustmentReason.CORRECTION, null, Instant.EPOCH),
             Quantity.of("1"));
 
     private final AtomicInteger calls = new AtomicInteger();

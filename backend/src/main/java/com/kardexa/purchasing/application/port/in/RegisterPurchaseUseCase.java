@@ -19,5 +19,6 @@ public interface RegisterPurchaseUseCase {
 
     /** {@code userId} es quien registra la compra (RN-04). */
     record RegisterPurchaseCommand(
-            UUID supplierId, String supplierDocument, LocalDate purchaseDate, List<ItemCommand> items, UUID userId) {}
+            UUID supplierId, UUID siteId, String supplierDocument, LocalDate purchaseDate, List<ItemCommand> items,
+            UUID userId) {}
 }

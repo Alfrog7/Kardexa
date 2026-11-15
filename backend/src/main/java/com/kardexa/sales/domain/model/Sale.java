@@ -20,6 +20,7 @@ public final class Sale {
     private final UUID id;
     private final List<SaleItem> items;
     private final UUID sellerId;
+    private final UUID siteId;
     private final Instant soldAt;
     private SaleStatus status;
     private SaleNumber number;
@@ -34,13 +35,14 @@ public final class Sale {
         }
     }
 
-    private Sale(UUID id, SaleNumber number, List<SaleItem> items, SaleStatus status, UUID sellerId, Instant soldAt,
-            Voiding voiding) {
+    private Sale(UUID id, SaleNumber number, List<SaleItem> items, SaleStatus status, UUID sellerId, UUID siteId,
+            Instant soldAt, Voiding voiding) {
         this.id = Objects.requireNonNull(id, "id");
         this.number = number;
         this.items = List.copyOf(items);
         this.status = Objects.requireNonNull(status, "status");
         this.sellerId = Objects.requireNonNull(sellerId, "sellerId");
+        this.siteId = Objects.requireNonNull(siteId, "siteId");
         this.soldAt = Objects.requireNonNull(soldAt, "soldAt");
         this.voiding = voiding;
         if (this.items.isEmpty()) {
@@ -55,14 +57,15 @@ public final class Sale {
     }
 
     /** Una venta nueva de {@code sellerId}, todavía sin número: lo recibe al final de la transacción (ADR 0010). */
-    public static Sale register(List<SaleItem> items, UUID sellerId, Instant soldAt) {
-        return new Sale(UUID.randomUUID(), null, items, SaleStatus.REGISTERED, sellerId, soldAt, null);
+    public static Sale register(List<SaleItem> items, UUID sellerId, UUID siteId, Instant soldAt) {
+        return new Sale(UUID.randomUUID(), null, items, SaleStatus.REGISTERED, sellerId, siteId, soldAt, null);
     }
 
     /** Reconstruye una venta ya guardada (lo usa el adaptador de persistencia). */
     public static Sale restore(UUID id, SaleNumber number, List<SaleItem> items, SaleStatus status, UUID sellerId,
-            Instant soldAt, Voiding voiding) {
-        return new Sale(id, Objects.requireNonNull(number, "number"), items, status, sellerId, soldAt, voiding);
+            UUID siteId, Instant soldAt, Voiding voiding) {
+        return new Sale(id, Objects.requireNonNull(number, "number"), items, status, sellerId, siteId, soldAt,
+                voiding);
     }
 
     /**
@@ -117,6 +120,11 @@ public final class Sale {
 
     public UUID sellerId() {
         return sellerId;
+    }
+
+    /** La sede donde se vendió; el stock que se descuenta es el de esa sede (RN-13). */
+    public UUID siteId() {
+        return siteId;
     }
 
     public Instant soldAt() {

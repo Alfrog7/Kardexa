@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.kardexa.inventory.domain.exception.InsufficientStockException;
 import com.kardexa.inventory.domain.exception.InvalidStockAdjustmentException;
 import com.kardexa.inventory.domain.exception.StockLimitExceededException;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Instant;
 import java.util.UUID;
@@ -19,11 +20,11 @@ class StockDomainTest {
     private static final Instant NOW = Instant.parse("2026-11-08T10:00:00Z");
 
     private static ProductStock stock(String quantity) {
-        return new ProductStock(PRODUCT, Quantity.of(quantity), 4);
+        return new ProductStock(PRODUCT, MainSite.ID, Quantity.of(quantity), 4);
     }
 
     private static StockAdjustment adjustment(String quantity, AdjustmentReason reason, String note) {
-        return StockAdjustment.create(PRODUCT, Direction.OUT, Quantity.of(quantity), reason, note, NOW);
+        return StockAdjustment.create(PRODUCT, MainSite.ID, Direction.OUT, Quantity.of(quantity), reason, note, NOW);
     }
 
     @Test
@@ -46,7 +47,7 @@ class StockDomainTest {
     @Test
     @DisplayName("un producto sin fila tiene stock 0 y aún no tiene versión")
     void emptyStock() {
-        ProductStock empty = ProductStock.empty(PRODUCT);
+        ProductStock empty = ProductStock.empty(PRODUCT, MainSite.ID);
 
         assertThat(empty.quantity()).isEqualTo(Quantity.ZERO);
         assertThat(empty.version()).isEqualTo(ProductStock.NEVER_SAVED);

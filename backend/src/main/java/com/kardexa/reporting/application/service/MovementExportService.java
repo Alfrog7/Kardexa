@@ -34,12 +34,12 @@ public class MovementExportService implements ExportMovementsUseCase {
     }
 
     @Override
-    public void kardex(UUID productId, ReportPeriod period, Consumer<MovementRow> sink) {
-        movements.kardex(productId, period, sink);
+    public void kardex(UUID productId, UUID siteId, ReportPeriod period, Consumer<MovementRow> sink) {
+        movements.kardex(productId, siteId, period, sink);
     }
 
     @Override
-    public void movements(ReportPeriod period, String type, Consumer<MovementRow> sink) {
-        movements.movements(period, type, sink);
+    public void movements(UUID siteId, ReportPeriod period, String type, Consumer<MovementRow> sink) {
+        movements.movements(siteId, period, type, sink);
     }
 }

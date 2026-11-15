@@ -25,7 +25,7 @@ public class SaleQueryService implements ListSalesUseCase {
         return sales.findViews(
                 filter.from() == null ? null : BusinessCalendar.startOf(filter.from()),
                 filter.to() == null ? null : BusinessCalendar.endOf(filter.to()),
-                sellerId, page);
+                sellerId, filter.siteId(), page);
     }
 
     @Override

@@ -15,8 +15,8 @@ public interface ExportMovementsUseCase {
     /** Código del producto para el nombre del archivo; si no existe lanza {@code ReportProductNotFoundException}. */
     String productCode(UUID productId);
 
-    void kardex(UUID productId, ReportPeriod period, Consumer<MovementRow> sink);
+    void kardex(UUID productId, UUID siteId, ReportPeriod period, Consumer<MovementRow> sink);
 
     /** {@code type} es opcional: sin él, todos los tipos. */
-    void movements(ReportPeriod period, String type, Consumer<MovementRow> sink);
+    void movements(UUID siteId, ReportPeriod period, String type, Consumer<MovementRow> sink);
 }

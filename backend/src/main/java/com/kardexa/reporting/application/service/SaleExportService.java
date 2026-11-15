@@ -28,7 +28,7 @@ public class SaleExportService implements ExportSalesUseCase {
     }
 
     @Override
-    public void sales(ReportPeriod period, UUID sellerId, String status, Consumer<SaleRow> sink) {
-        rows.sales(period, sellerId, status, sink);
+    public void sales(ReportPeriod period, UUID sellerId, UUID siteId, String status, Consumer<SaleRow> sink) {
+        rows.sales(period, sellerId, siteId, status, sink);
     }
 }

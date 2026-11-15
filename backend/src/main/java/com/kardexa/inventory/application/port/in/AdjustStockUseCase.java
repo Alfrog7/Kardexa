@@ -12,12 +12,12 @@ public interface AdjustStockUseCase {
     StockMovement adjust(AdjustStockCommand command);
 
     /** {@code userId} es quien registra el ajuste; nulo solo en procesos internos sin usuario. */
-    record AdjustStockCommand(UUID productId, Direction direction, Quantity quantity, AdjustmentReason reason,
-            String note, UUID userId) {
+    record AdjustStockCommand(UUID productId, UUID siteId, Direction direction, Quantity quantity,
+            AdjustmentReason reason, String note, UUID userId) {
 
-        public AdjustStockCommand(
-                UUID productId, Direction direction, Quantity quantity, AdjustmentReason reason, String note) {
-            this(productId, direction, quantity, reason, note, null);
+        public AdjustStockCommand(UUID productId, UUID siteId, Direction direction, Quantity quantity,
+                AdjustmentReason reason, String note) {
+            this(productId, siteId, direction, quantity, reason, note, null);
         }
     }
 }

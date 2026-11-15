@@ -6,11 +6,12 @@ import { InventoryPage } from '@features/inventory'
 import { PurchasesPage, SuppliersPage } from '@features/purchasing'
 import { UsersPage } from '@features/users'
 import { SalesPage } from '@features/sales'
-import { SitesPage } from '@features/sites'
+import { SitePickerPage, SitesPage } from '@features/sites'
 import { PanelLayout } from './layout/PanelLayout'
 import { NotFoundPage } from './NotFoundPage'
 import { RequireAdmin } from './RequireAdmin'
 import { RequireSession } from './RequireSession'
+import { RequireSite } from './RequireSite'
 import { routes } from './navigation'
 
 /** Árbol de rutas. `app` compone las funcionalidades; ninguna funcionalidad conoce a otra (ADR 0005). */
@@ -21,24 +22,33 @@ export const appRoutes: RouteObject[] = [
     element: <RequireSession />,
     children: [
       {
-        path: routes.dashboard,
-        element: <PanelLayout />,
+        element: <RequireAdmin />,
+        children: [{ path: routes.pickSite, element: <SitePickerPage /> }],
+      },
+      {
+        element: <RequireSite />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: routes.sales, element: <SalesPage /> },
-          { path: routes.products, element: <ProductsPage /> },
-          { path: routes.categories, element: <CategoriesPage /> },
-          { path: routes.inventory, element: <InventoryPage /> },
-          { path: routes.suppliers, element: <SuppliersPage /> },
           {
-            element: <RequireAdmin />,
+            path: routes.dashboard,
+            element: <PanelLayout />,
             children: [
-              { path: routes.purchases, element: <PurchasesPage /> },
-              { path: routes.sites, element: <SitesPage /> },
-              { path: routes.users, element: <UsersPage /> },
+              { index: true, element: <DashboardPage /> },
+              { path: routes.sales, element: <SalesPage /> },
+              { path: routes.products, element: <ProductsPage /> },
+              { path: routes.categories, element: <CategoriesPage /> },
+              { path: routes.inventory, element: <InventoryPage /> },
+              { path: routes.suppliers, element: <SuppliersPage /> },
+              {
+                element: <RequireAdmin />,
+                children: [
+                  { path: routes.purchases, element: <PurchasesPage /> },
+                  { path: routes.sites, element: <SitesPage /> },
+                  { path: routes.users, element: <UsersPage /> },
+                ],
+              },
+              { path: '*', element: <NotFoundPage /> },
             ],
           },
-          { path: '*', element: <NotFoundPage /> },
         ],
       },
     ],

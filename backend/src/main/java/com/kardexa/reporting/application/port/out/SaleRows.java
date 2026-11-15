@@ -9,5 +9,6 @@ import java.util.function.Consumer;
 public interface SaleRows {
 
     /** Ventas del rango, de la más reciente a la más antigua; {@code sellerId} y {@code status} son opcionales. */
-    void sales(ReportPeriod period, UUID sellerId, String status, Consumer<SaleRow> sink);
+    /** {@code siteId} nulo: las ventas de todas las sedes. */
+    void sales(ReportPeriod period, UUID sellerId, UUID siteId, String status, Consumer<SaleRow> sink);
 }

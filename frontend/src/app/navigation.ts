@@ -10,6 +10,7 @@ export const routes = {
   purchases: '/compras',
   suppliers: '/proveedores',
   sites: '/sedes',
+  pickSite: '/elegir-sede',
   users: '/usuarios',
 } as const
 

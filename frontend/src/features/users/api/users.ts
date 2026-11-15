@@ -12,12 +12,15 @@ export interface CreateUserRequest {
   email: string
   password: string
   role: Role
+  /** Sede del empleado; el administrador no lleva. */
+  siteId?: string
 }
 
 export interface UpdateUserRequest {
   fullName?: string
   role?: Role
   active?: boolean
+  siteId?: string
 }
 
 /** `GET /users` (HU-03, solo ADMIN). La lista de un negocio pequeño cabe en una página de 100. */

@@ -3,6 +3,7 @@ package com.kardexa.sites.infrastructure.adapter.in.web;
 import com.kardexa.sites.application.port.in.ChangeSiteStatusUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase.CreateSiteCommand;
+import com.kardexa.sites.application.port.in.DeleteSiteUseCase;
 import com.kardexa.sites.application.port.in.ListSitesUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase.UpdateSiteCommand;
@@ -14,7 +15,9 @@ import jakarta.validation.constraints.Size;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -33,13 +37,15 @@ class SiteController {
     private final CreateSiteUseCase createSite;
     private final UpdateSiteUseCase updateSite;
     private final ChangeSiteStatusUseCase changeStatus;
+    private final DeleteSiteUseCase deleteSite;
     private final ListSitesUseCase listSites;
 
     SiteController(CreateSiteUseCase createSite, UpdateSiteUseCase updateSite,
-            ChangeSiteStatusUseCase changeStatus, ListSitesUseCase listSites) {
+            ChangeSiteStatusUseCase changeStatus, DeleteSiteUseCase deleteSite, ListSitesUseCase listSites) {
         this.createSite = createSite;
         this.updateSite = updateSite;
         this.changeStatus = changeStatus;
+        this.deleteSite = deleteSite;
         this.listSites = listSites;
     }
 
@@ -66,6 +72,12 @@ class SiteController {
     @PatchMapping("/{id}")
     SiteResponse changeStatus(@PathVariable UUID id, @Valid @RequestBody SiteStatusRequest request) {
         return SiteResponse.from(changeStatus.changeStatus(id, request.active()));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@PathVariable UUID id) {
+        deleteSite.delete(id);
     }
 
     /** Esquema {@code SiteRequest}: la dirección es opcional. */

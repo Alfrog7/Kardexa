@@ -19,13 +19,13 @@ public class StockQueryService implements GetStockUseCase {
     }
 
     @Override
-    public Quantity currentStock(UUID productId) {
-        return stocks.findQuantity(productId).orElse(Quantity.ZERO);
+    public Quantity currentStock(UUID productId, UUID siteId) {
+        return stocks.findQuantity(productId, siteId).orElse(Quantity.ZERO);
     }
 
     @Override
-    public Map<UUID, Quantity> currentStock(Collection<UUID> productIds) {
-        Map<UUID, Quantity> found = productIds.isEmpty() ? Map.of() : stocks.findQuantities(productIds);
+    public Map<UUID, Quantity> currentStock(Collection<UUID> productIds, UUID siteId) {
+        Map<UUID, Quantity> found = productIds.isEmpty() ? Map.of() : stocks.findQuantities(productIds, siteId);
         Map<UUID, Quantity> result = new LinkedHashMap<>();
         for (UUID productId : productIds) {
             result.put(productId, found.getOrDefault(productId, Quantity.ZERO));

@@ -15,6 +15,7 @@ import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase.AdjustStockCommand;
 import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -200,7 +201,7 @@ class StockAdjustmentApiIntegrationTest {
         adjust("IN", "5", "CORRECTION").andExpect(status().isCreated());
         jdbc.execute("ALTER TABLE stock_movement ADD CONSTRAINT test_rechaza_todo CHECK (quantity < 0) NOT VALID");
         try {
-            AdjustStockCommand command = new AdjustStockCommand(UUID.fromString(productId), Direction.OUT,
+            AdjustStockCommand command = new AdjustStockCommand(UUID.fromString(productId), MainSite.ID, Direction.OUT,
                     Quantity.of("2"), AdjustmentReason.SHRINKAGE, null);
 
             assertThatThrownBy(() -> adjustStock.adjust(command)).isInstanceOf(DataAccessException.class);

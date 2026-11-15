@@ -49,6 +49,28 @@ class UserApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("un empleado queda en la sede indicada (o en la principal) y el administrador sin sede")
+    void usersBelongToASite() throws Exception {
+        jdbc.update("INSERT INTO site (id, name) VALUES ('00000000-0000-0000-0000-0000000000a1', 'Galeno')"
+                + " ON CONFLICT DO NOTHING");
+
+        json(post(BASE + "/users"), "{\"fullName\": \"Luis Gómez\", \"email\": \"luis@correo.com\","
+                + " \"password\": \"clave12345\", \"role\": \"EMPLOYEE\","
+                + " \"siteId\": \"00000000-0000-0000-0000-0000000000a1\"}", adminToken)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.siteId").value("00000000-0000-0000-0000-0000000000a1"));
+        createEmployee("marta@correo.com").andExpect(jsonPath("$.siteId").value("00000000-0000-0000-0000-000000000001"));
+        mvc.perform(get(BASE + "/auth/me").header("Authorization", "Bearer " + adminToken))
+                .andExpect(jsonPath("$.siteId").doesNotExist());
+
+        String luis = loginToken("luis@correo.com", "clave12345");
+        mvc.perform(get(BASE + "/auth/me").header("Authorization", "Bearer " + luis))
+                .andExpect(jsonPath("$.siteId").value("00000000-0000-0000-0000-0000000000a1"));
+        jdbc.update("TRUNCATE app_user CASCADE");
+        jdbc.update("DELETE FROM site WHERE id = '00000000-0000-0000-0000-0000000000a1'");
+    }
+
+    @Test
     @DisplayName("criterio 1: un ADMIN crea un EMPLOYEE y este puede iniciar sesión")
     void adminCreatesEmployeeWhoCanLogIn() throws Exception {
         createEmployee("luis@correo.com").andExpect(status().isCreated())

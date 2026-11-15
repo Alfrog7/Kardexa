@@ -125,8 +125,9 @@ class SaleExportApiIntegrationTest {
         Timestamp at = Timestamp.from(Instant.parse(soldAt));
         boolean voided = voidReason != null;
         jdbc.update("""
-                INSERT INTO sale (id, number, status, total, seller_id, sold_at, void_reason, voided_at, voided_by)
-                VALUES (?, ?, ?, ?::numeric, ?, ?, ?, ?, ?)""",
+                INSERT INTO sale (id, number, status, total, seller_id, site_id, sold_at, void_reason, voided_at,
+                                  voided_by)
+                VALUES (?, ?, ?, ?::numeric, ?, '00000000-0000-0000-0000-000000000001', ?, ?, ?, ?)""",
                 id, number, voided ? "VOIDED" : "REGISTERED", total, seller, at, voidReason, voided ? at : null,
                 voided ? TestSecurity.ADMIN_ID : null);
         return id;

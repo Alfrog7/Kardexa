@@ -29,22 +29,26 @@ class ProductStockPersistenceAdapter implements ProductStockRepository {
     }
 
     @Override
-    public Optional<Quantity> findQuantity(UUID productId) {
-        return jdbc.sql("SELECT quantity FROM product_stock WHERE product_id = ?")
-                .param(productId)
+    public Optional<Quantity> findQuantity(UUID productId, UUID siteId) {
+        return jdbc.sql("""
+                SELECT sum(quantity) FROM product_stock
+                WHERE product_id = :productId AND (CAST(:siteId AS uuid) IS NULL OR site_id = :siteId)
+                GROUP BY product_id""")
+                .param("productId", productId)
+                .param("siteId", siteId, java.sql.Types.OTHER)
                 .query(BigDecimal.class)
                 .optional()
                 .map(Quantity::new);
     }
 
     @Override
-    public ProductStock load(UUID productId) {
-        return jdbc.sql("SELECT quantity, version FROM product_stock WHERE product_id = ?")
-                .param(productId)
+    public ProductStock load(UUID productId, UUID siteId) {
+        return jdbc.sql("SELECT quantity, version FROM product_stock WHERE product_id = ? AND site_id = ?")
+                .params(productId, siteId)
                 .query((row, rowNumber) -> new ProductStock(
-                        productId, new Quantity(row.getBigDecimal("quantity")), row.getLong("version")))
+                        productId, siteId, new Quantity(row.getBigDecimal("quantity")), row.getLong("version")))
                 .optional()
-                .orElseGet(() -> ProductStock.empty(productId));
+                .orElseGet(() -> ProductStock.empty(productId, siteId));
     }
 
     @Override
@@ -58,28 +62,32 @@ class ProductStockPersistenceAdapter implements ProductStockRepository {
     /** Si otro creó la fila primero no inserta nada, y se trata como un stock que cambió. */
     private int insert(ProductStock stock) {
         return jdbc.sql("""
-                INSERT INTO product_stock (product_id, quantity) VALUES (?, ?)
-                ON CONFLICT (product_id) DO NOTHING""")
-                .params(stock.productId(), stock.quantity().value())
+                INSERT INTO product_stock (product_id, site_id, quantity) VALUES (?, ?, ?)
+                ON CONFLICT (product_id, site_id) DO NOTHING""")
+                .params(stock.productId(), stock.siteId(), stock.quantity().value())
                 .update();
     }
 
     private int update(ProductStock stock) {
         return jdbc.sql("""
                 UPDATE product_stock SET quantity = ?, version = version + 1, updated_at = now()
-                WHERE product_id = ? AND version = ?""")
-                .params(stock.quantity().value(), stock.productId(), stock.version())
+                WHERE product_id = ? AND site_id = ? AND version = ?""")
+                .params(stock.quantity().value(), stock.productId(), stock.siteId(), stock.version())
                 .update();
     }
 
     @Override
-    public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds) {
+    public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds, UUID siteId) {
         Map<UUID, Quantity> result = new HashMap<>();
         if (productIds.isEmpty()) {
             return result;
         }
-        jdbc.sql("SELECT product_id, quantity FROM product_stock WHERE product_id IN (:ids)")
+        jdbc.sql("""
+                SELECT product_id, sum(quantity) AS quantity FROM product_stock
+                WHERE product_id IN (:ids) AND (CAST(:siteId AS uuid) IS NULL OR site_id = :siteId)
+                GROUP BY product_id""")
                 .param("ids", List.copyOf(productIds))
+                .param("siteId", siteId, java.sql.Types.OTHER)
                 .query((RowCallbackHandler) row -> result.put(
                         row.getObject("product_id", UUID.class), new Quantity(row.getBigDecimal("quantity"))));
         return result;

@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
 import { login, registerFirstAdmin } from '../api/auth'
+import { PasswordInput } from '@shared/ui/PasswordInput'
 import { AuthLayout } from '../components/AuthLayout'
 
 type FieldName = 'fullName' | 'email' | 'password'
@@ -73,8 +74,8 @@ export function SetupPage() {
 
   return (
     <AuthLayout
-      title="Crea al primer administrador"
-      description="Solo se puede hacer una vez, cuando el sistema aún no tiene usuarios."
+      title="Configura el acceso inicial"
+      description="Crea la cuenta del administrador. Solo se puede hacer una vez, cuando el sistema aún no tiene usuarios."
     >
       <form className="auth__form" onSubmit={handleSubmit}>
         <TextField
@@ -133,17 +134,30 @@ function TextField({ id, label, value, onChange, error, type = 'text', autoCompl
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        name={id}
-        type={type}
-        autoComplete={autoComplete}
-        required
-        value={value}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      {type === 'password' ? (
+        <PasswordInput
+          id={id}
+          name={id}
+          autoComplete={autoComplete}
+          required
+          value={value}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      ) : (
+        <input
+          id={id}
+          name={id}
+          type={type}
+          autoComplete={autoComplete}
+          required
+          value={value}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )}
       {error ? (
         <p id={`${id}-error`} className="field__error">
           {error}

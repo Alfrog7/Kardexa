@@ -13,6 +13,7 @@ import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -52,26 +53,30 @@ class PurchaseController {
     private final RegisterPurchaseUseCase registerPurchase;
     private final VoidPurchaseUseCase voidPurchase;
     private final ListPurchasesUseCase listPurchases;
+    private final SiteScope siteScope;
 
     PurchaseController(
             RegisterPurchaseUseCase registerPurchase,
             VoidPurchaseUseCase voidPurchase,
-            ListPurchasesUseCase listPurchases) {
+            ListPurchasesUseCase listPurchases, SiteScope siteScope) {
         this.registerPurchase = registerPurchase;
         this.voidPurchase = voidPurchase;
         this.listPurchases = listPurchases;
+        this.siteScope = siteScope;
     }
 
     @GetMapping
-    PurchasePageResponse list(@Valid @ParameterObject PurchaseParams params) {
+    PurchasePageResponse list(@AuthenticationPrincipal Jwt jwt, @Valid @ParameterObject PurchaseParams params) {
         return PurchasePageResponse.from(
-                listPurchases.list(params.from(), params.to(), PageQuery.of(params.page(), params.size())));
+                listPurchases.list(siteScope.filter(jwt, params.siteId()), params.from(), params.to(),
+                        PageQuery.of(params.page(), params.size())));
     }
 
     @PostMapping
     ResponseEntity<PurchaseResponse> register(
             @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PurchaseRequest request) {
-        Purchase purchase = registerPurchase.register(request.toCommand(UUID.fromString(jwt.getSubject())));
+        Purchase purchase = registerPurchase.register(
+                request.toCommand(UUID.fromString(jwt.getSubject()), siteScope.single(jwt, request.siteId())));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(purchase.id())
@@ -98,6 +103,7 @@ class PurchaseController {
     record PurchaseParams(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            UUID siteId,
             @Min(value = 0, message = "Debe ser 0 o mayor.")
             Integer page,
             @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")
@@ -119,7 +125,8 @@ class PurchaseController {
             @NotNull(message = "La fecha de compra es obligatoria.")
             LocalDate purchaseDate,
             @NotEmpty(message = "La compra debe tener al menos un producto.")
-            List<@Valid @NotNull(message = "El ítem no puede estar vacío.") PurchaseItemRequest> items) {
+            List<@Valid @NotNull(message = "El ítem no puede estar vacío.") PurchaseItemRequest> items,
+            UUID siteId) {
 
         /** RNF-04: un producto repetido rechaza la compra entera antes de tocar el stock. */
         @AssertTrue(message = "Un producto no puede repetirse en la misma compra.")
@@ -132,8 +139,8 @@ class PurchaseController {
             return ids.stream().distinct().count() == ids.size();
         }
 
-        RegisterPurchaseCommand toCommand(UUID userId) {
-            return new RegisterPurchaseCommand(supplierId, supplierDocument, purchaseDate,
+        RegisterPurchaseCommand toCommand(UUID userId, UUID site) {
+            return new RegisterPurchaseCommand(supplierId, site, supplierDocument, purchaseDate,
                     items.stream().map(PurchaseItemRequest::toCommand).toList(), userId);
         }
     }

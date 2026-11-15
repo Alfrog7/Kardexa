@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '@shared/api/http'
 import type { Role } from '@shared/auth/session'
+import { PasswordInput } from '@shared/ui/PasswordInput'
+import type { SiteOption } from '../api/sites'
 import type { User } from '../api/users'
 
 export interface UserFormValues {
@@ -8,22 +10,27 @@ export interface UserFormValues {
   email: string
   password: string
   role: Role
+  /** Solo con rol de empleado. */
+  siteId?: string
 }
 
 interface UserFormProps {
   /** Usuario que se edita; sin él, el formulario crea uno nuevo. */
   user?: User
+  /** Sedes habilitadas entre las que se elige la del empleado. */
+  sites: SiteOption[]
   onSubmit: (values: UserFormValues) => Promise<void>
 }
 
 type FieldName = 'fullName' | 'email' | 'password' | 'role'
 
 /** Alta y edición. Al editar solo se cambian el nombre y el rol; el correo y la contraseña no. */
-export function UserForm({ user, onSubmit }: UserFormProps) {
+export function UserForm({ user, sites, onSubmit }: UserFormProps) {
   const [fullName, setFullName] = useState(user?.fullName ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<Role>(user?.role ?? 'EMPLOYEE')
+  const [siteId, setSiteId] = useState(user?.siteId ?? sites[0]?.id ?? '')
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({})
   const [formError, setFormError] = useState<string>()
   const [saving, setSaving] = useState(false)
@@ -34,7 +41,7 @@ export function UserForm({ user, onSubmit }: UserFormProps) {
     setErrors({})
     setFormError(undefined)
     try {
-      await onSubmit({ fullName, email, password, role })
+      await onSubmit({ fullName, email, password, role, siteId: role === 'EMPLOYEE' && siteId ? siteId : undefined })
     } catch (failure) {
       showError(failure)
       setSaving(false)
@@ -91,10 +98,9 @@ export function UserForm({ user, onSubmit }: UserFormProps) {
           </div>
           <div className="field">
             <label htmlFor="user-password">Contraseña inicial</label>
-            <input
+            <PasswordInput
               id="user-password"
               name="password"
-              type="password"
               autoComplete="new-password"
               value={password}
               required
@@ -113,6 +119,18 @@ export function UserForm({ user, onSubmit }: UserFormProps) {
         </select>
         {errors.role ? <p className="field__error">{errors.role}</p> : null}
       </div>
+      {role === 'EMPLOYEE' && sites.length > 0 ? (
+        <div className="field">
+          <label htmlFor="user-site">Sede</label>
+          <select id="user-site" name="siteId" value={siteId} onChange={(event) => setSiteId(event.target.value)}>
+            {sites.map((site) => (
+              <option key={site.id} value={site.id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
       {formError ? (
         <p className="alert" role="alert">
           {formError}

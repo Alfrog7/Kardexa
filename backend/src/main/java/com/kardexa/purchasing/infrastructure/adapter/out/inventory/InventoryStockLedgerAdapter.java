@@ -30,7 +30,7 @@ class InventoryStockLedgerAdapter implements StockLedger {
     }
 
     private void record(DocumentMovement movement, Purchase purchase, java.util.UUID userId) {
-        recordStockMovements.record(new RecordStockMovementsCommand(movement, purchase.id(), userId,
+        recordStockMovements.record(new RecordStockMovementsCommand(movement, purchase.id(), purchase.siteId(), userId,
                 purchase.items().stream().map(i -> new Line(i.productId(), i.quantity())).toList()));
     }
 }

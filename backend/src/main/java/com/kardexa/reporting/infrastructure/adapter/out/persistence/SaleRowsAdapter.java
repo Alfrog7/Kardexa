@@ -26,7 +26,7 @@ class SaleRowsAdapter implements SaleRows {
     }
 
     @Override
-    public void sales(ReportPeriod period, UUID sellerId, String status, Consumer<SaleRow> sink) {
+    public void sales(ReportPeriod period, UUID sellerId, UUID siteId, String status, Consumer<SaleRow> sink) {
         StringBuilder sql = new StringBuilder("""
                 SELECT s.number, s.sold_at, u.full_name AS seller, s.status, s.total, s.void_reason,
                        (SELECT count(*) FROM sale_item i WHERE i.sale_id = s.id) AS lines
@@ -39,6 +39,10 @@ class SaleRowsAdapter implements SaleRows {
         if (sellerId != null) {
             sql.append(" AND s.seller_id = :sellerId");
             params.addValue("sellerId", sellerId);
+        }
+        if (siteId != null) {
+            sql.append(" AND s.site_id = :siteId");
+            params.addValue("siteId", siteId);
         }
         if (status != null) {
             sql.append(" AND s.status = :status");

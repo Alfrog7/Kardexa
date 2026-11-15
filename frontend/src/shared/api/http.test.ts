@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { setActiveSite } from '@shared/site/activeSite'
 import { ApiError, apiDownload, apiRequest, filenameOf } from './http'
 
 function mockFetch(response: Response | Error) {
@@ -9,8 +10,61 @@ function mockFetch(response: Response | Error) {
   return fn
 }
 
+function mockFetchEach(make: () => Response) {
+  const fn = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) => Promise.resolve(make()))
+  vi.stubGlobal('fetch', fn)
+  return fn
+}
+
 const json = (body: unknown, status: number, type = 'application/json') =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': type } })
+
+describe('sede elegida', () => {
+  afterEach(() => {
+    setActiveSite(undefined)
+    vi.unstubAllGlobals()
+  })
+
+  it('añade siteId a las consultas por sede y no a las demás', async () => {
+    const fetchMock = mockFetchEach(() => json([], 200))
+    setActiveSite({ id: 'sede-1', name: 'Galeno' })
+
+    await apiRequest('/products')
+    await apiRequest('/sales?page=0')
+    await apiRequest('/products/1/kardex')
+    await apiRequest('/categories')
+    await apiRequest('/sales?siteId=otra')
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      '/api/v1/products?siteId=sede-1',
+      '/api/v1/sales?page=0&siteId=sede-1',
+      '/api/v1/products/1/kardex?siteId=sede-1',
+      '/api/v1/categories',
+      '/api/v1/sales?siteId=otra',
+    ])
+  })
+
+  it('incluye siteId al registrar ventas, compras y ajustes, pero no al anular', async () => {
+    const fetchMock = mockFetchEach(() => json({}, 201))
+    setActiveSite({ id: 'sede-1', name: 'Galeno' })
+
+    await apiRequest('/sales', { method: 'POST', body: JSON.stringify({ items: [] }) })
+    await apiRequest('/sales/9/void', { method: 'POST', body: JSON.stringify({ reason: 'x' }) })
+
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ siteId: 'sede-1', items: [] }))
+    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(JSON.stringify({ reason: 'x' }))
+  })
+
+  it('con «todas las sedes» o sin elección no cambia nada', async () => {
+    const fetchMock = mockFetchEach(() => json([], 200))
+
+    await apiRequest('/products')
+    setActiveSite({ id: null, name: 'Todas las sedes' })
+    await apiRequest('/products')
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual(['/api/v1/products', '/api/v1/products'])
+  })
+})
 
 describe('apiRequest', () => {
   afterEach(() => {

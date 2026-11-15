@@ -9,6 +9,7 @@ import com.kardexa.shared.domain.BusinessCalendar;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID;
 
 /** Historial general del inventario: qué entró y salió, de qué producto y quién lo hizo. */
 public class StockMovementHistoryService implements ListStockMovementsUseCase {
@@ -20,9 +21,10 @@ public class StockMovementHistoryService implements ListStockMovementsUseCase {
     }
 
     @Override
-    public ResultPage<MovementEntry> list(LocalDate from, LocalDate to, MovementType type, PageQuery page) {
+    public ResultPage<MovementEntry> list(
+            UUID siteId, LocalDate from, LocalDate to, MovementType type, PageQuery page) {
         Instant start = from == null ? null : BusinessCalendar.startOf(from);
         Instant end = to == null ? null : BusinessCalendar.endOf(to);
-        return movements.findAll(start, end, type, page);
+        return movements.findAll(siteId, start, end, type, page);
     }
 }

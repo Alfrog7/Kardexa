@@ -47,7 +47,7 @@ class ProductServiceTest {
     void setUp() {
         categories = new InMemoryCategoryRepository();
         products = new InMemoryProductRepository(id -> stock.getOrDefault(id, Quantity.ZERO));
-        service = new ProductService(products, categories, ids -> {
+        service = new ProductService(products, categories, (ids, siteId) -> {
             stockQueries.add(List.copyOf(ids));
             Map<UUID, Quantity> result = new HashMap<>();
             ids.forEach(id -> result.put(id, stock.getOrDefault(id, Quantity.ZERO)));
@@ -65,11 +65,11 @@ class ProductServiceTest {
     }
 
     private ResultPage<ProductView> search(String text, UUID categoryId, int page, int size) {
-        return service.search(new ProductSearch(text, categoryId, false, false, new PageQuery(page, size)));
+        return service.search(new ProductSearch(text, categoryId, false, false, null, new PageQuery(page, size)));
     }
 
     private ResultPage<ProductView> critical(String text) {
-        return service.search(new ProductSearch(text, null, true, false, new PageQuery(0, 20)));
+        return service.search(new ProductSearch(text, null, true, false, null, new PageQuery(0, 20)));
     }
 
     private static List<String> codes(ResultPage<ProductView> page) {
@@ -118,7 +118,7 @@ class ProductServiceTest {
         products.used.add(used);
 
         service.delete(unused);
-        assertThatThrownBy(() -> service.get(unused)).isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(() -> service.get(unused, null)).isInstanceOf(ProductNotFoundException.class);
         assertThatThrownBy(() -> service.delete(used)).isInstanceOf(ProductInUseException.class);
     }
 
@@ -181,7 +181,7 @@ class ProductServiceTest {
 
         service.update(new UpdateProductCommand(id, details("AB-001", drinks.id()), false));
 
-        assertThat(service.get(id).product().isActive()).isFalse();
+        assertThat(service.get(id, null).product().isActive()).isFalse();
     }
 
     @Test
@@ -200,7 +200,7 @@ class ProductServiceTest {
         UUID id = service.create(details("AB-001", drinks.id())).product().id();
         stock.put(id, Quantity.of("12.5"));
 
-        ProductView view = service.get(id);
+        ProductView view = service.get(id, null);
 
         assertThat(view.stock()).isEqualTo(Quantity.of("12.5"));
         assertThat(view.critical()).isFalse();
@@ -303,6 +303,6 @@ class ProductServiceTest {
     @Test
     @DisplayName("falla si el producto no existe")
     void failsWhenNotFound() {
-        assertThatThrownBy(() -> service.get(UUID.randomUUID())).isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(() -> service.get(UUID.randomUUID(), null)).isInstanceOf(ProductNotFoundException.class);
     }
 }

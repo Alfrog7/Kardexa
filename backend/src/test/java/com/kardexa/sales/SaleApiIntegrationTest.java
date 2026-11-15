@@ -289,7 +289,7 @@ class SaleApiIntegrationTest {
         jdbc.update("""
                 INSERT INTO product (id, code, name, category_id, unit, sale_price, min_stock)
                 VALUES (?, ?, ?, ?, 'UNIT', ?::numeric, 1)""", id, code, name, category, price);
-        jdbc.update("INSERT INTO product_stock (product_id, quantity, version) VALUES (?, ?::numeric, 0)", id, stock);
+        jdbc.update("INSERT INTO product_stock (product_id, site_id, quantity, version) VALUES (?, '00000000-0000-0000-0000-000000000001', ?::numeric, 0)", id, stock);
         return id;
     }
 

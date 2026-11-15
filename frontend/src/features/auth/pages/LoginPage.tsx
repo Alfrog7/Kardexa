@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
 import { login } from '../api/auth'
+import { PasswordInput } from '@shared/ui/PasswordInput'
 import { AuthLayout } from '../components/AuthLayout'
 
 /** Inicio de sesión (HU-02): `POST /api/v1/auth/login`. Si ya hay sesión, va al panel. */
@@ -40,11 +41,12 @@ export function LoginPage() {
       ) : null}
       <form className="auth__form" onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="email">Correo</label>
+          <label htmlFor="email">Usuario</label>
           <input
             id="email"
             name="email"
             type="email"
+            placeholder="correo@ejemplo.com"
             autoComplete="username"
             required
             value={email}
@@ -53,10 +55,9 @@ export function LoginPage() {
         </div>
         <div className="field">
           <label htmlFor="password">Contraseña</label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}
@@ -73,7 +74,7 @@ export function LoginPage() {
         </button>
       </form>
       <p className="muted auth__alt">
-        ¿Primera vez? <Link to="/registro-inicial">Crea al primer administrador</Link>
+        ¿Aún no hay cuentas? <Link to="/registro-inicial">Configura el acceso inicial</Link>
       </p>
     </AuthLayout>
   )

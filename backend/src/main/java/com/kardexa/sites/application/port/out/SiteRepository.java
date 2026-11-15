@@ -20,6 +20,9 @@ public interface SiteRepository {
     /** Todas las sedes ordenadas por nombre sin distinguir mayúsculas. */
     List<Site> findAllOrderedByName();
 
+    /** Elimina la sede; lanza {@code SiteNotDeletableException} si tiene registros que dependen de ella. */
+    void delete(UUID id);
+
     boolean existsByName(String name);
 
     boolean existsByNameExcluding(String name, UUID excludedId);

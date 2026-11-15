@@ -27,12 +27,15 @@ class JwtTokenIssuer implements TokenIssuer {
     @Override
     public IssuedToken issue(User user) {
         Instant now = Instant.now();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .subject(user.id().toString())
                 .claim("role", user.role().name())
                 .issuedAt(now)
-                .expiresAt(now.plus(lifetime))
-                .build();
+                .expiresAt(now.plus(lifetime));
+        if (user.siteId() != null) {
+            builder.claim("siteId", user.siteId().toString());
+        }
+        JwtClaimsSet claims = builder.build();
         String value = encoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
                 .getTokenValue();
         return new IssuedToken(value, lifetime.toSeconds());

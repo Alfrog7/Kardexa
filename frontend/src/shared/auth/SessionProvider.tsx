@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { setAccessToken, setUnauthorizedHandler } from '@shared/api/http'
 import { SessionContext, type Session, type SessionUser } from './session'
+import { setActiveSite } from '@shared/site/activeSite'
 import { clearSession, loadSession, saveSession } from './sessionStore'
 
 interface SessionProviderProps {
@@ -22,6 +23,7 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
   const start = useCallback((session: Session) => {
     setAccessToken(session.token)
     saveSession(session)
+    setActiveSite(undefined)
     setExpired(false)
     setUser(session.user)
   }, [])
@@ -29,6 +31,7 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
   const end = useCallback(() => {
     setAccessToken(undefined)
     clearSession()
+    setActiveSite(undefined)
     setUser(undefined)
   }, [])
 
@@ -37,6 +40,7 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
     setUnauthorizedHandler(() => {
       setAccessToken(undefined)
       clearSession()
+      setActiveSite(undefined)
       setUser(undefined)
       setExpired(true)
     })

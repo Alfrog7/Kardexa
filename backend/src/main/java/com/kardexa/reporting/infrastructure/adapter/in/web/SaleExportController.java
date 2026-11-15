@@ -35,7 +35,7 @@ class SaleExportController {
         StreamingResponseBody body = stream -> {
             CsvWriter csv = new CsvWriter(stream);
             csv.row("Número", "Fecha y hora", "Vendedor", "Estado", "Productos", "Total", "Motivo de anulación");
-            export.sales(period, params.sellerId(), params.status(), row -> csv.row(row.number(),
+            export.sales(period, params.sellerId(), params.siteId(), params.status(), row -> csv.row(row.number(),
                     DATE_TIME.format(row.soldAt()), row.seller(), "VOIDED".equals(row.status()) ? "Anulada" : "Registrada",
                     String.valueOf(row.lines()), row.total().toString(), row.voidReason()));
             csv.flush();
@@ -48,6 +48,7 @@ class SaleExportController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             UUID sellerId,
+            UUID siteId,
             @Pattern(regexp = "REGISTERED|VOIDED", message = "El estado debe ser REGISTERED o VOIDED.") String status) {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")

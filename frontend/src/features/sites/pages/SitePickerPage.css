@@ -1,0 +1,119 @@
+.site-picker {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+.site-picker__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.site-picker__body {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 64rem;
+  margin: auto;
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+.site-picker__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.site-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-picker__grid li {
+  width: min(15rem, 100%);
+}
+
+.site-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 10.5rem;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  text-align: center;
+  color: var(--color-text);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition:
+    border-color 140ms var(--ease-out),
+    box-shadow 140ms var(--ease-out);
+}
+
+.site-card:hover,
+.site-card[aria-current='true'] {
+  border-color: var(--color-primary);
+}
+
+.site-card:hover {
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.08);
+}
+
+.site-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+}
+
+.site-card__name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.site-card__address {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.site-card__badge {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary-contrast);
+  background: var(--color-primary);
+}
+
+.site-card--all {
+  border-style: dashed;
+}

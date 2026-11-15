@@ -30,6 +30,11 @@ class InMemorySiteRepository implements SiteRepository {
     }
 
     @Override
+    public void delete(UUID id) {
+        rows.remove(id);
+    }
+
+    @Override
     public Optional<Site> findById(UUID id) {
         return Optional.ofNullable(rows.get(id)).map(InMemorySiteRepository::copy);
     }

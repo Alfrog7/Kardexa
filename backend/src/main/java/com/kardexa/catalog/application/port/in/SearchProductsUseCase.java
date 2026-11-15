@@ -20,9 +20,11 @@ public interface SearchProductsUseCase {
      * @param categoryId   categoría de los productos; opcional
      * @param criticalOnly solo productos con stock actual ≤ stock mínimo
      * @param includeInactive incluye también los productos desactivados
+     * @param siteId       sede cuyo stock se muestra y evalúa (RN-09 por sede); nulo suma todas
      * @param page         página pedida
      */
-    record ProductSearch(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, PageQuery page) {
+    record ProductSearch(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, UUID siteId,
+            PageQuery page) {
 
         public static final int TEXT_MAX_LENGTH = 100;
 

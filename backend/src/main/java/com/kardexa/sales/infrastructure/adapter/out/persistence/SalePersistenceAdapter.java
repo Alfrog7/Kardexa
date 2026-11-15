@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 class SalePersistenceAdapter implements SaleRepository {
 
     private static final String HEADER_SELECT = """
-            SELECT s.id, s.number, s.sold_at, s.seller_id, u.full_name, s.status, s.void_reason, s.total
+            SELECT s.id, s.number, s.sold_at, s.seller_id, u.full_name, s.site_id, s.status, s.void_reason, s.total
             FROM sale s
             JOIN app_user u ON u.id = s.seller_id
             """;
@@ -49,13 +49,14 @@ class SalePersistenceAdapter implements SaleRepository {
     @Override
     public void add(Sale sale) {
         jdbc.sql("""
-                INSERT INTO sale (id, number, status, total, seller_id, sold_at)
-                VALUES (:id, :number, :status, :total, :sellerId, :soldAt)""")
+                INSERT INTO sale (id, number, status, total, seller_id, site_id, sold_at)
+                VALUES (:id, :number, :status, :total, :sellerId, :siteId, :soldAt)""")
                 .param("id", sale.id())
                 .param("number", sale.number().toString())
                 .param("status", sale.status().name())
                 .param("total", sale.total().amount())
                 .param("sellerId", sale.sellerId())
+                .param("siteId", sale.siteId())
                 .param("soldAt", Timestamp.from(sale.soldAt()))
                 .update();
         int line = 1;
@@ -87,12 +88,12 @@ class SalePersistenceAdapter implements SaleRepository {
                         Money.of(rs.getBigDecimal("unit_price"))))
                 .list();
         return jdbc.sql("""
-                SELECT id, number, status, seller_id, sold_at, void_reason, voided_by, voided_at
+                SELECT id, number, status, seller_id, site_id, sold_at, void_reason, voided_by, voided_at
                 FROM sale WHERE id = :id""")
                 .param("id", id)
                 .query((rs, n) -> Sale.restore(rs.getObject("id", UUID.class), SaleNumber.parse(rs.getString("number")),
                         items, SaleStatus.valueOf(rs.getString("status")), rs.getObject("seller_id", UUID.class),
-                        rs.getTimestamp("sold_at").toInstant(),
+                        rs.getObject("site_id", UUID.class), rs.getTimestamp("sold_at").toInstant(),
                         rs.getString("void_reason") == null ? null : new Sale.Voiding(rs.getString("void_reason"),
                                 rs.getObject("voided_by", UUID.class), rs.getTimestamp("voided_at").toInstant())))
                 .optional();
@@ -126,7 +127,7 @@ class SalePersistenceAdapter implements SaleRepository {
     }
 
     @Override
-    public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, PageQuery page) {
+    public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, UUID siteId, PageQuery page) {
         StringBuilder where = new StringBuilder("WHERE true");
         Map<String, Object> params = new LinkedHashMap<>();
         if (from != null) {
@@ -140,6 +141,10 @@ class SalePersistenceAdapter implements SaleRepository {
         if (sellerId != null) {
             where.append(" AND s.seller_id = :sellerId");
             params.put("sellerId", sellerId);
+        }
+        if (siteId != null) {
+            where.append(" AND s.site_id = :siteId");
+            params.put("siteId", siteId);
         }
         long total = jdbc.sql("SELECT count(*) FROM sale s " + where)
                 .params(params)
@@ -182,7 +187,7 @@ class SalePersistenceAdapter implements SaleRepository {
                 })
                 .list();
         return headers.stream()
-                .map(h -> new SaleView(h.id(), h.number(), h.soldAt(), h.sellerId(), h.sellerName(), h.status(), h.voidReason(),
+                .map(h -> new SaleView(h.id(), h.number(), h.soldAt(), h.sellerId(), h.sellerName(), h.siteId(), h.status(), h.voidReason(),
                         h.total(), items.get(h.id())))
                 .toList();
     }
@@ -190,10 +195,11 @@ class SalePersistenceAdapter implements SaleRepository {
     private static Header header(ResultSet rs, int rowNum) throws SQLException {
         return new Header(rs.getObject("id", UUID.class), rs.getString("number"),
                 rs.getTimestamp("sold_at").toInstant(), rs.getObject("seller_id", UUID.class),
-                rs.getString("full_name"), SaleStatus.valueOf(rs.getString("status")), rs.getString("void_reason"),
+                rs.getString("full_name"), rs.getObject("site_id", UUID.class), SaleStatus.valueOf(rs.getString("status")),
+                rs.getString("void_reason"),
                 Money.of(rs.getBigDecimal("total")));
     }
 
-    private record Header(UUID id, String number, Instant soldAt, UUID sellerId, String sellerName, SaleStatus status,
-            String voidReason, Money total) {}
+    private record Header(UUID id, String number, Instant soldAt, UUID sellerId, String sellerName, UUID siteId,
+            SaleStatus status, String voidReason, Money total) {}
 }

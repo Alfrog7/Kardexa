@@ -23,17 +23,20 @@ class StockFiguresAdapter implements StockFigures {
     }
 
     @Override
-    public List<CriticalProduct> criticalStock() {
+    public List<CriticalProduct> criticalStock(UUID siteId) {
         return jdbc.sql("""
                 SELECT p.id, p.code, p.name, c.name AS category, coalesce(s.quantity, 0) AS stock, p.min_stock,
                        i.updated_at AS image_version
                 FROM product p
                 JOIN category c ON c.id = p.category_id
-                LEFT JOIN product_stock s ON s.product_id = p.id
+                LEFT JOIN (SELECT product_id, sum(quantity) AS quantity FROM product_stock
+                           WHERE CAST(:siteId AS uuid) IS NULL OR site_id = :siteId
+                           GROUP BY product_id) s ON s.product_id = p.id
                 LEFT JOIN product_image i ON i.product_id = p.id
                 WHERE p.active
                   AND coalesce(s.quantity, 0) <= p.min_stock
                 ORDER BY coalesce(s.quantity, 0) > 0, coalesce(s.quantity, 0) - p.min_stock, p.name, p.id""")
+                .param("siteId", siteId, java.sql.Types.OTHER)
                 .query((row, rowNumber) -> {
                     Timestamp image = row.getTimestamp("image_version");
                     return new CriticalProduct(row.getObject("id", UUID.class), row.getString("code"),
