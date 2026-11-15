@@ -106,8 +106,9 @@ Más detalle en [backend/README.md](backend/README.md) y [frontend/README.md](fr
 | 5 · Proveedores y compras | Una compra suma stock | ✅ Completada |
 | 6 · Ventas | Una venta descuenta stock | ✅ Completada |
 | 7 · Panel y reportes | Dashboard con indicadores | ✅ Completada |
-| 8 · Landing | Página pública del producto | ⚪ Pendiente |
-| 9 · Despliegue | Publicación gratuita | ⚪ Pendiente |
+| 8 · Sedes y turnos | Varias sedes, turnos y cierre por conteo | ⚪ Pendiente |
+| 9 · Landing | Página pública del producto | ⚪ Pendiente |
+| 10 · Despliegue | Publicación gratuita | ⚪ Pendiente |
 
 El avance se sigue en los [milestones](https://github.com/Alfrog7/Kardexa/milestones) y en los [issues](https://github.com/Alfrog7/Kardexa/issues).
 
@@ -119,7 +120,7 @@ Kardexa/
 ├── docs/              # problemática, requisitos, arquitectura, ADRs y bitácora
 ├── backend/           # API Spring Boot · hexagonal por módulo (ADR 0002)
 ├── frontend/          # panel React · por funcionalidades (ADR 0005)
-├── landing/           # página pública (fase 8)
+├── landing/           # página pública (fase 9)
 ├── .github/workflows/ # CI
 ├── docker-compose.yml # PostgreSQL local
 ├── CHANGELOG.md

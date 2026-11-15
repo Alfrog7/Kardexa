@@ -32,3 +32,8 @@ Traducción oficial de los términos de negocio al código ([ADR 0003](../adr/00
 | Anulación | `void` / `VOIDED` | purchasing, sales | Cancelación que revierte el stock sin borrar el documento. |
 | Vendedor | `seller` | sales | Usuario que registró la venta. |
 | Panel / indicadores | `Dashboard` | reporting | Resumen de ventas y stock. |
+| Sede | `Site` | sites | Local del negocio con su propio stock y kárdex (RN-13). |
+| Turno | `Shift` | sites | Jornada de una sede a cargo de quien lleva la caja; uno abierto por sede (RN-14). |
+| Entrada de mercadería | `RECEIPT` | inventory | Entrada sin costo que anota la trabajadora de la sede. |
+| Cierre por conteo | `SHIFT_CLOSE` | sites | Salida que descuenta lo vendido: stock registrado − sobrante contado (RN-15). |
+| Cuadre | `difference` | sites | Recibido − esperado del turno; negativo es faltante (RN-16). |
