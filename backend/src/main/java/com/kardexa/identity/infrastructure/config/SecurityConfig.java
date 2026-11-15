@@ -84,6 +84,8 @@ class SecurityConfig {
                     auth.requestMatchers(API + "/users", API + "/users/**").hasRole("ADMIN");
                     // Las compras muestran costos: consultarlas también es solo de ADMIN (RN-05, ADR 0009).
                     auth.requestMatchers(API + "/purchases", API + "/purchases/**").hasRole("ADMIN");
+                    // Las sedes las administra el ADMIN; la lectura de su sede para el EMPLEADO llega con la HU-20 (ADR 0013).
+                    auth.requestMatchers(API + "/sites", API + "/sites/**").hasRole("ADMIN");
                     // Los indicadores muestran montos de todo el negocio: solo ADMIN (ADR 0012).
                     auth.requestMatchers(API + "/dashboard", API + "/dashboard/**").hasRole("ADMIN");
                     // RN-05: registrar y consultar ventas es de todos; anularlas, solo del ADMIN (ADR 0010).

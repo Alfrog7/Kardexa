@@ -9,6 +9,7 @@ export const routes = {
   inventory: '/inventario',
   purchases: '/compras',
   suppliers: '/proveedores',
+  sites: '/sedes',
   users: '/usuarios',
 } as const
 
@@ -20,5 +21,6 @@ export const navigation = [
   { to: routes.inventory, label: 'Inventario' },
   { to: routes.purchases, label: 'Compras', adminOnly: true },
   { to: routes.suppliers, label: 'Proveedores' },
+  { to: routes.sites, label: 'Sedes', adminOnly: true },
   { to: routes.users, label: 'Usuarios', adminOnly: true },
 ] as const
