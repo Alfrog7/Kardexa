@@ -4,7 +4,10 @@ Crea (si no existen) categorías, productos `DEMO-*`, un proveedor, una empleada
 que da stock. Luego registra ventas como ADMIN y como EMPLEADO, anula una y comprueba las reglas
 principales: stock insuficiente (RN-01), anulación solo del ADMIN (RN-05) y que el EMPLEADO solo ve sus
 ventas (RF-21). Además deja productos en stock crítico (RN-09) y comprueba que el inicio (`/dashboard`)
-cuadra con el historial de ventas. Solo usa la biblioteca estándar de Python.
+cuadra con el historial de ventas. Por último crea tres sedes con una trabajadora por turno (mañana y
+tarde), registra entradas de mercadería, abre y cierra turnos con conteo del sobrante y pagos mixtos
+(efectivo, Yape, Plin y transferencia), uno con faltante, y comprueba que lo vendido en cada cierre cuadra con
+el kárdex y que las sedes suman el total del negocio. Solo usa la biblioteca estándar de Python.
 
 Uso (con el backend corriendo):
 
@@ -63,6 +66,14 @@ HISTORY_DAYS = 29
 BASKET = [("DEMO-ARZ", "1"), ("DEMO-AZU", "2"), ("DEMO-ACE", "1"), ("DEMO-LEN", "0.5"), ("DEMO-GAS", "3"),
           ("DEMO-GAL", "1")]
 VOIDED_IN_HISTORY = 4
+
+# Sedes de la demostración (además de la «Sede principal») y sus dos turnos del día.
+MAIN_SITE_ID = "00000000-0000-0000-0000-000000000001"
+DEMO_SITES = ["Sede Galeno", "Sede Monserrate"]
+SHIFT_NAMES = ["mañana", "tarde"]
+RECEIPT_QUANTITY = {"DEMO-ARZ": "20", "DEMO-AZU": "30", "DEMO-ACE": "20", "DEMO-LEN": "8", "DEMO-GAS": "60",
+                    "DEMO-GAL": "24"}
+SHORTAGE = Decimal("5.00")  # lo que falta en el turno de la tarde de la última sede
 
 # Productos que quedan en stock crítico (stock <= mínimo, RN-09) y el stock con el que quedan.
 CRITICAL = {"DEMO-LEJ": Decimal("0"), "DEMO-DET": Decimal("2")}
@@ -243,6 +254,128 @@ def registered_sales(api, start, end):
             return total, count
 
 
+def money(value):
+    return Decimal(str(value)).quantize(Decimal("0.01"))
+
+
+def ensure_sites(admin):
+    """Las tres sedes de la demostración: la principal y las `DEMO_SITES`, con su id."""
+    _, listed = admin.call("GET", "/sites", expect=200)
+    by_name = {site["name"]: site["id"] for site in listed}
+    sites = [("Sede principal", MAIN_SITE_ID)]
+    for name in DEMO_SITES:
+        if name not in by_name:
+            _, created = admin.call("POST", "/sites", {"name": name, "address": "Lima"}, expect=201)
+            by_name[name] = created["id"]
+            print(f"  sede creada: {name}")
+        sites.append((name, by_name[name]))
+    return sites
+
+
+def ensure_shift_worker(admin, label, site_id, password):
+    """Una trabajadora por turno y sede; devuelve su sesión o None si ya existía sin contraseña conocida."""
+    email = f"{label}@kardexa.test"
+    _, users = admin.call("GET", "/users?size=100", expect=200)
+    if not any(user["email"] == email for user in users["content"]):
+        admin.call("POST", "/users", {"fullName": f"Trabajadora {label}", "email": email, "password": password,
+                                      "role": "EMPLOYEE", "siteId": site_id}, expect=201)
+    worker = Api(admin.base)
+    worker.login(email, password)
+    return worker
+
+
+def split_payments(expected, shortage=Decimal(0)):
+    """Reparte lo esperado entre los cuatro medios; `shortage` se resta del efectivo (faltante)."""
+    cash = money(expected * Decimal("0.55"))
+    yape = money(expected * Decimal("0.25"))
+    plin = money(expected * Decimal("0.10"))
+    transfer = expected - cash - yape - plin
+    cash = max(Decimal(0), cash - shortage)
+    return {"cash": str(cash), "yape": str(yape), "plin": str(plin), "transfer": str(money(transfer))}
+
+
+def run_shift(worker, products, rng, shortage=Decimal(0)):
+    """Marca el ingreso, vende un poco, cuenta el sobrante y cierra con pagos mixtos. Devuelve el turno cerrado."""
+    _, shift = worker.call("POST", "/shifts", {}, expect=201)
+    registered = Decimal(0)
+    for _ in range(rng.randint(2, 3)):
+        lines = [(code, str(Decimal(qty) * rng.randint(1, 2))) for code, qty in rng.sample(BASKET, rng.randint(1, 2))]
+        registered += money(sell(worker, products, lines)["total"])
+
+    _, page = worker.call("GET", "/products?size=100", expect=200)
+    counts, counted = [], Decimal(0)
+    base = dict(BASKET)
+    for product in page["content"]:
+        have = Decimal(str(product["stock"]))
+        if not product["code"].startswith("DEMO-") or have <= 0:
+            continue
+        sold = Decimal(0)
+        if product["code"] in base:
+            sold = min(have, Decimal(base[product["code"]]) * rng.randint(1, 4))
+        counts.append({"productId": product["id"], "leftover": str(have - sold)})
+        counted += money(sold * Decimal(str(product["salePrice"])))
+    expected = registered + counted
+    payments = split_payments(expected, shortage)
+    _, closed = worker.call("POST", f"/shifts/{shift['id']}/close", {
+        "counts": counts, "payments": payments,
+        "note": "Faltó sencillo" if shortage else None}, expect=200)
+    check(money(closed["expectedAmount"]) == expected,
+          f"esperado S/ {closed['expectedAmount']} = ventas registradas S/ {registered} + vendido por conteo S/ {counted}")
+    return closed
+
+
+def register_shifts(admin, products, employee_password, args):
+    """Tres sedes con entradas y un turno de mañana y uno de tarde cerrados en cada una (HU-20 a HU-24)."""
+    rng = random.Random(171)
+    sites = ensure_sites(admin)
+    password = employee_password or os.environ.get("KARDEXA_DEMO_PASSWORD")
+    if not password:
+        print("  omitido: define KARDEXA_DEMO_PASSWORD para usar o crear las trabajadoras de los turnos")
+        return
+    closed = []
+    for number, (name, site_id) in enumerate(sites):
+        admin.call("POST", "/receipts", {"siteId": site_id, "items": [
+            {"productId": products[code]["id"], "quantity": qty} for code, qty in RECEIPT_QUANTITY.items()]},
+            expect=201)
+        print(f"  {name}: entrada de mercadería registrada")
+        for shift_name in SHIFT_NAMES:
+            worker = ensure_shift_worker(admin, f"{shift_name}.sede{number + 1}", site_id, password)
+            missing = SHORTAGE if (number == len(sites) - 1 and shift_name == SHIFT_NAMES[-1]) else Decimal(0)
+            shift = run_shift(worker, products, rng, missing)
+            closed.append((name, shift_name, shift))
+            print(f"  {name} · turno {shift_name}: esperado S/ {shift['expectedAmount']}, recibido "
+                  f"S/ {shift['receivedAmount']}, diferencia S/ {shift['difference']}")
+
+    print("  Comprobaciones de los turnos")
+    for name, shift_name, shift in closed:
+        check(money(shift["difference"]) == money(shift["receivedAmount"]) - money(shift["expectedAmount"]),
+              f"{name} · {shift_name}: diferencia = recibido − esperado")
+    check(any(money(shift["difference"]) < 0 for _, _, shift in closed), "hay un turno con faltante")
+    ids = {shift["id"]: shift for _, _, shift in closed}
+    _, moves = admin.call("GET", "/stock-movements?type=SHIFT_CLOSE&size=100", expect=200)
+    by_shift = {}
+    for entry in moves["content"]:
+        move = entry["movement"]
+        if move["sourceId"] in ids:
+            key = (move["sourceId"], entry["productCode"])
+            by_shift[key] = by_shift.get(key, Decimal(0)) + Decimal(move["quantity"])
+    matches = all(
+        by_shift.get((shift["id"], item_code)) == Decimal(item["soldByCount"])
+        for shift in ids.values() for item in shift["items"] if Decimal(item["soldByCount"]) > 0
+        for item_code in [next(p["code"] for p in products.values() if p["id"] == item["productId"])])
+    check(matches, "lo vendido en cada cierre cuadra con las salidas del kárdex")
+
+    start, end = (today() - timedelta(days=HISTORY_DAYS)).isoformat(), today().isoformat()
+    _, dashboard = admin.call("GET", f"/dashboard?from={start}&to={end}", expect=200)
+    sites_total = sum(money(site["total"]) for site in dashboard["sites"])
+    check(sites_total == money(dashboard["summary"]["total"]),
+          f"las sedes suman el total del negocio (S/ {sites_total})")
+    _, listed = admin.call("GET", f"/shifts?from={start}&to={end}", expect=200)
+    received = sum(money(s["receivedAmount"]) for s in listed if s["receivedAmount"] is not None)
+    check(received == money(dashboard["payments"]["total"]),
+          f"lo recibido por medio de pago (S/ {dashboard['payments']['total']}) suma el de los turnos")
+
+
 def check(condition, message):
     print(("  OK   " if condition else "  FALLA ") + message)
     return condition
@@ -349,7 +482,9 @@ def main():
     check(len(dashboard["topProducts"]) > 0, f"{len(dashboard['topProducts'])} productos entre los más vendidos")
     codes = {p["productCode"] for p in dashboard["criticalStock"]}
     check(set(CRITICAL) <= codes, f"stock crítico: {', '.join(sorted(codes))}")
-    print("\nListo. Abre el inicio y /ventas en el panel para ver los indicadores y el historial.")
+    print("\n10. Sedes y turnos (HU-20 a HU-24)")
+    register_shifts(admin, products, employee_password, args)
+    print("\nListo. Abre el inicio y /ventas en el panel para ver los indicadores, las sedes y los turnos.")
 
 
 if __name__ == "__main__":
