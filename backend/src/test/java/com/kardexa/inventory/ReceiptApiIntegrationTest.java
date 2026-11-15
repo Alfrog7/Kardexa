@@ -48,7 +48,7 @@ class ReceiptApiIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jdbc.execute("TRUNCATE sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
+        jdbc.execute("TRUNCATE shift_item, shift, sale_item, sale, purchase_item, purchase, supplier, stock_movement, stock_adjustment,"
                 + " product_stock, product_image, product, category");
         jdbc.update("DELETE FROM site WHERE id <> ?", MainSite.ID);
         TestSecurity.insertAdmin(jdbc);

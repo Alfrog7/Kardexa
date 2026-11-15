@@ -10,7 +10,7 @@ export interface ProductOption {
 }
 
 export type Direction = 'IN' | 'OUT'
-export type MovementType = 'PURCHASE' | 'SALE' | 'ADJUSTMENT' | 'PURCHASE_VOID' | 'SALE_VOID' | 'RECEIPT'
+export type MovementType = 'PURCHASE' | 'SALE' | 'ADJUSTMENT' | 'PURCHASE_VOID' | 'SALE_VOID' | 'RECEIPT' | 'SHIFT_CLOSE'
 export type AdjustmentReason = 'SHRINKAGE' | 'PHYSICAL_COUNT' | 'CORRECTION'
 
 /** Esquema `StockMovement` de docs/api/openapi.yaml. Los decimales llegan como string. */

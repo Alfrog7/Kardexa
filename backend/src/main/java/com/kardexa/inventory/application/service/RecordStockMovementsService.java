@@ -44,6 +44,7 @@ public class RecordStockMovementsService implements RecordStockMovementsUseCase 
             case PURCHASE, PURCHASE_VOID -> SourceType.PURCHASE;
             case SALE, SALE_VOID -> SourceType.SALE;
             case RECEIPT -> SourceType.RECEIPT;
+            case SHIFT_CLOSE -> SourceType.SHIFT;
         };
         // ADR 0006, punto 5: siempre en el mismo orden, para que dos documentos no se bloqueen entre sí.
         var lines = command.lines().stream().sorted(Comparator.comparing(Line::productId)).toList();
@@ -64,7 +65,7 @@ public class RecordStockMovementsService implements RecordStockMovementsUseCase 
     private static Direction directionOf(DocumentMovement movement) {
         return switch (movement) {
             case PURCHASE, SALE_VOID, RECEIPT -> Direction.IN;
-            case PURCHASE_VOID, SALE -> Direction.OUT;
+            case PURCHASE_VOID, SALE, SHIFT_CLOSE -> Direction.OUT;
         };
     }
 }

@@ -558,6 +558,68 @@ paths:
         '409': { $ref: '#/components/responses/ConcurrentModification' }
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
+  /shifts:
+    post:
+      tags: [sites]
+      operationId: openShift
+      summary: Abre el turno de una sede (HU-22, RN-14)
+      description: Guarda una foto del stock de cada producto al abrir. Como máximo hay un turno abierto por sede (409 si ya hay). El EMPLOYEE abre en su sede; el ADMIN indica `siteId`.
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpenShiftRequest' }
+      responses:
+        '201':
+          description: Turno abierto
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shift' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /shifts/current:
+    get:
+      tags: [sites]
+      operationId: getCurrentShift
+      summary: El turno abierto de la sede (HU-22)
+      parameters:
+        - name: siteId
+          in: query
+          schema: { type: string, format: uuid }
+          description: Solo el ADMIN; el EMPLOYEE usa su sede
+      responses:
+        '200':
+          description: Turno abierto
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shift' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /shifts/{id}/close:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [sites]
+      operationId: closeShift
+      summary: Cierra el turno contando lo que sobró de cada producto (HU-22, RN-15)
+      description: En una sola transacción calcula lo vendido por conteo (stock registrado − sobrante), lo descuenta con una salida `SHIFT_CLOSE` y fija el monto esperado (ventas registradas + vendido por conteo × precio). Lo cierra el responsable o el ADMIN. Un turno cerrado no se modifica.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloseShiftRequest' }
+      responses:
+        '200':
+          description: Turno cerrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shift' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConcurrentModification' }
+        '422': { $ref: '#/components/responses/BusinessRuleViolation' }
+
   /suppliers:
     get:
       tags: [purchasing]
@@ -1184,7 +1246,7 @@ components:
       enum: [IN, OUT]
     MovementType:
       type: string
-      enum: [PURCHASE, SALE, ADJUSTMENT, PURCHASE_VOID, SALE_VOID, RECEIPT]
+      enum: [PURCHASE, SALE, ADJUSTMENT, PURCHASE_VOID, SALE_VOID, RECEIPT, SHIFT_CLOSE]
     StockMovement:
       type: object
       required: [id, occurredAt, type, direction, quantity, balanceAfter, sourceId, user]
@@ -1252,6 +1314,49 @@ components:
             properties:
               productId: { type: string, format: uuid }
               quantity: { $ref: '#/components/schemas/Decimal3' }
+
+    OpenShiftRequest:
+      type: object
+      properties:
+        siteId: { type: string, format: uuid }
+    CloseShiftRequest:
+      type: object
+      required: [counts]
+      properties:
+        counts:
+          type: array
+          items:
+            type: object
+            required: [productId, leftover]
+            properties:
+              productId: { type: string, format: uuid }
+              leftover: { $ref: '#/components/schemas/Decimal3' }
+        note: { type: string, maxLength: 255 }
+    Shift:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        responsibleId: { type: string, format: uuid }
+        responsible: { type: string }
+        status: { type: string, enum: [OPEN, CLOSED] }
+        openedAt: { type: string, format: date-time }
+        closedAt: { type: string, format: date-time, nullable: true }
+        registeredSales: { type: number, nullable: true, description: Ventas registradas una a una durante el turno }
+        countedSales: { type: number, nullable: true, description: Lo vendido por conteo × precio }
+        expectedAmount: { type: number, nullable: true, description: registeredSales + countedSales }
+        note: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId: { type: string, format: uuid }
+              productName: { type: string }
+              openingStock: { $ref: '#/components/schemas/Decimal3' }
+              leftover: { $ref: '#/components/schemas/Decimal3', nullable: true }
+              soldByCount: { $ref: '#/components/schemas/Decimal3', nullable: true }
+              unitPrice: { type: number, nullable: true }
 
     SupplierRequest:
       type: object

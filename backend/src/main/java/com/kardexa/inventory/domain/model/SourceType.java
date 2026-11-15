@@ -5,5 +5,6 @@ public enum SourceType {
     PURCHASE,
     SALE,
     ADJUSTMENT,
-    RECEIPT
+    RECEIPT,
+    SHIFT
 }

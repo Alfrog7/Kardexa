@@ -7,5 +7,6 @@ public enum MovementType {
     ADJUSTMENT,
     PURCHASE_VOID,
     SALE_VOID,
-    RECEIPT
+    RECEIPT,
+    SHIFT_CLOSE
 }
