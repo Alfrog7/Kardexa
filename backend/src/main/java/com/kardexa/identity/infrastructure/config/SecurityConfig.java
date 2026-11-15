@@ -73,6 +73,7 @@ class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.POST, API + "/auth/setup", API + "/auth/login").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, API + "/auth/setup-status").permitAll();
                     auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
                     // Exportar a CSV muestra costos y movimientos de todo el negocio: solo ADMIN (ADR 0012).

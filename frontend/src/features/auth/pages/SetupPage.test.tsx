@@ -29,6 +29,13 @@ afterEach(() => {
 })
 
 describe('registro inicial (HU-01)', () => {
+  it('con cuentas existentes vuelve al ingreso', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ pending: false })))
+    renderSetup()
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ingresa a tu negocio' })).toBeInTheDocument()
+  })
+
   it('crea al administrador, abre su sesión y entra al panel', async () => {
     const admin = { id: '1', fullName: 'Ana Pérez', email: 'ana@correo.com', role: 'ADMIN', active: true }
     vi.stubGlobal(

@@ -3,9 +3,11 @@ import { useLocation, useNavigate } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
 import { setActiveSite, useActiveSite } from '@shared/site/activeSite'
+import { Dialog } from '@shared/ui/Dialog'
 import { Icon } from '@shared/ui/Icon'
 import { Logo } from '@shared/ui/Logo'
-import { listSites, type Site } from '../api/sites'
+import { createSite, listSites, type Site, type SiteData } from '../api/sites'
+import { SiteForm } from '../components/SiteForm'
 import './SitePickerPage.css'
 
 /**
@@ -19,6 +21,7 @@ export function SitePickerPage() {
   const from = (useLocation().state as { from?: string } | null)?.from
   const [sites, setSites] = useState<Site[]>()
   const [error, setError] = useState<string>()
+  const [creating, setCreating] = useState(false)
   const firstName = user?.fullName.split(' ')[0]
 
   useEffect(() => {
@@ -27,6 +30,13 @@ export function SitePickerPage() {
       (failure: unknown) => setError(failure instanceof ApiError ? failure.message : 'No se pudieron cargar las sedes.'),
     )
   }, [])
+
+  /** Crea la sede con el mismo formulario de «Sedes» y la deja a la vista para elegirla. */
+  async function handleCreate(data: SiteData) {
+    const created = await createSite(data)
+    setSites((current) => [...(current ?? []), created])
+    setCreating(false)
+  }
 
   function choose(id: string | null, name: string) {
     setActiveSite({ id, name })
@@ -72,6 +82,15 @@ export function SitePickerPage() {
               </li>
             ))}
             <li>
+              <button className="site-card site-card--new" type="button" onClick={() => setCreating(true)}>
+                <span className="site-card__icon">
+                  <Icon name="plus" size={26} />
+                </span>
+                <span className="site-card__name">Nueva sede</span>
+                <span className="site-card__address">Agrega otra sede de tu negocio</span>
+              </button>
+            </li>
+            <li>
               <button
                 className="site-card site-card--all"
                 type="button"
@@ -89,6 +108,11 @@ export function SitePickerPage() {
           </ul>
         ) : null}
       </section>
+      {creating ? (
+        <Dialog title="Nueva sede" onClose={() => setCreating(false)}>
+          <SiteForm onSubmit={handleCreate} />
+        </Dialog>
+      ) : null}
     </main>
   )
 }

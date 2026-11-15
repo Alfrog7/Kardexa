@@ -7,5 +7,8 @@ public interface RegisterFirstAdminUseCase {
 
     User register(RegisterFirstAdminCommand command);
 
+    /** {@code true} mientras no exista ningún usuario: solo entonces el panel ofrece el acceso inicial. */
+    boolean isSetupPending();
+
     record RegisterFirstAdminCommand(String fullName, String email, String password) {}
 }

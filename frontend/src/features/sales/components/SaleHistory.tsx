@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '@shared/api/http'
 import { useCanManage } from '@shared/auth/session'
-import { formatDateTime, formatMoney } from '@shared/lib/format'
+import { formatDateTime, formatMoney, formatQuantity } from '@shared/lib/format'
 import { ExportButton } from '@shared/ui/ExportButton'
 import { Icon } from '@shared/ui/Icon'
 import { exportSales, listSales, listSellers, type Sale, type SalePage, type Seller } from '../api/sales'
@@ -141,6 +141,7 @@ export function SaleHistory({ today, version, onOpen }: SaleHistoryProps) {
                 <th scope="col">Número</th>
                 <th scope="col">Fecha</th>
                 <th scope="col">Vendedor</th>
+                <th scope="col">Qué se vendió</th>
                 <th scope="col" className="data-table__number">
                   Total
                 </th>
@@ -157,6 +158,9 @@ export function SaleHistory({ today, version, onOpen }: SaleHistoryProps) {
                   </td>
                   <td data-label="Fecha">{formatDateTime(sale.soldAt)}</td>
                   <td data-label="Vendedor">{sale.seller}</td>
+                  <td data-label="Qué se vendió">
+                    {sale.items.map((item) => `${item.productName} × ${formatQuantity(item.quantity)}`).join(', ')}
+                  </td>
                   <td data-label="Total" className="data-table__number">
                     {formatMoney(sale.total)}
                   </td>

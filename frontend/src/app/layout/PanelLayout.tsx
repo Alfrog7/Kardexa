@@ -43,7 +43,10 @@ export function PanelLayout() {
   const [mySite, setMySite] = useState<string>()
   const accountRef = useRef<HTMLDivElement>(null)
   const dismissNotice = useCallback(() => setNotice(undefined), [])
-  const visibleNavigation = navigation.filter((item) => !('adminOnly' in item) || user?.role === 'ADMIN')
+  const visibleNavigation = navigation.filter(
+    (item) =>
+      (!('adminOnly' in item) || user?.role === 'ADMIN') && (!('employeeOnly' in item) || user?.role !== 'ADMIN'),
+  )
 
   useEffect(() => {
     if (user?.role !== 'EMPLOYEE') return

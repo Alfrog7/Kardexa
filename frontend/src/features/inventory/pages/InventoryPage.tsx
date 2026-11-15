@@ -155,6 +155,13 @@ export function InventoryPage() {
               setReceiving(false)
               setNotice(count === 1 ? 'Entrada registrada: 1 producto.' : `Entrada registrada: ${count} productos.`)
               setAttempt((value) => value + 1)
+              if (productId) {
+                getProduct(productId)
+                  .then((found) => {
+                    if (found) setProduct((current) => (current?.id === productId ? found : current))
+                  })
+                  .catch(() => undefined)
+              }
             }}
           />
         </Dialog>

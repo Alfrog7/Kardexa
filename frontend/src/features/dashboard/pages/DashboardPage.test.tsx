@@ -64,12 +64,12 @@ describe('DashboardPage', () => {
     expect(screen.getByText(/Del 1 de noviembre de 2026 al 3 de noviembre de 2026/)).toBeInTheDocument()
   })
 
-  it('sin rango en la URL pide los últimos 30 días hasta hoy en Lima', async () => {
+  it('sin rango en la URL pide solo el día de hoy en Lima', async () => {
     renderAt('/')
 
     await screen.findByRole('list', { name: 'Indicadores' })
-    expect(getDashboard).toHaveBeenCalledWith('2026-10-16', '2026-11-14')
-    expect(screen.getByRole('button', { name: 'Últimos 30 días' })).toHaveAttribute('aria-pressed', 'true')
+    expect(getDashboard).toHaveBeenCalledWith('2026-11-14', '2026-11-14')
+    expect(screen.getByRole('button', { name: 'Hoy' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('cambiar el rango vuelve a pedir los datos y lo guarda en la URL', async () => {

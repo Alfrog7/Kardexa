@@ -56,6 +56,14 @@ class AuthController {
         return UserResponse.from(getCurrentUser.getCurrent(UUID.fromString(jwt.getSubject())));
     }
 
+    /** Público: dice si todavía falta crear al primer administrador; no revela nada más. */
+    @GetMapping("/setup-status")
+    SetupStatusResponse setupStatus() {
+        return new SetupStatusResponse(registerFirstAdmin.isSetupPending());
+    }
+
+    record SetupStatusResponse(boolean pending) {}
+
     @PostMapping("/setup")
     @ResponseStatus(HttpStatus.CREATED)
     UserResponse setup(@Valid @RequestBody RegisterAdminRequest request) {
