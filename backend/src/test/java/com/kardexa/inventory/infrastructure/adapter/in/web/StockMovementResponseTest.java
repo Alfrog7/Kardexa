@@ -6,6 +6,7 @@ import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.StockAdjustment;
 import com.kardexa.inventory.domain.model.StockMovement;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Instant;
 import java.util.Map;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class StockMovementResponseTest {
 
     private static StockMovement movement(UUID userId) {
-        StockAdjustment adjustment = StockAdjustment.create(UUID.randomUUID(), Direction.IN, Quantity.of("1"),
+        StockAdjustment adjustment = StockAdjustment.create(UUID.randomUUID(), MainSite.ID, Direction.IN, Quantity.of("1"),
                 AdjustmentReason.CORRECTION, null, userId, Instant.EPOCH);
         return StockMovement.fromAdjustment(adjustment, Quantity.of("1"));
     }

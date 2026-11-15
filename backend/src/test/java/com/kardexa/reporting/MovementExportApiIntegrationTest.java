@@ -63,16 +63,17 @@ class MovementExportApiIntegrationTest {
                 supplier);
         UUID purchase = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO purchase (id, supplier_id, supplier_document, purchase_date, status, total, user_id, created_at)
-                VALUES (?, ?, 'F001-25', DATE '2026-11-01', 'REGISTERED', 35, ?, now())""",
+                INSERT INTO purchase (id, supplier_id, site_id, supplier_document, purchase_date, status, total, user_id,
+                                      created_at)
+                VALUES (?, ?, '00000000-0000-0000-0000-000000000001', 'F001-25', DATE '2026-11-01', 'REGISTERED', 35, ?, now())""",
                 purchase, supplier, TestSecurity.ADMIN_ID);
         jdbc.update("""
                 INSERT INTO purchase_item (purchase_id, line_no, product_id, quantity, unit_cost, subtotal)
                 VALUES (?, 1, ?, 10, 3.50, 35)""", purchase, rice);
         UUID sale = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO sale (id, number, status, total, seller_id, sold_at)
-                VALUES (?, 'V-000001', 'REGISTERED', 9, ?, now())""", sale, TestSecurity.ADMIN_ID);
+                INSERT INTO sale (id, number, status, total, seller_id, site_id, sold_at)
+                VALUES (?, 'V-000001', 'REGISTERED', 9, ?, '00000000-0000-0000-0000-000000000001', now())""", sale, TestSecurity.ADMIN_ID);
 
         // 2026-11-01 10:00 y 23:30 en Lima; 2026-11-03 10:00; y uno fuera del rango.
         movement(rice, "PURCHASE", "IN", "10", "10", "PURCHASE", purchase, TestSecurity.ADMIN_ID, "2026-11-01T15:00:00Z");
@@ -155,9 +156,9 @@ class MovementExportApiIntegrationTest {
     private void movement(UUID product, String type, String direction, String quantity, String balance,
             String sourceType, UUID sourceId, UUID userId, String at) {
         jdbc.update("""
-                INSERT INTO stock_movement (id, product_id, type, direction, quantity, balance_after, source_type,
+                INSERT INTO stock_movement (id, product_id, site_id, type, direction, quantity, balance_after, source_type,
                                             source_id, user_id, occurred_at)
-                VALUES (?, ?, ?, ?, ?::numeric, ?::numeric, ?, ?, ?, ?)""",
+                VALUES (?, ?, '00000000-0000-0000-0000-000000000001', ?, ?, ?::numeric, ?::numeric, ?, ?, ?, ?)""",
                 UUID.randomUUID(), product, type, direction, quantity, balance, sourceType, sourceId, userId,
                 Timestamp.from(Instant.parse(at)));
     }

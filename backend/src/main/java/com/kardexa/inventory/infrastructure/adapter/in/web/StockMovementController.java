@@ -6,6 +6,7 @@ import com.kardexa.inventory.application.port.in.ResolveUserNamesUseCase;
 import com.kardexa.inventory.domain.model.MovementType;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -16,6 +17,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,15 +28,18 @@ class StockMovementController {
 
     private final ListStockMovementsUseCase listMovements;
     private final ResolveUserNamesUseCase userNames;
+    private final SiteScope siteScope;
 
-    StockMovementController(ListStockMovementsUseCase listMovements, ResolveUserNamesUseCase userNames) {
+    StockMovementController(ListStockMovementsUseCase listMovements, ResolveUserNamesUseCase userNames,
+            SiteScope siteScope) {
         this.listMovements = listMovements;
         this.userNames = userNames;
+        this.siteScope = siteScope;
     }
 
     @GetMapping("/stock-movements")
-    MovementPageResponse list(@Valid @ParameterObject HistoryParams params) {
-        ResultPage<MovementEntry> page = listMovements.list(params.from(), params.to(), params.type(),
+    MovementPageResponse list(@AuthenticationPrincipal Jwt jwt, @Valid @ParameterObject HistoryParams params) {
+        ResultPage<MovementEntry> page = listMovements.list(siteScope.filter(jwt, params.siteId()), params.from(), params.to(), params.type(),
                 PageQuery.of(params.page(), params.size()));
         Map<UUID, String> names = userNames.namesOf(page.content().stream().map(e -> e.movement().userId()).toList());
         return new MovementPageResponse(
@@ -45,6 +51,7 @@ class StockMovementController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             MovementType type,
+            UUID siteId,
             @Min(value = 0, message = "Debe ser 0 o mayor.") Integer page,
             @Min(value = 1, message = "Debe ser al menos 1.") @Max(value = PageQuery.MAX_SIZE, message = "Debe ser como máximo {value}.") Integer size) {
 

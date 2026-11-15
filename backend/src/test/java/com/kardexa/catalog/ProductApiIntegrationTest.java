@@ -131,7 +131,7 @@ class ProductApiIntegrationTest {
     @DisplayName("criterio 5: consulta con el stock del inventario; id inexistente 404")
     void getsProductWithInventoryStock() throws Exception {
         String id = idOf(create(body("AB-001", drinks, "3.50", "5")));
-        jdbc.update("INSERT INTO product_stock (product_id, quantity) VALUES (?::uuid, 12.5)", id);
+        jdbc.update("INSERT INTO product_stock (product_id, site_id, quantity) VALUES (?::uuid, '00000000-0000-0000-0000-000000000001', 12.5)", id);
 
         mvc.perform(get(URL + "/" + id))
                 .andExpect(status().isOk())
@@ -160,7 +160,7 @@ class ProductApiIntegrationTest {
         String soda = idOf(create(product("AB-001", "Gaseosa 500 ml", drinks)));
         create(product("GAS-02", "Agua mineral", drinks));
         create(product("AR-003", "Arroz 5 kg", drinks));
-        jdbc.update("INSERT INTO product_stock (product_id, quantity) VALUES (?::uuid, 7)", soda);
+        jdbc.update("INSERT INTO product_stock (product_id, site_id, quantity) VALUES (?::uuid, '00000000-0000-0000-0000-000000000001', 7)", soda);
 
         mvc.perform(get(URL).param("q", "GAS"))
                 .andExpect(status().isOk())
@@ -323,7 +323,7 @@ class ProductApiIntegrationTest {
         mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(parameters + "[*].name",
-                        containsInAnyOrder("q", "categoryId", "criticalOnly", "includeInactive", "page", "size")))
+                        containsInAnyOrder("q", "categoryId", "criticalOnly", "includeInactive", "siteId", "page", "size")))
                 .andExpect(jsonPath(parameters + "[?(@.required == true)]").isEmpty());
     }
 
@@ -394,8 +394,8 @@ class ProductApiIntegrationTest {
 
     /** Simula el stock que dejará un movimiento de inventario (los ajustes llegan con HU-09). */
     private void setStock(String productId, String quantity) {
-        jdbc.update("INSERT INTO product_stock (product_id, quantity) VALUES (?::uuid, ?::numeric) "
-                + "ON CONFLICT (product_id) DO UPDATE SET quantity = EXCLUDED.quantity", productId, quantity);
+        jdbc.update("INSERT INTO product_stock (product_id, site_id, quantity) VALUES (?::uuid, '00000000-0000-0000-0000-000000000001', ?::numeric) "
+                + "ON CONFLICT (product_id, site_id) DO UPDATE SET quantity = EXCLUDED.quantity", productId, quantity);
     }
 
     private ResultActions create(String json) throws Exception {

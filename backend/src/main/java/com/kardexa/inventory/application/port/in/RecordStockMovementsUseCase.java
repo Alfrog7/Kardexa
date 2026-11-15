@@ -35,11 +35,13 @@ public interface RecordStockMovementsUseCase {
     }
 
     /** {@code documentId} es el id de la compra o la venta; {@code userId}, quién la registra. */
-    record RecordStockMovementsCommand(DocumentMovement movement, UUID documentId, UUID userId, List<Line> lines) {
+    record RecordStockMovementsCommand(
+            DocumentMovement movement, UUID documentId, UUID siteId, UUID userId, List<Line> lines) {
 
         public RecordStockMovementsCommand {
             Objects.requireNonNull(movement, "movement");
             Objects.requireNonNull(documentId, "documentId");
+            Objects.requireNonNull(siteId, "siteId");
             lines = List.copyOf(lines);
             if (lines.isEmpty()) {
                 throw new IllegalArgumentException("El documento no tiene líneas.");

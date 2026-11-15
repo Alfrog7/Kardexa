@@ -14,6 +14,7 @@ import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.ProductStock;
 import com.kardexa.inventory.domain.model.StockAdjustment;
 import com.kardexa.inventory.domain.model.StockMovement;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
 import java.time.Instant;
@@ -53,13 +54,13 @@ class AdjustStockServiceTest {
 
     private StockMovement adjust(Direction direction, String quantity) {
         return service.adjust(new AdjustStockCommand(
-                PRODUCT, direction, Quantity.of(quantity), AdjustmentReason.SHRINKAGE, "rotura"));
+                PRODUCT, MainSite.ID, direction, Quantity.of(quantity), AdjustmentReason.SHRINKAGE, "rotura"));
     }
 
     @Test
     @DisplayName("criterio 1: una salida de 3 sobre 20 deja 17 y crea su movimiento")
     void withdraws() {
-        rows.put(PRODUCT, new ProductStock(PRODUCT, Quantity.of("20"), 2));
+        rows.put(PRODUCT, new ProductStock(PRODUCT, MainSite.ID, Quantity.of("20"), 2));
 
         StockMovement movement = adjust(Direction.OUT, "3");
 
@@ -108,18 +109,18 @@ class AdjustStockServiceTest {
     private final class InMemoryStocks implements ProductStockRepository {
 
         @Override
-        public Optional<Quantity> findQuantity(UUID productId) {
+        public Optional<Quantity> findQuantity(UUID productId, UUID siteId) {
             return Optional.ofNullable(rows.get(productId)).map(ProductStock::quantity);
         }
 
         @Override
-        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds) {
+        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds, UUID siteId) {
             return Map.of();
         }
 
         @Override
-        public ProductStock load(UUID productId) {
-            return rows.getOrDefault(productId, ProductStock.empty(productId));
+        public ProductStock load(UUID productId, UUID siteId) {
+            return rows.getOrDefault(productId, ProductStock.empty(productId, siteId));
         }
 
         @Override

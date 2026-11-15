@@ -10,6 +10,7 @@ import com.kardexa.purchasing.domain.exception.PurchaseNotFoundException;
 import com.kardexa.purchasing.domain.model.Purchase;
 import com.kardexa.purchasing.domain.model.PurchaseItem;
 import com.kardexa.purchasing.domain.model.PurchaseStatus;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
@@ -36,7 +37,7 @@ class VoidPurchaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        purchase = Purchase.register(UUID.randomUUID(), "F001-9", LocalDate.of(2026, 11, 10),
+        purchase = Purchase.register(UUID.randomUUID(), MainSite.ID, "F001-9", LocalDate.of(2026, 11, 10),
                 List.of(new PurchaseItem(UUID.randomUUID(), Quantity.of("4"), Money.of("2.50"))),
                 UUID.randomUUID(), NOW.minusSeconds(3600));
         purchases.add(purchase);

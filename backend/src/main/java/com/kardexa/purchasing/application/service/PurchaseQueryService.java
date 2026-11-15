@@ -20,8 +20,8 @@ public class PurchaseQueryService implements ListPurchasesUseCase {
     }
 
     @Override
-    public ResultPage<PurchaseView> list(LocalDate from, LocalDate to, PageQuery page) {
-        return purchases.findViews(from, to, page);
+    public ResultPage<PurchaseView> list(UUID siteId, LocalDate from, LocalDate to, PageQuery page) {
+        return purchases.findViews(siteId, from, to, page);
     }
 
     @Override

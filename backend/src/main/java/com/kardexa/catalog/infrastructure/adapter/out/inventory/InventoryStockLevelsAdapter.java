@@ -22,12 +22,12 @@ class InventoryStockLevelsAdapter implements StockLevels {
     }
 
     @Override
-    public Map<UUID, Quantity> currentStock(Collection<UUID> productIds) {
-        return getStock.currentStock(productIds);
+    public Map<UUID, Quantity> currentStock(Collection<UUID> productIds, UUID siteId) {
+        return getStock.currentStock(productIds, siteId);
     }
 
     @Override
-    public Quantity currentStock(UUID productId) {
-        return getStock.currentStock(productId);
+    public Quantity currentStock(UUID productId, UUID siteId) {
+        return getStock.currentStock(productId, siteId);
     }
 }

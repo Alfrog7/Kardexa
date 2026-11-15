@@ -10,7 +10,7 @@ import java.util.UUID;
  * Stock actual de un producto. Es inmutable: aplicar un movimiento devuelve el nuevo estado, con la
  * misma {@code version} que se leyó, para que al guardarlo se detecte si otro lo cambió (ADR 0006).
  */
-public record ProductStock(UUID productId, Quantity quantity, long version) {
+public record ProductStock(UUID productId, UUID siteId, Quantity quantity, long version) {
 
     /** Versión de un stock que todavía no tiene fila: nace con su primer movimiento. */
     public static final long NEVER_SAVED = -1;
@@ -20,11 +20,12 @@ public record ProductStock(UUID productId, Quantity quantity, long version) {
 
     public ProductStock {
         Objects.requireNonNull(productId, "productId");
+        Objects.requireNonNull(siteId, "siteId");
         Objects.requireNonNull(quantity, "quantity");
     }
 
-    public static ProductStock empty(UUID productId) {
-        return new ProductStock(productId, Quantity.ZERO, NEVER_SAVED);
+    public static ProductStock empty(UUID productId, UUID siteId) {
+        return new ProductStock(productId, siteId, Quantity.ZERO, NEVER_SAVED);
     }
 
     /** RN-01: una salida mayor que el stock se rechaza. */
@@ -40,13 +41,13 @@ public record ProductStock(UUID productId, Quantity quantity, long version) {
         if (MAX_QUANTITY.isLessThan(result)) {
             throw new StockLimitExceededException(result);
         }
-        return new ProductStock(productId, result, version);
+        return new ProductStock(productId, siteId, result, version);
     }
 
     private ProductStock withdraw(Quantity amount, String productName) {
         if (quantity.isLessThan(amount)) {
             throw new InsufficientStockException(productName, quantity, amount);
         }
-        return new ProductStock(productId, quantity.subtract(amount), version);
+        return new ProductStock(productId, siteId, quantity.subtract(amount), version);
     }
 }

@@ -9,7 +9,8 @@ import java.util.UUID;
 public interface ListPurchasesUseCase {
 
     /** Fechas de compra inclusivas; las dos son opcionales. */
-    ResultPage<PurchaseView> list(LocalDate from, LocalDate to, PageQuery page);
+    /** {@code siteId} nulo: todas las sedes. */
+    ResultPage<PurchaseView> list(UUID siteId, LocalDate from, LocalDate to, PageQuery page);
 
     /** Lanza {@code PurchaseNotFoundException} (404) si no existe. */
     PurchaseView get(UUID id);

@@ -6,6 +6,7 @@ import static com.kardexa.reporting.infrastructure.adapter.in.web.CsvResponses.c
 import com.kardexa.reporting.application.port.in.ExportMovementsUseCase;
 import com.kardexa.reporting.domain.model.MovementRow;
 import com.kardexa.reporting.domain.model.ReportPeriod;
+import com.kardexa.shared.domain.MainSite;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
@@ -45,10 +46,11 @@ class MovementExportController {
     ResponseEntity<StreamingResponseBody> kardex(@PathVariable UUID id, @Valid @ParameterObject ExportParams params) {
         ReportPeriod period = export.period(params.from(), params.to());
         String code = export.productCode(id);
+        UUID siteId = params.siteId() != null ? params.siteId() : MainSite.ID;
         StreamingResponseBody body = stream -> {
             CsvWriter csv = new CsvWriter(stream);
             csv.row("Fecha y hora", "Tipo", "Documento", "Entrada", "Salida", "Saldo", "Costo", "Usuario");
-            export.kardex(id, period, row -> csv.row(DATE_TIME.format(row.occurredAt()), label(row), row.document(),
+            export.kardex(id, siteId, period, row -> csv.row(DATE_TIME.format(row.occurredAt()), label(row), row.document(),
                     entry(row), exit(row), row.balanceAfter().toString(), cost(row), row.user()));
             csv.flush();
         };
@@ -62,7 +64,7 @@ class MovementExportController {
             CsvWriter csv = new CsvWriter(stream);
             csv.row("Fecha y hora", "Código", "Producto", "Tipo", "Documento", "Entrada", "Salida", "Saldo", "Costo",
                     "Usuario");
-            export.movements(period, params.type(), row -> csv.row(DATE_TIME.format(row.occurredAt()),
+            export.movements(params.siteId(), period, params.type(), row -> csv.row(DATE_TIME.format(row.occurredAt()),
                     row.productCode(), row.productName(), label(row), row.document(), entry(row), exit(row),
                     row.balanceAfter().toString(), cost(row), row.user()));
             csv.flush();
@@ -94,7 +96,8 @@ class MovementExportController {
     /** Fechas inclusivas en hora de Lima; sin fechas, los últimos 30 días. */
     record ExportParams(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            UUID siteId) {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {
@@ -112,7 +115,8 @@ class MovementExportController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @Pattern(regexp = "PURCHASE|SALE|ADJUSTMENT|PURCHASE_VOID|SALE_VOID", message = "Tipo de movimiento desconocido.")
-            String type) {
+            String type,
+            UUID siteId) {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {

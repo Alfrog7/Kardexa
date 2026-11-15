@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /** Arma el inicio del panel con las cifras del rango pedido (ADR 0012). */
 public class DashboardService implements GetDashboardUseCase {
@@ -27,10 +28,10 @@ public class DashboardService implements GetDashboardUseCase {
     }
 
     @Override
-    public Dashboard get(LocalDate from, LocalDate to) {
+    public Dashboard get(LocalDate from, LocalDate to, UUID siteId) {
         ReportPeriod period = ReportPeriod.resolve(from, to, LocalDate.now(clock.withZone(BusinessCalendar.ZONE)));
-        List<DailySales> days = sales.dailySales(period);
-        return new Dashboard(period, SalesSummary.of(days), days, sales.topProducts(period, TopProduct.LIMIT),
-                stock.criticalStock());
+        List<DailySales> days = sales.dailySales(period, siteId);
+        return new Dashboard(period, SalesSummary.of(days), days, sales.topProducts(period, TopProduct.LIMIT, siteId),
+                stock.criticalStock(siteId));
     }
 }

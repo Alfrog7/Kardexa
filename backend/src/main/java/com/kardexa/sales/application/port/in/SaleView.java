@@ -14,6 +14,7 @@ public record SaleView(
         Instant soldAt,
         UUID sellerId,
         String sellerName,
+        UUID siteId,
         SaleStatus status,
         String voidReason,
         Money total,

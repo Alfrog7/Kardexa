@@ -55,10 +55,11 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
     public void add(Purchase purchase) {
         jdbc.sql("""
                 INSERT INTO purchase
-                    (id, supplier_id, supplier_document, purchase_date, status, total, user_id, created_at)
-                VALUES (:id, :supplierId, :document, :purchaseDate, :status, :total, :userId, :createdAt)""")
+                    (id, supplier_id, site_id, supplier_document, purchase_date, status, total, user_id, created_at)
+                VALUES (:id, :supplierId, :siteId, :document, :purchaseDate, :status, :total, :userId, :createdAt)""")
                 .param("id", purchase.id())
                 .param("supplierId", purchase.supplierId())
+                .param("siteId", purchase.siteId())
                 .param("document", purchase.supplierDocument(), Types.VARCHAR)
                 .param("purchaseDate", purchase.purchaseDate())
                 .param("status", purchase.status().name())
@@ -91,12 +92,13 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
                         new Quantity(rs.getBigDecimal("quantity")), Money.of(rs.getBigDecimal("unit_cost"))))
                 .list();
         return jdbc.sql("""
-                SELECT id, supplier_id, supplier_document, purchase_date, status, user_id, created_at,
+                SELECT id, supplier_id, site_id, supplier_document, purchase_date, status, user_id, created_at,
                        void_reason, voided_by, voided_at
                 FROM purchase WHERE id = :id""")
                 .param("id", id)
                 .query((rs, n) -> Purchase.restore(rs.getObject("id", UUID.class),
-                        rs.getObject("supplier_id", UUID.class), rs.getString("supplier_document"),
+                        rs.getObject("supplier_id", UUID.class), rs.getObject("site_id", UUID.class),
+                        rs.getString("supplier_document"),
                         rs.getObject("purchase_date", LocalDate.class), items,
                         PurchaseStatus.valueOf(rs.getString("status")), rs.getObject("user_id", UUID.class),
                         rs.getTimestamp("created_at").toInstant(),
@@ -133,20 +135,24 @@ class PurchasePersistenceAdapter implements PurchaseRepository {
     }
 
     @Override
-    public ResultPage<PurchaseView> findViews(LocalDate from, LocalDate to, PageQuery page) {
+    public ResultPage<PurchaseView> findViews(UUID siteId, LocalDate from, LocalDate to, PageQuery page) {
         LocalDate start = from == null ? MIN_DATE : from;
         LocalDate end = to == null ? MAX_DATE : to;
-        long total = jdbc.sql("SELECT count(*) FROM purchase WHERE purchase_date BETWEEN :from AND :to")
+        long total = jdbc.sql("SELECT count(*) FROM purchase WHERE purchase_date BETWEEN :from AND :to"
+                        + " AND (CAST(:siteId AS uuid) IS NULL OR site_id = :siteId)")
                 .param("from", start)
                 .param("to", end)
+                .param("siteId", siteId, Types.OTHER)
                 .query(Long.class)
                 .single();
         List<Header> headers = jdbc.sql(HEADER_SELECT + """
                 WHERE p.purchase_date BETWEEN :from AND :to
+                  AND (CAST(:siteId AS uuid) IS NULL OR p.site_id = :siteId)
                 ORDER BY p.purchase_date DESC, p.created_at DESC, p.id
                 LIMIT :limit OFFSET :offset""")
                 .param("from", start)
                 .param("to", end)
+                .param("siteId", siteId, Types.OTHER)
                 .param("limit", page.size())
                 .param("offset", page.offset())
                 .query(PurchasePersistenceAdapter::header)

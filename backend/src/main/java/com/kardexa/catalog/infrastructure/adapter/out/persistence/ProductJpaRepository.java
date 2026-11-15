@@ -46,11 +46,14 @@ interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, UUID> {
             @Param("categoryId") UUID categoryId,
             @Param("criticalOnly") boolean criticalOnly,
             @Param("includeInactive") boolean includeInactive,
+            @Param("anySite") boolean anySite,
+            @Param("siteId") UUID siteId,
             Pageable pageable);
 
     String SEARCH_FROM = """
             FROM product p
-            LEFT JOIN product_stock s ON s.product_id = p.id
+            LEFT JOIN (SELECT product_id, sum(quantity) AS quantity FROM product_stock
+                       WHERE :anySite OR site_id = :siteId GROUP BY product_id) s ON s.product_id = p.id
             WHERE (:includeInactive OR p.active)
               AND (:anyCategory OR p.category_id = :categoryId)
               AND (lower(p.code) LIKE :pattern ESCAPE '!' OR lower(p.name) LIKE :pattern ESCAPE '!')

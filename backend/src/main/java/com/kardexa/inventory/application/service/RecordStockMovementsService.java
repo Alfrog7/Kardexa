@@ -51,10 +51,10 @@ public class RecordStockMovementsService implements RecordStockMovementsUseCase 
             if (!product.active()) {
                 throw new InactiveProductException(product.name());
             }
-            ProductStock updated = stocks.load(line.productId()).apply(direction, line.quantity(), product.name());
+            ProductStock updated = stocks.load(line.productId(), command.siteId()).apply(direction, line.quantity(), product.name());
             // Igual que en los ajustes: primero el stock, que bloquea la fila, y luego la hora.
             stocks.save(updated);
-            records.add(new StockMovement(UUID.randomUUID(), line.productId(), type, direction, line.quantity(),
+            records.add(new StockMovement(UUID.randomUUID(), line.productId(), command.siteId(), type, direction, line.quantity(),
                     updated.quantity(), source, command.documentId(), command.userId(),
                     clock.instant().truncatedTo(ChronoUnit.MICROS)));
         }

@@ -204,8 +204,9 @@ class DashboardApiIntegrationTest {
         UUID id = UUID.randomUUID();
         Timestamp at = Timestamp.from(Instant.parse(soldAt));
         jdbc.update("""
-                INSERT INTO sale (id, number, status, total, seller_id, sold_at, void_reason, voided_at, voided_by)
-                VALUES (?, ?, ?, ?::numeric, ?, ?, ?, ?, ?)""",
+                INSERT INTO sale (id, number, status, total, seller_id, site_id, sold_at, void_reason, voided_at,
+                                  voided_by)
+                VALUES (?, ?, ?, ?::numeric, ?, '00000000-0000-0000-0000-000000000001', ?, ?, ?, ?)""",
                 id, "V-%06d".formatted(number), voided ? "VOIDED" : "REGISTERED", total,
                 TestSecurity.ADMIN_ID, at, voided ? "Error de digitación" : null, voided ? at : null,
                 voided ? TestSecurity.ADMIN_ID : null);
@@ -223,7 +224,7 @@ class DashboardApiIntegrationTest {
     private UUID stocked(String code, String name, String minStock, String stock, boolean active) {
         UUID id = product(code, name);
         jdbc.update("UPDATE product SET min_stock = ?::numeric, active = ? WHERE id = ?", minStock, active, id);
-        jdbc.update("INSERT INTO product_stock (product_id, quantity, version) VALUES (?, ?::numeric, 0)", id, stock);
+        jdbc.update("INSERT INTO product_stock (product_id, site_id, quantity, version) VALUES (?, '00000000-0000-0000-0000-000000000001', ?::numeric, 0)", id, stock);
         return id;
     }
 

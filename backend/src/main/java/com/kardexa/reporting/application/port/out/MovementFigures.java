@@ -13,8 +13,10 @@ public interface MovementFigures {
     Optional<String> productCode(UUID productId);
 
     /** Movimientos del producto en el rango, en el orden del kárdex. */
-    void kardex(UUID productId, ReportPeriod period, Consumer<MovementRow> sink);
+    /** El kárdex es de una sola sede: el saldo de cada movimiento es el de esa sede (RN-13). */
+    void kardex(UUID productId, UUID siteId, ReportPeriod period, Consumer<MovementRow> sink);
 
     /** Movimientos de todos los productos en el rango, del más reciente al más antiguo; {@code type} opcional. */
-    void movements(ReportPeriod period, String type, Consumer<MovementRow> sink);
+    /** {@code siteId} nulo: los movimientos de todas las sedes. */
+    void movements(UUID siteId, ReportPeriod period, String type, Consumer<MovementRow> sink);
 }

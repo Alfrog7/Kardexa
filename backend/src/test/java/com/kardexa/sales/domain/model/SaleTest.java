@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.kardexa.sales.domain.exception.InvalidSaleException;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Instant;
@@ -21,7 +22,7 @@ class SaleTest {
     @DisplayName("el total suma los subtotales redondeados half-up (RN-12)")
     void total() {
         Sale sale = Sale.register(List.of(item(UUID.randomUUID(), "2.5", "3.99"), item(UUID.randomUUID(), "1", "10.00")),
-                SELLER, Instant.now());
+                SELLER, MainSite.ID, Instant.now());
 
         assertThat(sale.items().get(0).subtotal()).isEqualTo(Money.of("9.98"));
         assertThat(sale.total()).isEqualTo(Money.of("19.98"));
@@ -33,9 +34,9 @@ class SaleTest {
     @DisplayName("sin productos, con un producto repetido o con cantidad 0 se rechaza")
     void rejectsInvalidItems() {
         UUID product = UUID.randomUUID();
-        assertThatThrownBy(() -> Sale.register(List.of(), SELLER, Instant.now()))
+        assertThatThrownBy(() -> Sale.register(List.of(), SELLER, MainSite.ID, Instant.now()))
                 .isInstanceOf(InvalidSaleException.class);
-        assertThatThrownBy(() -> Sale.register(List.of(item(product, "1", "2.00"), item(product, "2", "2.00")), SELLER,
+        assertThatThrownBy(() -> Sale.register(List.of(item(product, "1", "2.00"), item(product, "2", "2.00")), SELLER, MainSite.ID,
                 Instant.now()))
                 .isInstanceOf(InvalidSaleException.class)
                 .hasMessageContaining("repetirse");
@@ -45,7 +46,7 @@ class SaleTest {
     @Test
     @DisplayName("RN-07: el número se asigna una sola vez y se formatea con 6 dígitos")
     void number() {
-        Sale sale = Sale.register(List.of(item(UUID.randomUUID(), "1", "2.00")), SELLER, Instant.now());
+        Sale sale = Sale.register(List.of(item(UUID.randomUUID(), "1", "2.00")), SELLER, MainSite.ID, Instant.now());
         sale.assignNumber(new SaleNumber(123));
 
         assertThat(sale.number()).hasToString("V-000123");

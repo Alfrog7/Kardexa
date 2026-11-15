@@ -31,12 +31,13 @@ class DashboardController {
 
     @GetMapping("/dashboard")
     DashboardResponse get(@Valid @ParameterObject PeriodParams params) {
-        return DashboardResponse.from(dashboard.get(params.from(), params.to()));
+        return DashboardResponse.from(dashboard.get(params.from(), params.to(), params.siteId()));
     }
 
     record PeriodParams(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            UUID siteId) {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {

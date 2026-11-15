@@ -17,6 +17,7 @@ import com.kardexa.inventory.domain.model.ProductStock;
 import com.kardexa.inventory.domain.model.SourceType;
 import com.kardexa.inventory.domain.model.StockAdjustment;
 import com.kardexa.inventory.domain.model.StockMovement;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
 import java.time.Instant;
@@ -48,18 +49,18 @@ class RecordStockMovementsServiceTest {
 
     private final RecordStockMovementsService service = new RecordStockMovementsService(new ProductStockRepository() {
         @Override
-        public Optional<Quantity> findQuantity(UUID productId) {
+        public Optional<Quantity> findQuantity(UUID productId, UUID siteId) {
             return Optional.ofNullable(rows.get(productId)).map(ProductStock::quantity);
         }
 
         @Override
-        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds) {
+        public Map<UUID, Quantity> findQuantities(Collection<UUID> productIds, UUID siteId) {
             return Map.of();
         }
 
         @Override
-        public ProductStock load(UUID productId) {
-            return rows.getOrDefault(productId, ProductStock.empty(productId));
+        public ProductStock load(UUID productId, UUID siteId) {
+            return rows.getOrDefault(productId, ProductStock.empty(productId, siteId));
         }
 
         @Override
@@ -80,7 +81,7 @@ class RecordStockMovementsServiceTest {
     }, id -> new StockProduct(id, "Producto " + id, !inactive.contains(id)), Clock.fixed(NOW, ZoneOffset.UTC));
 
     private void record(DocumentMovement movement, UUID documentId, Line... lines) {
-        service.record(new RecordStockMovementsCommand(movement, documentId, USER, List.of(lines)));
+        service.record(new RecordStockMovementsCommand(movement, documentId, MainSite.ID, USER, List.of(lines)));
     }
 
     private static Line line(UUID productId, String quantity) {
@@ -91,7 +92,7 @@ class RecordStockMovementsServiceTest {
     @DisplayName("una compra crea una entrada por producto con su documento y usuario, en orden de product_id")
     void purchaseAddsStock() {
         UUID purchase = UUID.randomUUID();
-        rows.put(LOW, new ProductStock(LOW, Quantity.of("5"), 1));
+        rows.put(LOW, new ProductStock(LOW, MainSite.ID, Quantity.of("5"), 1));
 
         record(DocumentMovement.PURCHASE, purchase, line(HIGH, "2"), line(LOW, "3"));
 
@@ -112,7 +113,7 @@ class RecordStockMovementsServiceTest {
     @Test
     @DisplayName("anular una compra resta y una salida mayor que el stock se rechaza (RN-01)")
     void voidSubtractsAndChecksStock() {
-        rows.put(LOW, new ProductStock(LOW, Quantity.of("5"), 1));
+        rows.put(LOW, new ProductStock(LOW, MainSite.ID, Quantity.of("5"), 1));
 
         record(DocumentMovement.PURCHASE_VOID, UUID.randomUUID(), line(LOW, "5"));
         assertThat(rows.get(LOW).quantity()).isEqualTo(Quantity.ZERO);
@@ -128,7 +129,7 @@ class RecordStockMovementsServiceTest {
     @Test
     @DisplayName("las ventas restan y sus anulaciones suman, con origen SALE")
     void salesDirections() {
-        rows.put(LOW, new ProductStock(LOW, Quantity.of("5"), 1));
+        rows.put(LOW, new ProductStock(LOW, MainSite.ID, Quantity.of("5"), 1));
 
         record(DocumentMovement.SALE, UUID.randomUUID(), line(LOW, "2"));
         record(DocumentMovement.SALE_VOID, UUID.randomUUID(), line(LOW, "2"));

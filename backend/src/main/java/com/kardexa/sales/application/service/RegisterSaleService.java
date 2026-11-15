@@ -54,7 +54,7 @@ public class RegisterSaleService implements RegisterSaleUseCase {
             }
             return new SaleItem(product.id(), product.code(), product.name(), item.quantity(), product.salePrice());
         }).toList();
-        Sale sale = Sale.register(items, command.sellerId(), clock.instant().truncatedTo(ChronoUnit.MICROS));
+        Sale sale = Sale.register(items, command.sellerId(), command.siteId(), clock.instant().truncatedTo(ChronoUnit.MICROS));
 
         stockLedger.withdraw(sale);
         sale.assignNumber(numbers.next());

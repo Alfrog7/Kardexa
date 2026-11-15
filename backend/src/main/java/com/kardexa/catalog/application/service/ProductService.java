@@ -117,9 +117,9 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
     }
 
     @Override
-    public ProductView get(UUID id) {
+    public ProductView get(UUID id, UUID siteId) {
         Product product = products.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
-        return view(product, existingCategory(product.categoryId()));
+        return view(product, existingCategory(product.categoryId()), siteId);
     }
 
     @Override
@@ -131,7 +131,8 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
     @Override
     public ResultPage<ProductView> search(ProductSearch search) {
         ResultPage<Product> page = products.search(
-                search.text(), search.categoryId(), search.criticalOnly(), search.includeInactive(), search.page());
+                search.text(), search.categoryId(), search.criticalOnly(), search.includeInactive(), search.siteId(),
+                search.page());
         if (page.content().isEmpty()) {
             return new ResultPage<>(List.of(), page.page(), page.size(), page.totalElements());
         }
@@ -141,7 +142,7 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
                 .stream()
                 .collect(Collectors.toMap(Category::id, Category::name));
         List<UUID> ids = page.content().stream().map(Product::id).toList();
-        Map<UUID, Quantity> stock = stockLevels.currentStock(ids);
+        Map<UUID, Quantity> stock = stockLevels.currentStock(ids, search.siteId());
         Map<UUID, Instant> imageVersions = images.versions(ids);
         return page.map(product -> new ProductView(product, categoryNames.get(product.categoryId()),
                 stock.getOrDefault(product.id(), Quantity.ZERO), imageVersions.get(product.id())));
@@ -174,8 +175,13 @@ public class ProductService implements CreateProductUseCase, UpdateProductUseCas
         return category;
     }
 
+    /** Tras crear o editar, el stock mostrado es el de todas las sedes juntas. */
     private ProductView view(Product product, Category category) {
-        return new ProductView(product, category.name(), stockLevels.currentStock(product.id()),
+        return view(product, category, null);
+    }
+
+    private ProductView view(Product product, Category category, UUID siteId) {
+        return new ProductView(product, category.name(), stockLevels.currentStock(product.id(), siteId),
                 images.versions(List.of(product.id())).get(product.id()));
     }
 }

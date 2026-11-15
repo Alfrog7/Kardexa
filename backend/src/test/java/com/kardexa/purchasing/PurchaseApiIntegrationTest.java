@@ -17,6 +17,7 @@ import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase;
 import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase.DocumentMovement;
 import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase.Line;
 import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase.RecordStockMovementsCommand;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Quantity;
 import java.math.BigDecimal;
 import java.util.List;
@@ -189,7 +190,7 @@ class PurchaseApiIntegrationTest {
     @DisplayName("ADR 0009: el inventario no registra movimientos fuera de una transacción")
     void inventoryRequiresTransaction() {
         assertThatThrownBy(() -> recordStockMovements.record(new RecordStockMovementsCommand(
-                DocumentMovement.PURCHASE, UUID.randomUUID(), null, List.of(new Line(rice, Quantity.of("1"))))))
+                DocumentMovement.PURCHASE, UUID.randomUUID(), MainSite.ID, null, List.of(new Line(rice, Quantity.of("1"))))))
                 .isInstanceOf(IllegalTransactionStateException.class);
         assertThat(count("stock_movement")).isZero();
     }

@@ -21,10 +21,11 @@ class StockRecordsPersistenceAdapter implements StockRecords {
     public void add(StockAdjustment adjustment) {
         jdbc.sql("""
                 INSERT INTO stock_adjustment
-                    (id, product_id, direction, quantity, reason, note, user_id, created_at)
-                VALUES (:id, :productId, :direction, :quantity, :reason, :note, :userId, :createdAt)""")
+                    (id, product_id, site_id, direction, quantity, reason, note, user_id, created_at)
+                VALUES (:id, :productId, :siteId, :direction, :quantity, :reason, :note, :userId, :createdAt)""")
                 .param("id", adjustment.id())
                 .param("productId", adjustment.productId())
+                .param("siteId", adjustment.siteId())
                 .param("direction", adjustment.direction().name())
                 .param("quantity", adjustment.quantity().value())
                 .param("reason", adjustment.reason().name())
@@ -38,11 +39,13 @@ class StockRecordsPersistenceAdapter implements StockRecords {
     public void add(StockMovement movement) {
         jdbc.sql("""
                 INSERT INTO stock_movement
-                    (id, product_id, type, direction, quantity, balance_after, source_type, source_id, user_id, occurred_at)
-                VALUES (:id, :productId, :type, :direction, :quantity, :balanceAfter, :sourceType, :sourceId,
+                    (id, product_id, site_id, type, direction, quantity, balance_after, source_type, source_id, user_id,
+                     occurred_at)
+                VALUES (:id, :productId, :siteId, :type, :direction, :quantity, :balanceAfter, :sourceType, :sourceId,
                         :userId, :occurredAt)""")
                 .param("id", movement.id())
                 .param("productId", movement.productId())
+                .param("siteId", movement.siteId())
                 .param("type", movement.type().name())
                 .param("direction", movement.direction().name())
                 .param("quantity", movement.quantity().value())

@@ -14,6 +14,7 @@ import java.util.UUID;
 public record StockMovement(
         UUID id,
         UUID productId,
+        UUID siteId,
         MovementType type,
         Direction direction,
         Quantity quantity,
@@ -26,6 +27,7 @@ public record StockMovement(
     public StockMovement {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(productId, "productId");
+        Objects.requireNonNull(siteId, "siteId");
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(direction, "direction");
         Objects.requireNonNull(quantity, "quantity");
@@ -36,7 +38,7 @@ public record StockMovement(
     }
 
     public static StockMovement fromAdjustment(StockAdjustment adjustment, Quantity balanceAfter) {
-        return new StockMovement(UUID.randomUUID(), adjustment.productId(), MovementType.ADJUSTMENT,
+        return new StockMovement(UUID.randomUUID(), adjustment.productId(), adjustment.siteId(), MovementType.ADJUSTMENT,
                 adjustment.direction(), adjustment.quantity(), balanceAfter, SourceType.ADJUSTMENT, adjustment.id(),
                 adjustment.userId(), adjustment.createdAt());
     }

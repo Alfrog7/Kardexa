@@ -88,7 +88,8 @@ class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
-    public ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, PageQuery page) {
+    public ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive,
+            UUID siteId, PageQuery page) {
         String needle = text == null ? null : text.toLowerCase(Locale.ROOT);
         List<Product> matches = rows.values().stream()
                 .filter(p -> includeInactive || p.isActive())

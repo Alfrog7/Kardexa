@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Agregado
 
+- **Stock y kárdex por sede (HU-19, RN-13):** el stock, los movimientos, las ventas, las compras y los ajustes pertenecen a una sede (`siteId` en cada respuesta y filtro opcional en productos, kárdex, movimientos, ventas, compras, dashboard y exportaciones). Sin sede, el stock de un producto es la suma de todas; el stock crítico se evalúa por sede. El `EMPLOYEE` opera en la Sede principal e ignora el `siteId` pedido hasta que la #164 lo asigne a una sede. La migración V15 deja todo lo existente en la «Sede principal» con los mismos saldos (#163).
 - **Sedes (HU-19):** `GET`, `POST`, `PUT` y `PATCH /api/v1/sites` (solo `ADMIN`) para registrar, editar, inhabilitar y volver a habilitar sedes con nombre y dirección opcional; el nombre no se repite sin distinguir mayúsculas y una sede inhabilitada sigue en la lista. La migración V14 crea la tabla `site` y la «Sede principal» (id fijo) que recibirá lo existente. El panel tiene la pantalla `/sedes`, visible solo para el administrador. Módulo nuevo `sites` (#162).
 - **ADR 0013 · Sedes y turnos:** catálogo común y stock por (producto, sede); el empleado opera solo en su sede; el turno lo abre quien lleva la caja y se cierra contando lo que sobró (vendido = stock registrado − sobrante), con el cuadre de efectivo, Yape, Plin y transferencia. Requisitos RF-26 a RF-33 y RN-13 a RN-16, historias HU-19 a HU-24, y el camino a varios negocios documentado sin implementarlo (#161).
 

@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface StockMovementQueries {
 
     /** Saldo que dejó el último movimiento anterior a {@code instant}; 0 si no hubo ninguno. */
-    Quantity balanceBefore(UUID productId, Instant instant);
+    Quantity balanceBefore(UUID productId, UUID siteId, Instant instant);
 
     /**
      * Movimientos del producto en orden cronológico.
@@ -22,11 +22,11 @@ public interface StockMovementQueries {
      * @param from primer instante incluido; nulo para no limitar
      * @param to   límite exclusivo; nulo para no limitar
      */
-    List<StockMovement> findMovements(UUID productId, Instant from, Instant to);
+    List<StockMovement> findMovements(UUID productId, UUID siteId, Instant from, Instant to);
 
     /**
      * Movimientos de todos los productos, del más reciente al más antiguo, con el código y el nombre del
      * producto. {@code from} incluido y {@code to} excluido; los filtros nulos no se aplican.
      */
-    ResultPage<MovementEntry> findAll(Instant from, Instant to, MovementType type, PageQuery page);
+    ResultPage<MovementEntry> findAll(UUID siteId, Instant from, Instant to, MovementType type, PageQuery page);
 }

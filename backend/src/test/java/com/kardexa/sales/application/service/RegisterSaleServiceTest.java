@@ -22,6 +22,7 @@ import com.kardexa.sales.domain.model.SaleNumber;
 import com.kardexa.sales.domain.model.SaleStatus;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
@@ -130,13 +131,13 @@ class RegisterSaleServiceTest {
         UUID other = UUID.randomUUID();
         UUID employee = UUID.randomUUID();
 
-        query.list(new SaleFilter(java.time.LocalDate.parse("2026-11-12"), null, other), new Viewer(employee, false),
+        query.list(new SaleFilter(java.time.LocalDate.parse("2026-11-12"), null, other, null), new Viewer(employee, false),
                 PageQuery.of(0, 20));
         assertThat(sales.lastSeller).isEqualTo(employee);
         assertThat(sales.lastFrom).isEqualTo(Instant.parse("2026-11-12T05:00:00Z"));
         assertThat(sales.lastTo).isNull();
 
-        query.list(new SaleFilter(null, java.time.LocalDate.parse("2026-11-12"), other), new Viewer(employee, true),
+        query.list(new SaleFilter(null, java.time.LocalDate.parse("2026-11-12"), other, null), new Viewer(employee, true),
                 PageQuery.of(0, 20));
         assertThat(sales.lastSeller).isEqualTo(other);
         assertThat(sales.lastTo).isEqualTo(Instant.parse("2026-11-13T05:00:00Z"));
@@ -186,7 +187,7 @@ class RegisterSaleServiceTest {
     }
 
     private static RegisterSaleCommand command(ItemCommand... items) {
-        return new RegisterSaleCommand(List.of(items), SELLER);
+        return new RegisterSaleCommand(List.of(items), SELLER, MainSite.ID);
     }
 
     /** Doble en memoria de {@link SaleRepository}. */
@@ -216,11 +217,11 @@ class RegisterSaleServiceTest {
         public Optional<SaleView> findView(UUID id) {
             return saved.stream().filter(s -> s.id().equals(id)).findFirst()
                     .map(s -> new SaleView(s.id(), s.number().toString(), s.soldAt(), s.sellerId(), "Vendedor",
-                            s.status(), null, s.total(), List.of()));
+                            s.siteId(), s.status(), null, s.total(), List.of()));
         }
 
         @Override
-        public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, PageQuery page) {
+        public ResultPage<SaleView> findViews(Instant from, Instant to, UUID sellerId, UUID siteId, PageQuery page) {
             lastFrom = from;
             lastTo = to;
             lastSeller = sellerId;

@@ -21,6 +21,7 @@ public final class Purchase {
 
     private final UUID id;
     private final UUID supplierId;
+    private final UUID siteId;
     private final String supplierDocument;
     private final LocalDate purchaseDate;
     private final List<PurchaseItem> items;
@@ -38,10 +39,11 @@ public final class Purchase {
         }
     }
 
-    private Purchase(UUID id, UUID supplierId, String supplierDocument, LocalDate purchaseDate,
+    private Purchase(UUID id, UUID supplierId, UUID siteId, String supplierDocument, LocalDate purchaseDate,
             List<PurchaseItem> items, PurchaseStatus status, UUID userId, Instant createdAt, Voiding voiding) {
         this.id = Objects.requireNonNull(id, "id");
         this.supplierId = Objects.requireNonNull(supplierId, "supplierId");
+        this.siteId = Objects.requireNonNull(siteId, "siteId");
         this.supplierDocument = normalizeDocument(supplierDocument);
         this.purchaseDate = Objects.requireNonNull(purchaseDate, "purchaseDate");
         this.items = List.copyOf(items);
@@ -61,16 +63,17 @@ public final class Purchase {
     }
 
     /** Una compra nueva, registrada por {@code userId}. */
-    public static Purchase register(UUID supplierId, String supplierDocument, LocalDate purchaseDate,
+    public static Purchase register(UUID supplierId, UUID siteId, String supplierDocument, LocalDate purchaseDate,
             List<PurchaseItem> items, UUID userId, Instant createdAt) {
-        return new Purchase(UUID.randomUUID(), supplierId, supplierDocument, purchaseDate, items,
+        return new Purchase(UUID.randomUUID(), supplierId, siteId, supplierDocument, purchaseDate, items,
                 PurchaseStatus.REGISTERED, userId, createdAt, null);
     }
 
     /** Reconstruye una compra ya guardada (lo usa el adaptador de persistencia). */
-    public static Purchase restore(UUID id, UUID supplierId, String supplierDocument, LocalDate purchaseDate,
-            List<PurchaseItem> items, PurchaseStatus status, UUID userId, Instant createdAt, Voiding voiding) {
-        return new Purchase(id, supplierId, supplierDocument, purchaseDate, items, status, userId, createdAt,
+    public static Purchase restore(UUID id, UUID supplierId, UUID siteId, String supplierDocument,
+            LocalDate purchaseDate, List<PurchaseItem> items, PurchaseStatus status, UUID userId, Instant createdAt,
+            Voiding voiding) {
+        return new Purchase(id, supplierId, siteId, supplierDocument, purchaseDate, items, status, userId, createdAt,
                 voiding);
     }
 
@@ -118,6 +121,11 @@ public final class Purchase {
 
     public UUID supplierId() {
         return supplierId;
+    }
+
+    /** La sede que recibió la mercadería; el stock que suma es el de esa sede (RN-13). */
+    public UUID siteId() {
+        return siteId;
     }
 
     public String supplierDocument() {

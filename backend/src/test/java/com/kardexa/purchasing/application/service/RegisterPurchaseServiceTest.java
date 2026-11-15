@@ -9,6 +9,7 @@ import com.kardexa.purchasing.domain.exception.InactiveSupplierException;
 import com.kardexa.purchasing.domain.exception.SupplierNotFoundException;
 import com.kardexa.purchasing.domain.model.Purchase;
 import com.kardexa.purchasing.domain.model.Supplier;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.time.Clock;
@@ -47,7 +48,7 @@ class RegisterPurchaseServiceTest {
     }
 
     private RegisterPurchaseCommand command(UUID supplierId) {
-        return new RegisterPurchaseCommand(supplierId, "F001-77", LocalDate.of(2026, 11, 10), List.of(
+        return new RegisterPurchaseCommand(supplierId, MainSite.ID, "F001-77", LocalDate.of(2026, 11, 10), List.of(
                 new ItemCommand(RICE, Quantity.of("10"), Money.of("18.50")),
                 new ItemCommand(OIL, Quantity.of("4"), Money.of("9.90"))), USER);
     }

@@ -26,5 +26,5 @@ public interface PurchaseRepository {
     Optional<PurchaseView> findView(UUID id);
 
     /** Ordenadas por fecha de compra y luego por registro, de la más reciente a la más antigua. */
-    ResultPage<PurchaseView> findViews(LocalDate from, LocalDate to, PageQuery page);
+    ResultPage<PurchaseView> findViews(UUID siteId, LocalDate from, LocalDate to, PageQuery page);
 }

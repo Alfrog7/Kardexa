@@ -233,8 +233,11 @@ paths:
       summary: Busca productos por nombre o código (RF-08)
       description: >-
         Productos activos (o todos con `includeInactive`), ordenados por nombre. `q` se busca sin distinguir mayúsculas
-        dentro del código o del nombre; `%` y `_` se toman como texto, no como comodines.
+        dentro del código o del nombre; `%` y `_` se toman como texto, no como comodines. El `stock` y
+        `criticalOnly` (RN-09) se evalúan en la sede indicada con `siteId`; sin ella, con el stock de todas las sedes
+        sumado (solo ADMIN).
       parameters:
+        - $ref: '#/components/parameters/SiteFilter'
         - name: q
           in: query
           description: Texto contenido en el nombre o el código
@@ -288,6 +291,9 @@ paths:
       tags: [catalog]
       operationId: getProduct
       summary: Obtiene un producto
+      description: El `stock` es el de la sede indicada con `siteId`; sin ella (ADMIN), la suma de todas.
+      parameters:
+        - $ref: '#/components/parameters/SiteFilter'
       responses:
         '200':
           description: Producto
@@ -388,8 +394,11 @@ paths:
       tags: [inventory]
       operationId: listStockMovements
       summary: Historial general de movimientos de stock
-      description: Todos los productos, del más reciente al más antiguo. Fechas en hora de Lima, inclusivas.
+      description: >-
+        Todos los productos, del más reciente al más antiguo. Fechas en hora de Lima, inclusivas. Cada movimiento
+        trae su `siteId`; con `siteId` solo los de esa sede y, sin él, el ADMIN ve los de todas.
       parameters:
+        - $ref: '#/components/parameters/SiteFilter'
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
         - name: type
@@ -461,8 +470,10 @@ paths:
       summary: Kárdex del producto en un rango de fechas (RF-12)
       description: >-
         Las dos fechas son opcionales. Sin `from`, el saldo inicial es 0 y empieza en el primer movimiento.
-        Sin `to`, llega hasta el último. Los movimientos van en orden cronológico.
+        Sin `to`, llega hasta el último. Los movimientos van en orden cronológico. El kárdex es de una sola sede
+        (`siteId`): los saldos son por producto y sede (RN-13).
       parameters:
+        - $ref: '#/components/parameters/SiteOperation'
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
       responses:
@@ -665,6 +676,7 @@ paths:
       operationId: listPurchases
       summary: Lista compras por fecha de compra, de la más reciente a la más antigua (solo ADMIN)
       parameters:
+        - $ref: '#/components/parameters/SiteFilter'
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Page'
@@ -727,8 +739,9 @@ paths:
       tags: [sales]
       operationId: listSales
       summary: Historial de ventas (RF-21; un EMPLOYEE solo ve las suyas)
-      description: De la más reciente a la más antigua. Fechas inclusivas en hora de Lima. Un EMPLOYEE recibe solo sus ventas aunque envíe otro sellerId.
+      description: De la más reciente a la más antigua. Fechas inclusivas en hora de Lima. Un EMPLOYEE recibe solo sus ventas aunque envíe otro sellerId. Se puede filtrar por sede con `siteId`.
       parameters:
+        - $ref: '#/components/parameters/SiteFilter'
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
         - name: sellerId
@@ -838,10 +851,14 @@ paths:
       summary: Indicadores del panel (RF-22, RF-23, RF-24; solo ADMIN)
       description: >-
         Todo el inicio en una respuesta (ADR 0012). Días en hora de Lima, rango inclusivo; sin fechas, los últimos
-        30 días hasta hoy y como máximo 366 días. Las ventas anuladas no cuentan.
+        30 días hasta hoy y como máximo 366 días. Las ventas anuladas no cuentan. Con `siteId`, solo las ventas y el
+        stock crítico de esa sede (RN-09 por sede); sin él, todo el negocio y el stock sumado.
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
+        - name: siteId
+          in: query
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: Resumen y ventas por día del rango
@@ -882,6 +899,21 @@ components:
       in: query
       description: Fecha final inclusiva (zona America/Lima)
       schema: { type: string, format: date }
+    SiteFilter:
+      name: siteId
+      in: query
+      description: >-
+        Sede (RN-13, ADR 0013). El EMPLOYEE siempre ve la suya e ignora este valor; el ADMIN, sin él, consulta todas
+        las sedes (el stock de un producto es la suma). Mientras no haya sedes asignadas a los usuarios (HU-20), la
+        «Sede principal» `00000000-0000-0000-0000-000000000001`.
+      schema: { type: string, format: uuid }
+    SiteOperation:
+      name: siteId
+      in: query
+      description: >-
+        Sede cuyo kárdex se consulta (el saldo es por producto y sede). El EMPLOYEE usa la suya; el ADMIN, sin
+        `siteId`, la «Sede principal».
+      schema: { type: string, format: uuid }
 
   responses:
     ValidationError:
@@ -1099,6 +1131,7 @@ components:
       required: [id, occurredAt, type, direction, quantity, balanceAfter, sourceId, user]
       properties:
         id: { type: string, format: uuid }
+        siteId: { type: string, format: uuid, description: Sede donde ocurrió el movimiento (RN-13) }
         occurredAt: { type: string, format: date-time }
         type: { $ref: '#/components/schemas/MovementType' }
         direction: { $ref: '#/components/schemas/Direction' }
@@ -1125,6 +1158,7 @@ components:
       required: [productId, direction, quantity, reason]
       properties:
         productId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid, description: Sede del ajuste; el EMPLOYEE usa la suya y el ADMIN, sin ella, la «Sede principal» }
         direction: { $ref: '#/components/schemas/Direction' }
         quantity: { $ref: '#/components/schemas/Decimal3' }
         reason:
@@ -1191,6 +1225,7 @@ components:
       required: [supplierId, purchaseDate, items]
       properties:
         supplierId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid, description: Sede que recibe la mercadería; sin ella, la «Sede principal» }
         supplierDocument: { type: string, maxLength: 40 }
         purchaseDate: { type: string, format: date }
         items:
@@ -1236,6 +1271,7 @@ components:
       type: object
       required: [items]
       properties:
+        siteId: { type: string, format: uuid, description: Sede donde se vende; el EMPLOYEE usa la suya y el ADMIN, sin ella, la «Sede principal» }
         items:
           type: array
           minItems: 1
@@ -1256,6 +1292,7 @@ components:
       required: [id, number, soldAt, sellerId, seller, status, total, items]
       properties:
         id: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
         number:
           type: string
           pattern: '^V-\d{6,}$'

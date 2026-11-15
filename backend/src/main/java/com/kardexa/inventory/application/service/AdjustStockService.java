@@ -38,7 +38,7 @@ public class AdjustStockService implements AdjustStockUseCase {
         if (!product.active()) {
             throw new InactiveProductException(product.name());
         }
-        ProductStock updated = stocks.load(command.productId())
+        ProductStock updated = stocks.load(command.productId(), command.siteId())
                 .apply(command.direction(), command.quantity(), product.name());
         // Primero el stock: si otro lo cambió falla aquí, y a partir de este punto la fila queda
         // bloqueada hasta el final de la transacción, lo que ordena los movimientos del producto.
@@ -46,7 +46,7 @@ public class AdjustStockService implements AdjustStockUseCase {
 
         // La hora se toma con la fila bloqueada, para que las fechas sigan el orden de los saldos.
         // Microsegundos: la precisión de timestamptz, para que lo devuelto sea igual a lo guardado.
-        StockAdjustment adjustment = StockAdjustment.create(command.productId(), command.direction(),
+        StockAdjustment adjustment = StockAdjustment.create(command.productId(), command.siteId(), command.direction(),
                 command.quantity(), command.reason(), command.note(), command.userId(), clock.instant().truncatedTo(ChronoUnit.MICROS));
         StockMovement movement = StockMovement.fromAdjustment(adjustment, updated.quantity());
         records.add(adjustment);

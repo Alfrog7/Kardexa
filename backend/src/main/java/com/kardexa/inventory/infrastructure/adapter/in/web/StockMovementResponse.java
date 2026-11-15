@@ -10,6 +10,7 @@ import java.util.UUID;
 /** Esquema {@code StockMovement}. Las cantidades viajan como texto para no perder precisión. */
 record StockMovementResponse(
         UUID id,
+        UUID siteId,
         Instant occurredAt,
         MovementType type,
         Direction direction,
@@ -23,7 +24,7 @@ record StockMovementResponse(
     static final String SYSTEM_USER = "Sistema";
 
     static StockMovementResponse from(StockMovement movement, Map<UUID, String> userNames) {
-        return new StockMovementResponse(movement.id(), movement.occurredAt(), movement.type(), movement.direction(),
+        return new StockMovementResponse(movement.id(), movement.siteId(), movement.occurredAt(), movement.type(), movement.direction(),
                 movement.quantity().toString(), movement.balanceAfter().toString(), movement.sourceId(),
                 label(movement), userName(movement, userNames));
     }

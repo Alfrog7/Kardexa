@@ -12,7 +12,7 @@ import java.util.UUID;
 public final class Site {
 
     /** Sede que crea la migración V14 con todo lo que existía antes de la Fase 8. */
-    public static final UUID MAIN_SITE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    public static final UUID MAIN_SITE_ID = com.kardexa.shared.domain.MainSite.ID;
 
     public static final int NAME_MIN_LENGTH = 2;
     public static final int NAME_MAX_LENGTH = 80;

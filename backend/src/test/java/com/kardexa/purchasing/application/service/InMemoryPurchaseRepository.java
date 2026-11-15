@@ -20,7 +20,7 @@ class InMemoryPurchaseRepository implements PurchaseRepository {
     final Map<UUID, Purchase> rows = new LinkedHashMap<>();
 
     private static Purchase copy(Purchase p) {
-        return Purchase.restore(p.id(), p.supplierId(), p.supplierDocument(), p.purchaseDate(), p.items(),
+        return Purchase.restore(p.id(), p.supplierId(), p.siteId(), p.supplierDocument(), p.purchaseDate(), p.items(),
                 p.status(), p.userId(), p.createdAt(), p.voiding());
     }
 
@@ -49,7 +49,7 @@ class InMemoryPurchaseRepository implements PurchaseRepository {
     }
 
     @Override
-    public ResultPage<PurchaseView> findViews(LocalDate from, LocalDate to, PageQuery page) {
+    public ResultPage<PurchaseView> findViews(UUID siteId, LocalDate from, LocalDate to, PageQuery page) {
         return ResultPage.of(List.of(), page, 0);
     }
 }

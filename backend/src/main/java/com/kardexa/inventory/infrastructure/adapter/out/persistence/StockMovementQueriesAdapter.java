@@ -32,12 +32,13 @@ class StockMovementQueriesAdapter implements StockMovementQueries {
     }
 
     @Override
-    public Quantity balanceBefore(UUID productId, Instant instant) {
+    public Quantity balanceBefore(UUID productId, UUID siteId, Instant instant) {
         return jdbc.sql("""
                 SELECT balance_after FROM stock_movement
-                WHERE product_id = :productId AND occurred_at < :instant
+                WHERE product_id = :productId AND site_id = :siteId AND occurred_at < :instant
                 ORDER BY seq DESC LIMIT 1""")
                 .param("productId", productId)
+                .param("siteId", siteId)
                 .param("instant", Timestamp.from(instant))
                 .query(BigDecimal.class)
                 .optional()
@@ -46,15 +47,18 @@ class StockMovementQueriesAdapter implements StockMovementQueries {
     }
 
     @Override
-    public List<StockMovement> findMovements(UUID productId, Instant from, Instant to) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM stock_movement WHERE product_id = :productId");
+    public List<StockMovement> findMovements(UUID productId, UUID siteId, Instant from, Instant to) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM stock_movement WHERE product_id = :productId AND site_id = :siteId");
         if (from != null) {
             sql.append(" AND occurred_at >= :from");
         }
         if (to != null) {
             sql.append(" AND occurred_at < :to");
         }
-        JdbcClient.StatementSpec query = jdbc.sql(sql.append(" ORDER BY seq").toString()).param("productId", productId);
+        JdbcClient.StatementSpec query = jdbc.sql(sql.append(" ORDER BY seq").toString())
+                .param("productId", productId)
+                .param("siteId", siteId);
         if (from != null) {
             query = query.param("from", Timestamp.from(from));
         }
@@ -69,9 +73,14 @@ class StockMovementQueriesAdapter implements StockMovementQueries {
      * nombre: lectura permitida por el ADR 0007.
      */
     @Override
-    public ResultPage<MovementEntry> findAll(Instant from, Instant to, MovementType type, PageQuery page) {
+    public ResultPage<MovementEntry> findAll(
+            UUID siteId, Instant from, Instant to, MovementType type, PageQuery page) {
         StringBuilder where = new StringBuilder(" WHERE true");
         Map<String, Object> params = new HashMap<>();
+        if (siteId != null) {
+            where.append(" AND m.site_id = :siteId");
+            params.put("siteId", siteId);
+        }
         if (from != null) {
             where.append(" AND m.occurred_at >= :from");
             params.put("from", Timestamp.from(from));
@@ -102,6 +111,7 @@ class StockMovementQueriesAdapter implements StockMovementQueries {
         return new StockMovement(
                 row.getObject("id", UUID.class),
                 row.getObject("product_id", UUID.class),
+                row.getObject("site_id", UUID.class),
                 MovementType.valueOf(row.getString("type")),
                 Direction.valueOf(row.getString("direction")),
                 new Quantity(row.getBigDecimal("quantity")),

@@ -18,7 +18,8 @@ public interface ListSalesUseCase {
     ResultPage<SaleView> list(SaleFilter filter, Viewer viewer, PageQuery page);
 
     /** Fechas inclusivas en hora de Lima; todo es opcional. */
-    record SaleFilter(LocalDate from, LocalDate to, UUID sellerId) {}
+    /** {@code siteId} nulo: todas las sedes (solo el ADMIN; al EMPLOYEE se le fija la suya). */
+    record SaleFilter(LocalDate from, LocalDate to, UUID sellerId, UUID siteId) {}
 
     /** Quién consulta: su id y si es {@code ADMIN}. */
     record Viewer(UUID userId, boolean admin) {}

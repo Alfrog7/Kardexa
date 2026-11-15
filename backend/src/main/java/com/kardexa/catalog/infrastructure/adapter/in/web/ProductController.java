@@ -22,6 +22,7 @@ import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
 import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -34,6 +35,8 @@ import java.util.List;
 import java.util.UUID;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +60,7 @@ class ProductController {
     private final SearchProductsUseCase searchProducts;
     private final DeleteProductUseCase deleteProduct;
     private final ManageProductImageUseCase productImage;
+    private final SiteScope siteScope;
 
     ProductController(
             CreateProductUseCase createProduct,
@@ -64,13 +68,15 @@ class ProductController {
             GetProductUseCase getProduct,
             SearchProductsUseCase searchProducts,
             DeleteProductUseCase deleteProduct,
-            ManageProductImageUseCase productImage) {
+            ManageProductImageUseCase productImage,
+            SiteScope siteScope) {
         this.createProduct = createProduct;
         this.updateProduct = updateProduct;
         this.getProduct = getProduct;
         this.searchProducts = searchProducts;
         this.deleteProduct = deleteProduct;
         this.productImage = productImage;
+        this.siteScope = siteScope;
     }
 
     /** Elimina un producto sin historial; con movimientos, compras o ventas responde 409 (RN-03). */
@@ -108,10 +114,10 @@ class ProductController {
 
     /** HU-07 y HU-10 · Búsqueda paginada de productos (activos, salvo que se pidan todos; {@code searchProducts} en el contrato). */
     @GetMapping
-    ProductPageResponse search(@Valid @ParameterObject SearchParams params) {
+    ProductPageResponse search(@AuthenticationPrincipal Jwt jwt, @Valid @ParameterObject SearchParams params) {
         ResultPage<ProductView> page = searchProducts.search(new ProductSearch(
                 params.q(), params.categoryId(), params.criticalOnlyOrDefault(), params.includeInactiveOrDefault(),
-                PageQuery.of(params.page(), params.size())));
+                siteScope.filter(jwt, params.siteId()), PageQuery.of(params.page(), params.size())));
         return ProductPageResponse.from(page);
     }
 
@@ -126,8 +132,8 @@ class ProductController {
     }
 
     @GetMapping("/{id}")
-    ProductResponse get(@PathVariable UUID id) {
-        return ProductResponse.from(getProduct.get(id));
+    ProductResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @RequestParam(required = false) UUID siteId) {
+        return ProductResponse.from(getProduct.get(id, siteScope.filter(jwt, siteId)));
     }
 
     @PutMapping("/{id}")
@@ -175,6 +181,7 @@ class ProductController {
             UUID categoryId,
             Boolean criticalOnly,
             Boolean includeInactive,
+            UUID siteId,
             @Min(value = 0, message = "Debe ser 0 o mayor.")
             Integer page,
             @Min(value = 1, message = "Debe estar entre 1 y " + PageQuery.MAX_SIZE + ".")

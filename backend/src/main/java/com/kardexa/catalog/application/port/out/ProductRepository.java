@@ -49,5 +49,6 @@ public interface ProductRepository {
      * Con {@code criticalOnly}, solo los que tienen stock actual ≤ stock mínimo (RN-09); un producto
      * sin movimientos tiene stock 0.
      */
-    ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, PageQuery page);
+    ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, UUID siteId,
+            PageQuery page);
 }

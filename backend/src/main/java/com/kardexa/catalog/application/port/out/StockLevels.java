@@ -15,11 +15,11 @@ public interface StockLevels {
 
     /**
      * Stock de varios productos en una sola consulta (evita N+1 al listar). El mapa trae una entrada
-     * por cada id pedido; un producto sin movimientos tiene stock 0.
+     * por cada id pedido; un producto sin movimientos tiene stock 0. {@code siteId} nulo suma todas las sedes.
      */
-    Map<UUID, Quantity> currentStock(Collection<UUID> productIds);
+    Map<UUID, Quantity> currentStock(Collection<UUID> productIds, UUID siteId);
 
-    default Quantity currentStock(UUID productId) {
-        return currentStock(List.of(productId)).getOrDefault(productId, Quantity.ZERO);
+    default Quantity currentStock(UUID productId, UUID siteId) {
+        return currentStock(List.of(productId), siteId).getOrDefault(productId, Quantity.ZERO);
     }
 }

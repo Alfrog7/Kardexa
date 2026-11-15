@@ -172,7 +172,7 @@ class KardexApiIntegrationTest {
         String parameters = "$.paths['/api/v1/products/{id}/kardex'].get.parameters";
 
         mvc.perform(get("/v3/api-docs"))
-                .andExpect(jsonPath(parameters + "[*].name", containsInAnyOrder("id", "from", "to")));
+                .andExpect(jsonPath(parameters + "[*].name", containsInAnyOrder("id", "from", "to", "siteId")));
     }
 
     @Test
@@ -199,8 +199,8 @@ class KardexApiIntegrationTest {
     private void movement(String direction, String quantity, String balance, String instant) {
         jdbc.update("""
                 INSERT INTO stock_movement
-                    (id, product_id, type, direction, quantity, balance_after, source_type, source_id, occurred_at)
-                VALUES (?::uuid, ?::uuid, 'ADJUSTMENT', ?, ?::numeric, ?::numeric, 'ADJUSTMENT', ?::uuid, ?)""",
+                    (id, product_id, site_id, type, direction, quantity, balance_after, source_type, source_id, occurred_at)
+                VALUES (?::uuid, ?::uuid, '00000000-0000-0000-0000-000000000001', 'ADJUSTMENT', ?, ?::numeric, ?::numeric, 'ADJUSTMENT', ?::uuid, ?)""",
                 UUID.randomUUID().toString(), productId, direction, quantity, balance, UUID.randomUUID().toString(),
                 Timestamp.from(Instant.parse(instant)));
     }

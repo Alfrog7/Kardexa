@@ -24,11 +24,11 @@ public class KardexService implements GetKardexUseCase {
     }
 
     @Override
-    public Kardex get(UUID productId, LocalDate from, LocalDate to) {
+    public Kardex get(UUID productId, UUID siteId, LocalDate from, LocalDate to) {
         StockProduct product = products.require(productId);
         Instant start = from == null ? null : BusinessCalendar.startOf(from);
         Instant end = to == null ? null : BusinessCalendar.endOf(to);
-        Quantity opening = start == null ? Quantity.ZERO : movements.balanceBefore(productId, start);
-        return Kardex.of(productId, product.name(), opening, movements.findMovements(productId, start, end));
+        Quantity opening = start == null ? Quantity.ZERO : movements.balanceBefore(productId, siteId, start);
+        return Kardex.of(productId, product.name(), opening, movements.findMovements(productId, siteId, start, end));
     }
 }

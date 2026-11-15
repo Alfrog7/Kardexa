@@ -57,10 +57,12 @@ class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive, PageQuery page) {
+    public ResultPage<Product> search(String text, UUID categoryId, boolean criticalOnly, boolean includeInactive,
+            UUID siteId, PageQuery page) {
         String pattern = text == null ? "%" : "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";
         Page<ProductJpaEntity> result = jpa.search(pattern, categoryId == null,
-                categoryId == null ? NO_CATEGORY : categoryId, criticalOnly, includeInactive, PageRequest.of(page.page(), page.size()));
+                categoryId == null ? NO_CATEGORY : categoryId, criticalOnly, includeInactive, siteId == null,
+                siteId == null ? NO_CATEGORY : siteId, PageRequest.of(page.page(), page.size()));
         return ResultPage.of(
                 result.getContent().stream().map(ProductJpaEntity::toDomain).toList(), page, result.getTotalElements());
     }

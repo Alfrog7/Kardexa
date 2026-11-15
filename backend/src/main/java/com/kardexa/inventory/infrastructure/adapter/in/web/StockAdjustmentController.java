@@ -11,6 +11,7 @@ import com.kardexa.inventory.domain.model.AdjustmentReason;
 import com.kardexa.inventory.domain.model.Direction;
 import com.kardexa.inventory.domain.model.StockAdjustment;
 import com.kardexa.shared.domain.Quantity;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -30,17 +31,20 @@ class StockAdjustmentController {
 
     private final AdjustStockUseCase adjustStock;
     private final ResolveUserNamesUseCase userNames;
+    private final SiteScope siteScope;
 
-    StockAdjustmentController(AdjustStockUseCase adjustStock, ResolveUserNamesUseCase userNames) {
+    StockAdjustmentController(AdjustStockUseCase adjustStock, ResolveUserNamesUseCase userNames,
+            SiteScope siteScope) {
         this.adjustStock = adjustStock;
         this.userNames = userNames;
+        this.siteScope = siteScope;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     StockMovementResponse adjust(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StockAdjustmentRequest request) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        StockMovement movement = adjustStock.adjust(request.toCommand(userId));
+        StockMovement movement = adjustStock.adjust(request.toCommand(userId, siteScope.single(jwt, request.siteId())));
         return StockMovementResponse.from(movement, userNames.namesOf(List.of(userId)));
     }
 
@@ -48,6 +52,7 @@ class StockAdjustmentController {
     record StockAdjustmentRequest(
             @NotNull(message = "El producto es obligatorio.")
             UUID productId,
+            UUID siteId,
             @NotNull(message = "La dirección es obligatoria.")
             @Pattern(regexp = "IN|OUT", message = "Debe ser IN o OUT.")
             String direction,
@@ -61,8 +66,8 @@ class StockAdjustmentController {
             @Size(max = StockAdjustment.NOTE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.")
             String note) {
 
-        AdjustStockCommand toCommand(UUID userId) {
-            return new AdjustStockCommand(productId, Direction.valueOf(direction), Quantity.of(quantity),
+        AdjustStockCommand toCommand(UUID userId, UUID site) {
+            return new AdjustStockCommand(productId, site, Direction.valueOf(direction), Quantity.of(quantity),
                     AdjustmentReason.valueOf(reason), note, userId);
         }
     }

@@ -11,5 +11,5 @@ public interface GetKardexUseCase {
      * @param from primera fecha incluida, en hora de Lima; nula para empezar desde el primer movimiento
      * @param to   última fecha incluida, en hora de Lima; nula para llegar hasta el último movimiento
      */
-    Kardex get(UUID productId, LocalDate from, LocalDate to);
+    Kardex get(UUID productId, UUID siteId, LocalDate from, LocalDate to);
 }

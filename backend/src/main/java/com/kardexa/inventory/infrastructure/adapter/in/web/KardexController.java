@@ -13,6 +13,9 @@ import java.util.UUID;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
+import com.kardexa.shared.infrastructure.web.SiteScope;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,15 +25,18 @@ class KardexController {
 
     private final GetKardexUseCase getKardex;
     private final ResolveUserNamesUseCase userNames;
+    private final SiteScope siteScope;
 
-    KardexController(GetKardexUseCase getKardex, ResolveUserNamesUseCase userNames) {
+    KardexController(GetKardexUseCase getKardex, ResolveUserNamesUseCase userNames, SiteScope siteScope) {
         this.getKardex = getKardex;
         this.userNames = userNames;
+        this.siteScope = siteScope;
     }
 
     @GetMapping("/products/{id}/kardex")
-    KardexResponse get(@PathVariable UUID id, @Valid @ParameterObject KardexParams params) {
-        Kardex kardex = getKardex.get(id, params.from(), params.to());
+    KardexResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+            @Valid @ParameterObject KardexParams params) {
+        Kardex kardex = getKardex.get(id, siteScope.single(jwt, params.siteId()), params.from(), params.to());
         Map<UUID, String> names = userNames.namesOf(kardex.movements().stream().map(StockMovement::userId).toList());
         return KardexResponse.from(kardex, names);
     }
@@ -38,7 +44,8 @@ class KardexController {
     /** Fechas inclusivas en hora de Lima; las dos son opcionales. */
     record KardexParams(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            UUID siteId) {
 
         @AssertTrue(message = "La fecha inicial no puede ser posterior a la final.")
         public boolean isRange() {

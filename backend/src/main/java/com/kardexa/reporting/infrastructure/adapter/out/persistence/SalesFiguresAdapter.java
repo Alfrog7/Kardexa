@@ -8,6 +8,7 @@ import com.kardexa.shared.domain.Money;
 import com.kardexa.shared.domain.Quantity;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -34,18 +35,20 @@ class SalesFiguresAdapter implements SalesFigures {
      * la sesión y {@code AT TIME ZONE} convertiría al revés, dependiendo de la zona del servidor.
      */
     @Override
-    public List<DailySales> dailySales(ReportPeriod period) {
+    public List<DailySales> dailySales(ReportPeriod period, UUID siteId) {
         return jdbc.sql("""
                 SELECT d.day::date AS day, coalesce(sum(s.total), 0) AS total, count(s.id) AS sales
                 FROM generate_series(CAST(:from AS timestamp), CAST(:to AS timestamp), interval '1 day') AS d(day)
                 LEFT JOIN sale s
                        ON s.status = 'REGISTERED'
+                      AND (CAST(:siteId AS uuid) IS NULL OR s.site_id = :siteId)
                       AND s.sold_at >= (d.day AT TIME ZONE 'America/Lima')
                       AND s.sold_at < ((d.day + interval '1 day') AT TIME ZONE 'America/Lima')
                 GROUP BY d.day
                 ORDER BY d.day""")
                 .param("from", Date.valueOf(period.from()))
                 .param("to", Date.valueOf(period.to()))
+                .param("siteId", siteId, Types.OTHER)
                 .query((row, rowNumber) -> new DailySales(row.getDate("day").toLocalDate(),
                         Money.of(row.getBigDecimal("total")), row.getLong("sales")))
                 .list();
@@ -56,7 +59,7 @@ class SalesFiguresAdapter implements SalesFigures {
      * en la venta más reciente, así un producto renombrado o inhabilitado después sigue apareciendo.
      */
     @Override
-    public List<TopProduct> topProducts(ReportPeriod period, int limit) {
+    public List<TopProduct> topProducts(ReportPeriod period, int limit, UUID siteId) {
         return jdbc.sql("""
                 SELECT i.product_id,
                        (array_agg(i.product_code ORDER BY s.sold_at DESC))[1] AS code,
@@ -66,6 +69,7 @@ class SalesFiguresAdapter implements SalesFigures {
                 JOIN sale s ON s.id = i.sale_id
                 LEFT JOIN product_image img ON img.product_id = i.product_id
                 WHERE s.status = 'REGISTERED'
+                  AND (CAST(:siteId AS uuid) IS NULL OR s.site_id = :siteId)
                   AND s.sold_at >= (CAST(:from AS timestamp) AT TIME ZONE 'America/Lima')
                   AND s.sold_at < ((CAST(:to AS timestamp) + interval '1 day') AT TIME ZONE 'America/Lima')
                 GROUP BY i.product_id
@@ -74,6 +78,7 @@ class SalesFiguresAdapter implements SalesFigures {
                 .param("from", Date.valueOf(period.from()))
                 .param("to", Date.valueOf(period.to()))
                 .param("limit", limit)
+                .param("siteId", siteId, Types.OTHER)
                 .query((row, rowNumber) -> {
                     Timestamp image = row.getTimestamp("image_version");
                     return new TopProduct(row.getObject("product_id", UUID.class), row.getString("code"),

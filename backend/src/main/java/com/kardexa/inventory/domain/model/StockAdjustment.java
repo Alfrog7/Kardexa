@@ -14,6 +14,7 @@ import java.util.UUID;
 public record StockAdjustment(
         UUID id,
         UUID productId,
+        UUID siteId,
         Direction direction,
         Quantity quantity,
         AdjustmentReason reason,
@@ -26,6 +27,7 @@ public record StockAdjustment(
     public StockAdjustment {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(productId, "productId");
+        Objects.requireNonNull(siteId, "siteId");
         Objects.requireNonNull(direction, "direction");
         Objects.requireNonNull(quantity, "quantity");
         Objects.requireNonNull(createdAt, "createdAt");
@@ -42,13 +44,14 @@ public record StockAdjustment(
         }
     }
 
-    public static StockAdjustment create(
-            UUID productId, Direction direction, Quantity quantity, AdjustmentReason reason, String note, Instant now) {
-        return create(productId, direction, quantity, reason, note, null, now);
+    public static StockAdjustment create(UUID productId, UUID siteId, Direction direction, Quantity quantity,
+            AdjustmentReason reason, String note, Instant now) {
+        return create(productId, siteId, direction, quantity, reason, note, null, now);
     }
 
-    public static StockAdjustment create(UUID productId, Direction direction, Quantity quantity,
+    public static StockAdjustment create(UUID productId, UUID siteId, Direction direction, Quantity quantity,
             AdjustmentReason reason, String note, UUID userId, Instant now) {
-        return new StockAdjustment(UUID.randomUUID(), productId, direction, quantity, reason, note, userId, now);
+        return new StockAdjustment(UUID.randomUUID(), productId, siteId, direction, quantity, reason, note, userId,
+                now);
     }
 }

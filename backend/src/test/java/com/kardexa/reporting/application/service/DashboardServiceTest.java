@@ -33,24 +33,24 @@ class DashboardServiceTest {
     private List<TopProduct> top = List.of();
     private final SalesFigures figures = new SalesFigures() {
         @Override
-        public List<DailySales> dailySales(ReportPeriod period) {
+        public List<DailySales> dailySales(ReportPeriod period, UUID siteId) {
             asked.add(period);
             return days;
         }
 
         @Override
-        public List<TopProduct> topProducts(ReportPeriod period, int limit) {
+        public List<TopProduct> topProducts(ReportPeriod period, int limit, UUID siteId) {
             assertThat(limit).isEqualTo(TopProduct.LIMIT);
             return top;
         }
     };
     private List<CriticalProduct> critical = List.of();
-    private final DashboardService service = new DashboardService(figures, () -> critical, CLOCK);
+    private final DashboardService service = new DashboardService(figures, siteId -> critical, CLOCK);
 
     @Test
     @DisplayName("sin fechas toma los últimos 30 días hasta hoy en hora de Lima")
     void defaultPeriod() {
-        Dashboard dashboard = service.get(null, null);
+        Dashboard dashboard = service.get(null, null, null);
 
         assertThat(dashboard.period()).isEqualTo(new ReportPeriod(LocalDate.of(2026, 10, 16), LocalDate.of(2026, 11, 14)));
         assertThat(asked).containsExactly(dashboard.period());
@@ -59,7 +59,7 @@ class DashboardServiceTest {
     @Test
     @DisplayName("con solo la fecha final, el rango son los 30 días que terminan ese día")
     void onlyTo() {
-        assertThat(service.get(null, LocalDate.of(2026, 3, 31)).period())
+        assertThat(service.get(null, LocalDate.of(2026, 3, 31), null).period())
                 .isEqualTo(new ReportPeriod(LocalDate.of(2026, 3, 2), LocalDate.of(2026, 3, 31)));
     }
 
@@ -68,7 +68,7 @@ class DashboardServiceTest {
     void summary() {
         days = List.of(day(1, "10.00", 2), day(2, "0", 0), day(3, "10.01", 1));
 
-        Dashboard dashboard = service.get(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 3));
+        Dashboard dashboard = service.get(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 3), null);
 
         assertThat(dashboard.summary().total()).isEqualTo(Money.of("20.01"));
         assertThat(dashboard.summary().count()).isEqualTo(3);
@@ -81,7 +81,7 @@ class DashboardServiceTest {
     void topProducts() {
         top = List.of(new TopProduct(UUID.randomUUID(), "A01", "Arroz", Quantity.of("5"), Money.of("20.00"), null));
 
-        assertThat(service.get(null, null).topProducts()).isEqualTo(top);
+        assertThat(service.get(null, null, null).topProducts()).isEqualTo(top);
     }
 
     @Test
@@ -90,7 +90,7 @@ class DashboardServiceTest {
         critical = List.of(new CriticalProduct(UUID.randomUUID(), "A01", "Arroz", "Abarrotes", Quantity.ZERO,
                 Quantity.of("5"), null));
 
-        assertThat(service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)).criticalStock())
+        assertThat(service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), null).criticalStock())
                 .isEqualTo(critical);
     }
 
@@ -99,7 +99,7 @@ class DashboardServiceTest {
     void noSales() {
         days = List.of(day(1, "0", 0));
 
-        Dashboard dashboard = service.get(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 1));
+        Dashboard dashboard = service.get(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 1), null);
 
         assertThat(dashboard.summary().count()).isZero();
         assertThat(dashboard.summary().averageTicket()).isEqualTo(Money.ZERO);
@@ -108,12 +108,12 @@ class DashboardServiceTest {
     @Test
     @DisplayName("rechaza un rango invertido o de más de 366 días")
     void invalidPeriods() {
-        assertThatThrownBy(() -> service.get(LocalDate.of(2026, 11, 20), null))
+        assertThatThrownBy(() -> service.get(LocalDate.of(2026, 11, 20), null, null))
                 .isInstanceOf(InvalidReportPeriodException.class);
-        assertThatThrownBy(() -> service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2026, 1, 2)))
+        assertThatThrownBy(() -> service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2026, 1, 2), null))
                 .isInstanceOf(InvalidReportPeriodException.class)
                 .hasMessageContaining("366");
-        assertThat(service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31)).period().to())
+        assertThat(service.get(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31), null).period().to())
                 .isEqualTo(LocalDate.of(2025, 12, 31));
     }
 

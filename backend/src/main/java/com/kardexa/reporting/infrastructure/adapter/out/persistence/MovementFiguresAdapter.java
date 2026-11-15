@@ -41,6 +41,7 @@ class MovementFiguresAdapter implements MovementFigures {
                    ON m.source_type = 'PURCHASE' AND pi.purchase_id = m.source_id AND pi.product_id = m.product_id
             LEFT JOIN app_user u ON u.id = m.user_id
             WHERE m.occurred_at >= :from AND m.occurred_at < :to
+              AND (CAST(:siteId AS uuid) IS NULL OR m.site_id = :siteId)
             """;
 
     private final StreamingQueries queries;
@@ -56,14 +57,14 @@ class MovementFiguresAdapter implements MovementFigures {
     }
 
     @Override
-    public void kardex(UUID productId, ReportPeriod period, Consumer<MovementRow> sink) {
+    public void kardex(UUID productId, UUID siteId, ReportPeriod period, Consumer<MovementRow> sink) {
         stream(SELECT + " AND m.product_id = :productId ORDER BY m.seq",
-                range(period).addValue("productId", productId), sink);
+                range(period, siteId).addValue("productId", productId), sink);
     }
 
     @Override
-    public void movements(ReportPeriod period, String type, Consumer<MovementRow> sink) {
-        MapSqlParameterSource params = range(period);
+    public void movements(UUID siteId, ReportPeriod period, String type, Consumer<MovementRow> sink) {
+        MapSqlParameterSource params = range(period, siteId);
         String sql = SELECT;
         if (type != null) {
             sql += " AND m.type = :type";
@@ -78,10 +79,11 @@ class MovementFiguresAdapter implements MovementFigures {
         });
     }
 
-    private static MapSqlParameterSource range(ReportPeriod period) {
+    private static MapSqlParameterSource range(ReportPeriod period, UUID siteId) {
         return new MapSqlParameterSource()
                 .addValue("from", Timestamp.from(BusinessCalendar.startOf(period.from())))
-                .addValue("to", Timestamp.from(BusinessCalendar.endOf(period.to())));
+                .addValue("to", Timestamp.from(BusinessCalendar.endOf(period.to())))
+                .addValue("siteId", siteId);
     }
 
     private static MovementRow toRow(ResultSet row) throws SQLException {
