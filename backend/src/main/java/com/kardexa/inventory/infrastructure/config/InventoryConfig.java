@@ -3,6 +3,7 @@ package com.kardexa.inventory.infrastructure.config;
 import com.kardexa.inventory.application.service.StockMovementHistoryService;
 import com.kardexa.inventory.application.port.in.AdjustStockUseCase;
 import com.kardexa.inventory.application.port.in.RecordStockMovementsUseCase;
+import com.kardexa.inventory.application.port.in.RegisterReceiptUseCase;
 import com.kardexa.inventory.application.port.out.ProductStockRepository;
 import com.kardexa.inventory.application.port.out.StockMovementQueries;
 import com.kardexa.inventory.application.port.out.StockProducts;
@@ -11,6 +12,7 @@ import com.kardexa.inventory.application.port.out.UserNames;
 import com.kardexa.inventory.application.service.AdjustStockService;
 import com.kardexa.inventory.application.service.KardexService;
 import com.kardexa.inventory.application.service.RecordStockMovementsService;
+import com.kardexa.inventory.application.service.RegisterReceiptService;
 import com.kardexa.inventory.application.service.StockQueryService;
 import com.kardexa.inventory.application.service.UserNamesService;
 import java.time.Clock;
@@ -52,6 +54,14 @@ class InventoryConfig {
             TransactionTemplate transactionTemplate) {
         return new RetryingAdjustStock(
                 new AdjustStockService(stocks, records, products, Clock.systemUTC()), transactionTemplate);
+    }
+
+    /** Entradas de mercadería de la sede (HU-21): con su propia transacción y reintentos. */
+    @Bean
+    RegisterReceiptUseCase registerReceiptUseCase(
+            RecordStockMovementsUseCase recordStockMovements, TransactionTemplate transactionTemplate) {
+        return new RetryingRegisterReceipt(
+                new RegisterReceiptService(recordStockMovements, Clock.systemUTC()), transactionTemplate);
     }
 
     /** Solo se llama dentro de la transacción de compras o ventas (ADR 0009). */

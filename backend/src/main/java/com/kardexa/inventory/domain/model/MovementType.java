@@ -6,5 +6,6 @@ public enum MovementType {
     SALE,
     ADJUSTMENT,
     PURCHASE_VOID,
-    SALE_VOID
+    SALE_VOID,
+    RECEIPT
 }

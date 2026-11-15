@@ -36,6 +36,13 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M9 4.5V3h6v1.5M9 10h6M9 14h6M9 17.5h3" />
     </>
   ),
+  [routes.receipts]: (
+    <>
+      <path d="M12 3.5v11" />
+      <path d="m7.5 10.5 4.5 4.5 4.5-4.5" />
+      <path d="M4.5 15.5v4h15v-4" />
+    </>
+  ),
   [routes.purchases]: (
     <>
       <path d="M5 8.5h14l-1 11.5H6z" />

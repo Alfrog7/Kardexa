@@ -6,4 +6,5 @@ export const MOVEMENT_LABELS: Record<MovementType, string> = {
   ADJUSTMENT: 'Ajuste',
   PURCHASE_VOID: 'Anulación de compra',
   SALE_VOID: 'Anulación de venta',
+  RECEIPT: 'Entrada',
 }
