@@ -145,6 +145,24 @@ describe('rutas del panel', () => {
     expect(screen.queryByRole('link', { name: /Sede/ })).not.toBeInTheDocument()
   })
 
+  it('la trabajadora ve el nombre de su sede, sin poder cambiarla', async () => {
+    setActiveSite(undefined)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ id: 'sede-2', name: 'Monserrate', address: null, active: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    renderAt('/', {
+      token: 't',
+      user: { id: '2', fullName: 'Luis Soto', email: 'luis@correo.com', role: 'EMPLOYEE', active: true },
+    })
+
+    expect(await screen.findByText('Monserrate')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Monserrate/ })).not.toBeInTheDocument()
+    vi.restoreAllMocks()
+  })
+
   it('responde a rutas desconocidas con una página 404', () => {
     renderAt('/no-existe')
 

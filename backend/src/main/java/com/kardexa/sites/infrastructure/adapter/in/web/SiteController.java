@@ -4,10 +4,12 @@ import com.kardexa.sites.application.port.in.ChangeSiteStatusUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase.CreateSiteCommand;
 import com.kardexa.sites.application.port.in.DeleteSiteUseCase;
+import com.kardexa.sites.application.port.in.GetSiteUseCase;
 import com.kardexa.sites.application.port.in.ListSitesUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase.UpdateSiteCommand;
 import com.kardexa.sites.domain.model.Site;
+import com.kardexa.shared.infrastructure.web.SiteScope;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +18,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-/** {@code /api/v1/sites} según el contrato {@code docs/api/openapi.yaml} (HU-19). Solo {@code ADMIN}. */
+/** {@code /api/v1/sites} según el contrato {@code docs/api/openapi.yaml} (HU-19). Solo {@code ADMIN}, salvo {@code /mine}. */
 @RestController
 @RequestMapping("/sites")
 class SiteController {
@@ -39,19 +43,30 @@ class SiteController {
     private final ChangeSiteStatusUseCase changeStatus;
     private final DeleteSiteUseCase deleteSite;
     private final ListSitesUseCase listSites;
+    private final GetSiteUseCase getSite;
+    private final SiteScope siteScope;
 
     SiteController(CreateSiteUseCase createSite, UpdateSiteUseCase updateSite,
-            ChangeSiteStatusUseCase changeStatus, DeleteSiteUseCase deleteSite, ListSitesUseCase listSites) {
+            ChangeSiteStatusUseCase changeStatus, DeleteSiteUseCase deleteSite, ListSitesUseCase listSites,
+            GetSiteUseCase getSite, SiteScope siteScope) {
         this.createSite = createSite;
         this.updateSite = updateSite;
         this.changeStatus = changeStatus;
         this.deleteSite = deleteSite;
         this.listSites = listSites;
+        this.getSite = getSite;
+        this.siteScope = siteScope;
     }
 
     @GetMapping
     List<SiteResponse> list() {
         return listSites.list().stream().map(SiteResponse::from).toList();
+    }
+
+    /** La sede de quien consulta: la de su token si es trabajadora; la «Sede principal» si es ADMIN. */
+    @GetMapping("/mine")
+    SiteResponse mine(@AuthenticationPrincipal Jwt jwt) {
+        return SiteResponse.from(getSite.get(siteScope.single(jwt, null)));
     }
 
     @PostMapping

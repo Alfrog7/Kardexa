@@ -182,6 +182,21 @@ class SiteApiIntegrationTest {
         mvc.perform(get(URL).header("Authorization", "")).andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("criterio 1: cada quien lee solo su sede en /sites/mine; el ADMIN, la principal")
+    void everyoneReadsOnlyItsSite() throws Exception {
+        String monserrate = idOf(create("Monserrate", null));
+        String employee = "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE, UUID.fromString(monserrate));
+
+        mvc.perform(get(URL + "/mine").header("Authorization", employee))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(monserrate))
+                .andExpect(jsonPath("$.name").value("Monserrate"));
+        mvc.perform(get(URL + "/mine"))
+                .andExpect(jsonPath("$.id").value(MainSite.ID.toString()));
+        mvc.perform(get(URL + "/mine").header("Authorization", "")).andExpect(status().isUnauthorized());
+    }
+
     private ResultActions create(String name, String address) throws Exception {
         String body = address == null
                 ? "{\"name\": \"%s\"}".formatted(name)

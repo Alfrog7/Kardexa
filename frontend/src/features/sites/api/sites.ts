@@ -19,6 +19,11 @@ export function listSites(): Promise<Site[]> {
   return apiRequest<Site[]>('/sites')
 }
 
+/** La sede de quien consulta: la de su sesión si es trabajadora; la principal si es administrador. */
+export function getMySite(): Promise<Site> {
+  return apiRequest<Site>('/sites/mine')
+}
+
 export function createSite(data: SiteData): Promise<Site> {
   return apiRequest<Site>('/sites', { method: 'POST', body: JSON.stringify(data) })
 }

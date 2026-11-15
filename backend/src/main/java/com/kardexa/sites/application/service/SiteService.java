@@ -3,6 +3,7 @@ package com.kardexa.sites.application.service;
 import com.kardexa.sites.application.port.in.ChangeSiteStatusUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase;
 import com.kardexa.sites.application.port.in.DeleteSiteUseCase;
+import com.kardexa.sites.application.port.in.GetSiteUseCase;
 import com.kardexa.sites.application.port.in.ListSitesUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase;
 import com.kardexa.shared.domain.MainSite;
@@ -18,7 +19,8 @@ import java.util.UUID;
 
 /** Casos de uso de HU-19 sobre las sedes. Java puro: se registra como bean en {@code SitesConfig}. */
 public class SiteService
-        implements CreateSiteUseCase, UpdateSiteUseCase, ChangeSiteStatusUseCase, DeleteSiteUseCase, ListSitesUseCase {
+        implements CreateSiteUseCase, UpdateSiteUseCase, ChangeSiteStatusUseCase, DeleteSiteUseCase, ListSitesUseCase,
+                GetSiteUseCase {
 
     private final SiteRepository sites;
 
@@ -69,6 +71,11 @@ public class SiteService
             throw new LastActiveSiteException();
         }
         sites.delete(id);
+    }
+
+    @Override
+    public Site get(UUID id) {
+        return find(id);
     }
 
     @Override
