@@ -1,5 +1,6 @@
 package com.kardexa.identity;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -50,21 +51,27 @@ class BusinessSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("criterio 2: un EMPLOYEE recibe 403 al crear, editar o ajustar")
-    void employeeCannotWrite() throws Exception {
+    @DisplayName("un EMPLOYEE crea y edita productos y categorías y ajusta stock; eliminar y proveedores siguen con 403")
+    void employeeWritesCatalogButNotDeletesNorSuppliers() throws Exception {
         String employee = bearer(Role.EMPLOYEE);
 
+        // Pasa la autorización: el cuerpo vacío responde 400 y un id inexistente, 404 (nunca 403).
         mvc.perform(post(API + "/categories").header("Authorization", employee)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Bebidas\"}"))
-                .andExpect(status().isForbidden());
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
         mvc.perform(put(API + "/categories/" + ANY_ID).header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Bebidas\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
         mvc.perform(post(API + "/products").header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isBadRequest());
         mvc.perform(post(API + "/stock-adjustments").header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+
+        mvc.perform(delete(API + "/products/" + ANY_ID).header("Authorization", employee))
+                .andExpect(status().isForbidden());
+        mvc.perform(delete(API + "/categories/" + ANY_ID).header("Authorization", employee))
                 .andExpect(status().isForbidden());
         mvc.perform(post(API + "/suppliers").header("Authorization", employee)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))

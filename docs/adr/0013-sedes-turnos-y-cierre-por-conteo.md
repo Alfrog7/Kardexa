@@ -57,7 +57,7 @@ Esto cambia el modelo de datos (el stock deja de ser único), así que se decide
 - `app_user.site_id`: obligatorio para el `EMPLEADO`, vacío para el `ADMIN`. La sede viaja como claim **`siteId`** en el token; cambiar a una persona de sede rige desde su siguiente inicio de sesión.
 - El **`EMPLEADO`** opera solo en su sede: la toma del token e ignora cualquier `siteId` que envíe. Pedir datos de otra sede responde **404**, como ya ocurre con las ventas ajenas (RF-21).
 - El **`ADMIN`** puede consultar una sede o **todas juntas**, pero para **registrar** una operación debe indicar una sede concreta (`siteId`).
-- Se mantiene RN-05: ajustes, compras y anulaciones siguen siendo del `ADMIN`. No hay rol de encargado de sede.
+- **Ajuste de RN-05 (HU-20, tras probar el panel):** la trabajadora trabaja «casi a la par» del administrador: además de vender, abrir y cerrar turno y registrar entradas, **crea y edita productos y categorías y ajusta el stock** (queda con su nombre en el kárdex). Siguen siendo del `ADMIN`: eliminar productos, compras (muestran costos), proveedores, anular ventas, usuarios, sedes, indicadores y exportaciones. No hay rol de encargado de sede.
 
 ### 3. Entradas de mercadería
 

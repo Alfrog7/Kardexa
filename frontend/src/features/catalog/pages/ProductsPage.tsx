@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ApiError } from '@shared/api/http'
-import { useCanManage } from '@shared/auth/session'
+import { useCanEdit, useCanManage } from '@shared/auth/session'
 import { formatQuantity } from '@shared/lib/format'
 import { Dialog } from '@shared/ui/Dialog'
 import { Toast } from '@shared/ui/Toast'
@@ -65,6 +65,7 @@ export function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesError, setCategoriesError] = useState<string>()
   const canManage = useCanManage()
+  const canEdit = useCanEdit()
   const [form, setForm] = useState<FormMode>({ kind: 'closed' })
   const [notice, setNotice] = useState<string>()
   const [view, setView] = useViewMode('products', 'table')
@@ -186,6 +187,7 @@ export function ProductsPage() {
   }
 
   const handlers = {
+    canEdit,
     canManage,
     onView: (product: Product) => setForm({ kind: 'view', product }),
     onEdit: (product: Product) => setForm({ kind: 'edit', product }),
@@ -202,7 +204,7 @@ export function ProductsPage() {
           <h1>Productos</h1>
           <p className="page__subtitle">Tu catálogo: precios, stock y estado de cada producto.</p>
         </div>
-        {canManage ? (
+        {canEdit ? (
           <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
             <Icon name="plus" size={18} />
             Nuevo producto
@@ -215,6 +217,7 @@ export function ProductsPage() {
           {form.kind === 'view' ? (
             <ProductDetail
               product={form.product}
+              canEdit={canEdit}
               canManage={canManage}
               onEdit={() => setForm({ kind: 'edit', product: form.product })}
               onChanged={replaceProduct}
@@ -339,7 +342,7 @@ export function ProductsPage() {
       {found && found.content.length === 0 && !loading ? (
         <div className="empty-state card">
           <p>{q || categoryId || criticalOnly ? 'No hay productos con estos filtros.' : 'Aún no tienes productos.'}</p>
-          {canManage && !q && !categoryId && !criticalOnly ? (
+          {canEdit && !q && !categoryId && !criticalOnly ? (
             <button className="button" type="button" onClick={() => setForm({ kind: 'create' })}>
               Crear el primer producto
             </button>

@@ -30,6 +30,7 @@ export interface CountProduct {
   id: string
   code: string
   name: string
+  salePrice: string
   stock: string
 }
 

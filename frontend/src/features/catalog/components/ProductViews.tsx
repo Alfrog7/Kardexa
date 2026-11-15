@@ -7,6 +7,7 @@ import type { Product } from '../api/products'
 import { unitLabel } from './productFormat'
 
 export interface ProductHandlers {
+  canEdit: boolean
   canManage: boolean
   onView: (product: Product) => void
   onEdit: (product: Product) => void
@@ -37,7 +38,7 @@ function ProductActions({ product, handlers }: { product: Product; handlers: Pro
   return (
     <Actions label={`Acciones de ${product.name}`}>
       <ActionButton icon="eye" label={`Ver ${product.name}`} onClick={() => handlers.onView(product)} />
-      {handlers.canManage ? (
+      {handlers.canEdit ? (
         <>
           <ActionButton icon="pencil" label={`Editar ${product.name}`} onClick={() => handlers.onEdit(product)} />
           {product.active ? (
@@ -47,12 +48,14 @@ function ProductActions({ product, handlers }: { product: Product; handlers: Pro
               to={`${routes.inventory}?producto=${product.id}&ajustar=1`}
             />
           ) : null}
-          <ActionButton
-            icon="trash"
-            tone="danger"
-            label={`Eliminar ${product.name}`}
-            onClick={() => handlers.onDelete(product)}
-          />
+          {handlers.canManage ? (
+            <ActionButton
+              icon="trash"
+              tone="danger"
+              label={`Eliminar ${product.name}`}
+              onClick={() => handlers.onDelete(product)}
+            />
+          ) : null}
         </>
       ) : null}
     </Actions>

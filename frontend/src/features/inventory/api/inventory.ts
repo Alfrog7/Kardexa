@@ -62,6 +62,29 @@ export function getKardex(productId: string, from: string, to: string): Promise<
   return apiRequest<Kardex>(`/products/${productId}/kardex?${params}`)
 }
 
+/** Esquema `ReceiptRequest`: lo que llegó a la sede, sin costo ni proveedor (HU-21). */
+export interface ReceiptRequest {
+  items: { productId: string; quantity: string }[]
+}
+
+/** Producto de la lista rápida de entradas (el stock es el de la sede). */
+export interface ReceiptProduct {
+  id: string
+  code: string
+  name: string
+  stock: string
+}
+
+/** Los productos activos para marcar lo que llegó (máximo 100: el tope de la API). */
+export async function listReceiptProducts(): Promise<ReceiptProduct[]> {
+  const page = await apiRequest<{ content: ReceiptProduct[] }>('/products?size=100')
+  return page.content
+}
+
+export function registerReceipt(request: ReceiptRequest): Promise<void> {
+  return apiRequest<void>('/receipts', { method: 'POST', body: JSON.stringify(request) })
+}
+
 export function registerAdjustment(request: StockAdjustmentRequest): Promise<StockMovement> {
   return apiRequest<StockMovement>('/stock-adjustments', { method: 'POST', body: JSON.stringify(request) })
 }

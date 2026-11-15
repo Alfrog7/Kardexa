@@ -187,7 +187,7 @@ paths:
     post:
       tags: [catalog]
       operationId: createCategory
-      summary: Crea una categoría (RF-06, solo ADMIN)
+      summary: Crea una categoría (RF-06; ADMIN y EMPLOYEE)
       requestBody:
         required: true
         content:
@@ -266,7 +266,7 @@ paths:
     post:
       tags: [catalog]
       operationId: createProduct
-      summary: Crea un producto con stock 0 (RF-07, solo ADMIN)
+      summary: Crea un producto con stock 0 (RF-07; ADMIN y EMPLOYEE)
       requestBody:
         required: true
         content:
@@ -356,7 +356,7 @@ paths:
     put:
       tags: [catalog]
       operationId: uploadProductImage
-      summary: Sube o reemplaza la imagen (solo ADMIN)
+      summary: Sube o reemplaza la imagen (ADMIN y EMPLOYEE)
       description: PNG, JPG o WebP de hasta 2 MB; el tipo se comprueba con el contenido del archivo.
       requestBody:
         required: true
@@ -379,7 +379,7 @@ paths:
     delete:
       tags: [catalog]
       operationId: removeProductImage
-      summary: Quita la imagen (solo ADMIN)
+      summary: Quita la imagen (ADMIN y EMPLOYEE)
       responses:
         '200':
           description: Producto sin imagen
@@ -518,7 +518,7 @@ paths:
     post:
       tags: [inventory]
       operationId: adjustStock
-      summary: Registra un ajuste de stock (RF-11, solo ADMIN)
+      summary: Registra un ajuste de stock (RF-11; ADMIN y EMPLOYEE, queda con su nombre en el kárdex)
       requestBody:
         required: true
         content:

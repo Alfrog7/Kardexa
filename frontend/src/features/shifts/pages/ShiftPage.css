@@ -99,3 +99,34 @@
     justify-self: start;
   }
 }
+
+.shift__sold {
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+}
+
+.shift__wrong {
+  color: var(--color-danger, #b91c1c);
+  font-size: var(--font-size-sm);
+}
+
+.shift__preview {
+  padding-top: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.shift__confirm {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.shift__confirm p {
+  margin: 0;
+}
+
+.shift__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

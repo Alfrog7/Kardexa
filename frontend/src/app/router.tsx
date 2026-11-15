@@ -6,7 +6,6 @@ import { InventoryPage } from '@features/inventory'
 import { PurchasesPage, SuppliersPage } from '@features/purchasing'
 import { UsersPage } from '@features/users'
 import { SalesPage } from '@features/sales'
-import { ReceiptsPage } from '@features/receipts'
 import { ShiftPage } from '@features/shifts'
 import { SitePickerPage, SitesPage } from '@features/sites'
 import { PanelLayout } from './layout/PanelLayout'
@@ -40,7 +39,6 @@ export const appRoutes: RouteObject[] = [
               { path: routes.categories, element: <CategoriesPage /> },
               { path: routes.inventory, element: <InventoryPage /> },
               { path: routes.shift, element: <ShiftPage /> },
-              { path: routes.receipts, element: <ReceiptsPage /> },
               { path: routes.suppliers, element: <SuppliersPage /> },
               {
                 element: <RequireAdmin />,

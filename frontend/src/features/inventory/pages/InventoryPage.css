@@ -143,3 +143,9 @@
   justify-content: center;
   gap: var(--space-3);
 }
+
+.inventory__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

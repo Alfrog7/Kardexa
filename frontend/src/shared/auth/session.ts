@@ -42,7 +42,13 @@ export function useSession(): SessionContextValue {
   return context
 }
 
-/** `true` si la persona puede administrar (crear, editar, ajustar). Sin proveedor, no oculta nada. */
+/** `true` si la persona puede crear y editar productos y categorías y ajustar stock: cualquiera con sesión. */
+export function useCanEdit(): boolean {
+  const context = useContext(SessionContext)
+  return context === null || context.user !== null
+}
+
+/** `true` si la persona es administradora (eliminar, costos, compras, exportar). Sin proveedor, no oculta nada. */
 export function useCanManage(): boolean {
   const context = useContext(SessionContext)
   return context === null || context.user?.role === 'ADMIN'
