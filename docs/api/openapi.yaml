@@ -674,6 +674,16 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problem' }
+    delete:
+      tags: [sites]
+      operationId: deleteSite
+      summary: Elimina una sede que nunca se usó
+      description: Solo se elimina una sede sin stock, ventas, compras ni trabajadores, que no sea la Sede principal ni la última habilitada. Con historial se inhabilita.
+      responses:
+        '204': { description: Sede eliminada }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /purchases:
     get:
@@ -1014,6 +1024,10 @@ components:
         email: { type: string, format: email }
         role: { $ref: '#/components/schemas/Role' }
         active: { type: boolean }
+        siteId:
+          type: [string, 'null']
+          format: uuid
+          description: Sede del empleado; nulo en el administrador, que opera en todas. Va también en el token.
     UserPage:
       allOf:
         - $ref: '#/components/schemas/PageMeta'
@@ -1036,12 +1050,17 @@ components:
           required: [role]
           properties:
             role: { $ref: '#/components/schemas/Role' }
+            siteId:
+              type: string
+              format: uuid
+              description: Sede del empleado; sin ella, la Sede principal. El administrador no lleva.
     UpdateUserRequest:
       type: object
       properties:
         fullName: { type: string, minLength: 2, maxLength: 120 }
         role: { $ref: '#/components/schemas/Role' }
         active: { type: boolean }
+        siteId: { type: string, format: uuid, description: Cambia la sede de un empleado. }
     LoginRequest:
       type: object
       required: [email, password]

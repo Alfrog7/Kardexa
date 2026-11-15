@@ -46,7 +46,8 @@ class UserController {
     @PostMapping
     ResponseEntity<AuthController.UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
         User created = manageUsers.create(
-                new CreateUserCommand(request.fullName(), request.email(), request.password(), request.role()));
+                new CreateUserCommand(
+                        request.fullName(), request.email(), request.password(), request.role(), request.siteId()));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(created.id())
@@ -57,7 +58,8 @@ class UserController {
     @PatchMapping("/{id}")
     AuthController.UserResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         return AuthController.UserResponse.from(
-                manageUsers.update(new UpdateUserCommand(id, request.fullName(), request.role(), request.active())));
+                manageUsers.update(new UpdateUserCommand(
+                        id, request.fullName(), request.role(), request.active(), request.siteId())));
     }
 
     record CreateUserRequest(
@@ -72,14 +74,16 @@ class UserController {
             @NotBlank(message = "La contraseña es obligatoria.")
             @Size(min = 8, max = 72, message = "Debe tener entre {min} y {max} caracteres.")
             String password,
-            @NotNull(message = "El rol es obligatorio.") Role role) {}
+            @NotNull(message = "El rol es obligatorio.") Role role,
+            UUID siteId) {}
 
     record UpdateUserRequest(
             @Size(min = User.NAME_MIN_LENGTH, max = User.NAME_MAX_LENGTH,
                     message = "Debe tener entre {min} y {max} caracteres.")
             String fullName,
             Role role,
-            Boolean active) {}
+            Boolean active,
+            UUID siteId) {}
 
     record UserPageResponse(
             List<AuthController.UserResponse> content, int page, int size, long totalElements, int totalPages) {

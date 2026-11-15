@@ -33,6 +33,12 @@ public class TestSecurity {
         return tokens.issue(user).value();
     }
 
+    /** Token de un empleado de una sede concreta (claim {@code siteId}). */
+    public static String token(TokenIssuer tokens, Role role, UUID siteId) {
+        User user = User.restore(ADMIN_ID, "Usuario de pruebas", "admin@pruebas.test", "x", role, true, siteId);
+        return tokens.issue(user).value();
+    }
+
     /** Crea la fila del usuario por defecto, para los tests cuyos registros la referencian por clave foránea. */
     public static void insertAdmin(JdbcTemplate jdbc) {
         jdbc.update("""

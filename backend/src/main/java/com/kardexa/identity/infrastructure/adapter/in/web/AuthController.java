@@ -101,10 +101,11 @@ class AuthController {
         }
     }
 
-    record UserResponse(UUID id, String fullName, String email, String role, boolean active) {
+    record UserResponse(UUID id, String fullName, String email, String role, boolean active, UUID siteId) {
 
         static UserResponse from(User user) {
-            return new UserResponse(user.id(), user.fullName(), user.email(), user.role().name(), user.isActive());
+            return new UserResponse(
+                    user.id(), user.fullName(), user.email(), user.role().name(), user.isActive(), user.siteId());
         }
     }
 }

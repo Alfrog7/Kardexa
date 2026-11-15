@@ -9,7 +9,10 @@ import com.kardexa.identity.domain.exception.UserNotFoundException;
 import com.kardexa.identity.domain.model.User;
 import com.kardexa.shared.application.PageQuery;
 import com.kardexa.shared.application.ResultPage;
+import com.kardexa.identity.domain.model.Role;
+import com.kardexa.shared.domain.MainSite;
 import java.util.Objects;
+import java.util.UUID;
 
 /** Casos de uso de HU-03. Java puro: se registra como bean en {@code IdentityConfig}. */
 public class UserManagementService implements ManageUsersUseCase {
@@ -28,7 +31,9 @@ public class UserManagementService implements ManageUsersUseCase {
         if (users.existsByEmail(email)) {
             throw new DuplicateEmailException(email);
         }
-        return users.save(User.create(command.fullName(), email, hasher.hash(command.password()), command.role()));
+        UUID siteId = command.role() == Role.EMPLOYEE && command.siteId() == null ? MainSite.ID : command.siteId();
+        return users.save(
+                User.create(command.fullName(), email, hasher.hash(command.password()), command.role(), siteId));
     }
 
     @Override
@@ -47,6 +52,12 @@ public class UserManagementService implements ManageUsersUseCase {
         }
         if (command.role() != null) {
             user.changeRole(command.role());
+        }
+        if (command.siteId() != null) {
+            user.assignSite(command.siteId());
+        }
+        if (user.role() == Role.EMPLOYEE && user.siteId() == null) {
+            user.assignSite(MainSite.ID);
         }
         if (command.active() != null) {
             if (command.active()) {

@@ -1,3 +1,20 @@
 .sites__address {
   overflow-wrap: anywhere;
 }
+
+.sites__details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.sites__details dt {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.sites__details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

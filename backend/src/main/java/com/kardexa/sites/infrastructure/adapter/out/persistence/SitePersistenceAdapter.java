@@ -4,6 +4,7 @@ import static com.kardexa.shared.infrastructure.persistence.ConstraintViolations
 
 import com.kardexa.sites.application.port.out.SiteRepository;
 import com.kardexa.sites.domain.exception.DuplicateSiteNameException;
+import com.kardexa.sites.domain.exception.SiteNotDeletableException;
 import com.kardexa.sites.domain.model.Site;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,16 @@ class SitePersistenceAdapter implements SiteRepository {
                 throw new DuplicateSiteNameException(site.name());
             }
             throw ex;
+        }
+    }
+
+    @Override
+    public void delete(UUID id) {
+        try {
+            jpa.deleteById(id);
+            jpa.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw SiteNotDeletableException.inUse();
         }
     }
 

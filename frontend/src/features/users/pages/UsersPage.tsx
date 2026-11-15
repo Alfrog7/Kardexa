@@ -3,6 +3,7 @@ import { ApiError } from '@shared/api/http'
 import { Dialog } from '@shared/ui/Dialog'
 import { Icon } from '@shared/ui/Icon'
 import { Toast } from '@shared/ui/Toast'
+import { listSiteOptions, type SiteOption } from '../api/sites'
 import { createUser, listUsers, updateUser, type User } from '../api/users'
 import { UserForm, type UserFormValues } from '../components/UserForm'
 
@@ -15,6 +16,12 @@ function messageOf(error: unknown): string {
   return error instanceof ApiError ? error.message : 'Algo salió mal. Inténtalo otra vez.'
 }
 
+/** Un administrador opera en todas las sedes; un empleado, en la suya. */
+function siteLabel(user: User, sites: SiteOption[]): string {
+  if (user.role === 'ADMIN') return 'Todas las sedes'
+  return sites.find((site) => site.id === user.siteId)?.name ?? '—'
+}
+
 function sortByName(users: User[]): User[] {
   return [...users].sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'))
 }
@@ -22,6 +29,7 @@ function sortByName(users: User[]): User[] {
 /** Gestión de usuarios (HU-03): listar, crear, cambiar nombre y rol, activar y desactivar. Solo ADMIN. */
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>()
+  const [sites, setSites] = useState<SiteOption[]>([])
   const [loadError, setLoadError] = useState<string>()
   const [actionError, setActionError] = useState<string>()
   const [form, setForm] = useState<FormMode>({ kind: 'closed' })
@@ -44,6 +52,10 @@ export function UsersPage() {
     }
   }, [loadAttempt])
 
+  useEffect(() => {
+    void listSiteOptions().then(setSites)
+  }, [])
+
   function retryLoad() {
     setLoadError(undefined)
     setLoadAttempt((attempt) => attempt + 1)
@@ -55,7 +67,7 @@ export function UsersPage() {
 
   async function handleSubmit(values: UserFormValues) {
     if (form.kind === 'edit') {
-      replace(await updateUser(form.user.id, { fullName: values.fullName, role: values.role }))
+      replace(await updateUser(form.user.id, { fullName: values.fullName, role: values.role, siteId: values.siteId }))
     } else {
       const created = await createUser(values)
       setUsers((current) => sortByName([...(current ?? []), created]))
@@ -92,7 +104,11 @@ export function UsersPage() {
           title={form.kind === 'edit' ? `Editar ${form.user.fullName}` : 'Nuevo usuario'}
           onClose={() => setForm({ kind: 'closed' })}
         >
-          <UserForm user={form.kind === 'edit' ? form.user : undefined} onSubmit={handleSubmit} />
+          <UserForm
+            user={form.kind === 'edit' ? form.user : undefined}
+            sites={sites.filter((site) => site.active)}
+            onSubmit={handleSubmit}
+          />
         </Dialog>
       ) : null}
 
@@ -121,6 +137,7 @@ export function UsersPage() {
                 <th scope="col">Nombre</th>
                 <th scope="col">Correo</th>
                 <th scope="col">Rol</th>
+                <th scope="col">Sede</th>
                 <th scope="col">Activo</th>
               </tr>
             </thead>
@@ -134,6 +151,7 @@ export function UsersPage() {
                   </td>
                   <td data-label="Correo">{user.email}</td>
                   <td data-label="Rol">{ROLE_LABEL[user.role]}</td>
+                  <td data-label="Sede">{siteLabel(user, sites)}</td>
                   <td data-label="Activo">
                     <label className="switch">
                       <input

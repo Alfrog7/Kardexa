@@ -34,6 +34,9 @@ class UserJpaEntity {
     @Column(nullable = false)
     private boolean active;
 
+    @Column(name = "site_id")
+    private UUID siteId;
+
     protected UserJpaEntity() {
         // Requerido por JPA.
     }
@@ -46,10 +49,11 @@ class UserJpaEntity {
         entity.passwordHash = user.passwordHash();
         entity.role = user.role();
         entity.active = user.isActive();
+        entity.siteId = user.siteId();
         return entity;
     }
 
     User toDomain() {
-        return User.restore(id, fullName, email, passwordHash, role, active);
+        return User.restore(id, fullName, email, passwordHash, role, active, siteId);
     }
 }

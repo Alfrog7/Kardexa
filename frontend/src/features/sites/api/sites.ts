@@ -27,6 +27,11 @@ export function updateSite(id: string, data: SiteData): Promise<Site> {
   return apiRequest<Site>(`/sites/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 }
 
+/** Elimina una sede que nunca se usó; con historial o trabajadores la API responde 409. */
+export function deleteSite(id: string): Promise<void> {
+  return apiRequest<void>(`/sites/${id}`, { method: 'DELETE' })
+}
+
 /** Inhabilita o vuelve a habilitar una sede; conserva su historial. */
 export function setSiteActive(id: string, active: boolean): Promise<Site> {
   return apiRequest<Site>(`/sites/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) })

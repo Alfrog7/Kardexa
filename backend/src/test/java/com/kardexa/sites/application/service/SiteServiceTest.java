@@ -88,6 +88,17 @@ class SiteServiceTest {
     }
 
     @Test
+    @DisplayName("elimina una sede, pero no la última habilitada ni la Sede principal")
+    void deletesSites() {
+        Site galeno = create("Galeno");
+        Site monserrate = create("Monserrate");
+
+        service.delete(galeno.id());
+        assertThat(service.list()).extracting(Site::name).containsExactly("Monserrate");
+        assertThatThrownBy(() -> service.delete(monserrate.id())).isInstanceOf(LastActiveSiteException.class);
+    }
+
+    @Test
     @DisplayName("una sede inexistente responde no encontrada")
     void notFound() {
         UUID unknown = UUID.randomUUID();

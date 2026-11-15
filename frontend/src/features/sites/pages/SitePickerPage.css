@@ -1,4 +1,6 @@
 .site-picker {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
   padding: var(--space-4);
@@ -10,15 +12,20 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  width: 100%;
   max-width: 64rem;
   margin: 0 auto;
 }
 
 .site-picker__body {
   display: grid;
+  justify-items: center;
   gap: var(--space-3);
+  width: 100%;
   max-width: 64rem;
-  margin: var(--space-8) auto 0;
+  margin: auto;
+  padding: var(--space-8) 0;
+  text-align: center;
 }
 
 .site-picker__title {
@@ -31,26 +38,32 @@
 }
 
 .site-picker__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-4);
-  margin: var(--space-3) 0 0;
+  margin: var(--space-4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+.site-picker__grid li {
+  width: min(15rem, 100%);
 }
 
 .site-card {
   position: relative;
   display: grid;
+  justify-items: center;
   align-content: start;
   gap: var(--space-1);
   width: 100%;
-  min-height: 9.5rem;
-  padding: var(--space-4);
+  min-height: 10.5rem;
+  padding: var(--space-6) var(--space-4) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font: inherit;
-  text-align: left;
+  text-align: center;
   color: var(--color-text);
   background: var(--color-surface);
   cursor: pointer;

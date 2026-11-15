@@ -66,6 +66,37 @@ describe('usuarios (HU-03)', () => {
     expect(calls.find((c) => c.method === 'PATCH')!.url).toContain('/users/3')
   })
 
+  it('muestra la sede de cada empleado y deja elegirla al crear', async () => {
+    const galeno = { id: 's1', name: 'Galeno', address: null, active: true }
+    const monserrate = { id: 's2', name: 'Monserrate', address: null, active: true }
+    const calls: { method?: string; body?: string }[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        calls.push({ method: init?.method, body: init?.body as string | undefined })
+        if (url.endsWith('/sites')) return Response.json([galeno, monserrate])
+        if (init?.method === 'POST') return Response.json({ ...employee, id: '3', fullName: 'Marta Ríos', siteId: 's2' }, { status: 201 })
+        return page([admin, { ...employee, siteId: 's1' }])
+      }),
+    )
+    renderAt('/usuarios', adminSession)
+
+    const row = (await screen.findByRole('button', { name: 'Luis Gómez' })).closest('tr')!
+    expect(within(row).getByText('Galeno')).toBeInTheDocument()
+    expect(screen.getByText('Todas las sedes')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo usuario' }))
+    const drawer = await screen.findByRole('dialog')
+    fireEvent.change(within(drawer).getByLabelText('Nombre completo'), { target: { value: 'Marta Ríos' } })
+    fireEvent.change(within(drawer).getByLabelText('Correo'), { target: { value: 'marta@correo.com' } })
+    fireEvent.change(within(drawer).getByLabelText('Contraseña inicial'), { target: { value: 'clave12345' } })
+    fireEvent.change(within(drawer).getByLabelText('Sede'), { target: { value: 's2' } })
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Crear usuario' }))
+
+    await screen.findByRole('switch', { name: 'Marta Ríos activo' })
+    expect(JSON.parse(calls.find((c) => c.method === 'POST')!.body!)).toMatchObject({ role: 'EMPLOYEE', siteId: 's2' })
+  })
+
   it('RN-11: al desactivar al último administrador se explica por qué', async () => {
     vi.stubGlobal(
       'fetch',

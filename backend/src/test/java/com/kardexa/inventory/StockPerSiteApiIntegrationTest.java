@@ -183,6 +183,22 @@ class StockPerSiteApiIntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(2)); // solo ve la suya: la principal
     }
 
+    @Test
+    @DisplayName("criterio 4: un EMPLOYEE con sede en su token opera solo en ella")
+    void employeeOperatesInItsSite() throws Exception {
+        String employee = "Bearer " + TestSecurity.token(tokens, Role.EMPLOYEE, java.util.UUID.fromString(monserrate));
+
+        mvc.perform(post("/api/v1/sales").header("Authorization", employee)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"siteId\": \"%s\", \"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}"
+                                .formatted(galeno, productId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.siteId").value(monserrate));
+
+        assertThat(stockOf(monserrate)).isEqualTo("3.000");
+        assertThat(stockOf(galeno)).isEqualTo("10.000");
+    }
+
     private String stockOf(String siteId) throws Exception {
         String body = mvc.perform(get("/api/v1/products/" + productId).param("siteId", siteId))
                 .andReturn().getResponse().getContentAsString();

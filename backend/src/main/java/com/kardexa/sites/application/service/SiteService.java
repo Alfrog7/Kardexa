@@ -2,11 +2,14 @@ package com.kardexa.sites.application.service;
 
 import com.kardexa.sites.application.port.in.ChangeSiteStatusUseCase;
 import com.kardexa.sites.application.port.in.CreateSiteUseCase;
+import com.kardexa.sites.application.port.in.DeleteSiteUseCase;
 import com.kardexa.sites.application.port.in.ListSitesUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.sites.application.port.out.SiteRepository;
 import com.kardexa.sites.domain.exception.DuplicateSiteNameException;
 import com.kardexa.sites.domain.exception.LastActiveSiteException;
+import com.kardexa.sites.domain.exception.SiteNotDeletableException;
 import com.kardexa.sites.domain.exception.SiteNotFoundException;
 import com.kardexa.sites.domain.model.Site;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.UUID;
 
 /** Casos de uso de HU-19 sobre las sedes. Java puro: se registra como bean en {@code SitesConfig}. */
 public class SiteService
-        implements CreateSiteUseCase, UpdateSiteUseCase, ChangeSiteStatusUseCase, ListSitesUseCase {
+        implements CreateSiteUseCase, UpdateSiteUseCase, ChangeSiteStatusUseCase, DeleteSiteUseCase, ListSitesUseCase {
 
     private final SiteRepository sites;
 
@@ -54,6 +57,18 @@ public class SiteService
             site.deactivate();
         }
         return sites.save(site);
+    }
+
+    @Override
+    public void delete(UUID id) {
+        Site site = find(id);
+        if (MainSite.ID.equals(id)) {
+            throw SiteNotDeletableException.main();
+        }
+        if (site.isActive() && sites.findAllOrderedByName().stream().filter(Site::isActive).count() <= 1) {
+            throw new LastActiveSiteException();
+        }
+        sites.delete(id);
     }
 
     @Override

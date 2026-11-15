@@ -8,6 +8,8 @@ export interface SessionUser {
   email: string
   role: Role
   active: boolean
+  /** Sede del empleado; el administrador no tiene (opera en todas). */
+  siteId?: string | null
 }
 
 export interface Session {

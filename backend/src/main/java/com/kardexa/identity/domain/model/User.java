@@ -18,25 +18,38 @@ public final class User {
     private String passwordHash;
     private Role role;
     private boolean active;
+    private UUID siteId;
 
-    private User(UUID id, String fullName, String email, String passwordHash, Role role, boolean active) {
+    private User(
+            UUID id, String fullName, String email, String passwordHash, Role role, boolean active, UUID siteId) {
         this.id = Objects.requireNonNull(id, "id");
         this.fullName = normalizeName(fullName);
         this.email = normalizeEmail(email);
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
         this.role = Objects.requireNonNull(role, "role");
         this.active = active;
+        this.siteId = role == Role.ADMIN ? null : siteId;
     }
 
-    /** Crea un usuario nuevo y activo. */
+    /** Crea un usuario nuevo y activo, sin sede asignada. */
     public static User create(String fullName, String email, String passwordHash, Role role) {
-        return new User(UUID.randomUUID(), fullName, email, passwordHash, role, true);
+        return create(fullName, email, passwordHash, role, null);
+    }
+
+    /** Crea un usuario nuevo y activo; el administrador no tiene sede (opera en todas). */
+    public static User create(String fullName, String email, String passwordHash, Role role, UUID siteId) {
+        return new User(UUID.randomUUID(), fullName, email, passwordHash, role, true, siteId);
     }
 
     /** Reconstruye un usuario ya guardado (lo usa el adaptador de persistencia). */
     public static User restore(
             UUID id, String fullName, String email, String passwordHash, Role role, boolean active) {
-        return new User(id, fullName, email, passwordHash, role, active);
+        return restore(id, fullName, email, passwordHash, role, active, null);
+    }
+
+    public static User restore(
+            UUID id, String fullName, String email, String passwordHash, Role role, boolean active, UUID siteId) {
+        return new User(id, fullName, email, passwordHash, role, active, siteId);
     }
 
     /** Normaliza un correo (sin espacios en los extremos y en minúsculas) para compararlo o guardarlo. */
@@ -63,6 +76,14 @@ public final class User {
 
     public void changeRole(Role newRole) {
         this.role = Objects.requireNonNull(newRole, "role");
+        if (newRole == Role.ADMIN) {
+            this.siteId = null;
+        }
+    }
+
+    /** Cambia la sede de un empleado; el administrador no tiene sede. */
+    public void assignSite(UUID newSiteId) {
+        this.siteId = role == Role.ADMIN ? null : newSiteId;
     }
 
     public void changePasswordHash(String newPasswordHash) {
@@ -104,5 +125,10 @@ public final class User {
 
     public boolean isActive() {
         return active;
+    }
+
+    /** Sede del empleado; nulo en el administrador y en cuentas anteriores a las sedes. */
+    public UUID siteId() {
+        return siteId;
     }
 }
