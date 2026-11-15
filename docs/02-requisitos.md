@@ -59,6 +59,21 @@
 | RF-24 | El panel muestra la lista de productos con **stock crítico**. | M |
 | RF-25 | El administrador exporta el kárdex o el historial de ventas a CSV. | C |
 
+### Sedes y turnos (SED)
+
+> Fase 8 · Extensión posterior al MVP, decidida en el [ADR 0013](adr/0013-sedes-turnos-y-cierre-por-conteo.md).
+
+| ID | Requisito | Prioridad |
+|---|---|---|
+| RF-26 | El administrador crea, edita e inhabilita **sedes** con nombre y dirección, sin límite de cantidad. | M |
+| RF-27 | Cada sede tiene su **propio stock y kárdex**; las ventas, compras, ajustes y entradas ocurren en una sede. El catálogo y los precios son comunes. | M |
+| RF-28 | Cada empleado pertenece a una sede y solo ve y opera en ella. El administrador consulta una sede o todas y elige la sede en la que registra. | M |
+| RF-29 | El empleado registra las **entradas de mercadería** de su sede, sin costo ni proveedor. | M |
+| RF-30 | Quien lleva la caja **abre un turno** en su sede; solo puede haber un turno abierto por sede. | M |
+| RF-31 | Al **cerrar el turno** se cuenta lo que sobró de cada producto; el sistema calcula lo vendido y el monto esperado. | M |
+| RF-32 | Al cerrar se anota lo recibido en **efectivo, Yape, Plin y transferencia**; el sistema calcula la diferencia contra lo esperado. | M |
+| RF-33 | El administrador ve por **sede, turno y responsable** lo vendido, lo recibido por medio de pago y las diferencias. | S |
+
 ## 2. Reglas de negocio
 
 | ID | Regla |
@@ -75,6 +90,10 @@
 | RN-10 | El código de producto es **único**. El RUC del proveedor es único y tiene 11 dígitos. |
 | RN-11 | Siempre debe existir **al menos un administrador activo**; el último no puede desactivarse ni cambiar de rol. |
 | RN-12 | Montos en soles (PEN) con 2 decimales y redondeo *half-up*; cantidades con hasta 3 decimales para productos a granel. |
+| RN-13 | El stock y el saldo del kárdex (RN-02) se llevan **por producto y sede**; un movimiento de una sede nunca cambia el saldo de otra. El comprobante `V-` sigue siendo único para todo el negocio (RN-07). |
+| RN-14 | Hay **un solo turno abierto por sede**. Un turno cerrado no se edita ni se reabre; lo que sobra queda como stock inicial del siguiente. |
+| RN-15 | Al cerrar, vendido por conteo = stock registrado − sobrante contado. El sobrante no puede superar el stock registrado (lo que llegó se anota antes como entrada). |
+| RN-16 | Diferencia del turno = recibido − esperado, donde esperado = ventas registradas del turno + vendido por conteo × precio vigente. Se calcula en el servidor y negativo es faltante. |
 
 ## 3. Requisitos no funcionales
 
@@ -119,5 +138,11 @@
 | RF-21 | HU-16 |
 | RF-22, RF-23 | HU-17 |
 | RF-25 | HU-18 |
+| RF-26, RF-27 | HU-19 |
+| RF-28 | HU-20 |
+| RF-29 | HU-21 |
+| RF-30, RF-31 | HU-22 |
+| RF-32 | HU-23 |
+| RF-33 | HU-24 |
 
 Las historias están en [`03-historias-de-usuario.md`](03-historias-de-usuario.md).

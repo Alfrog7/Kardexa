@@ -16,6 +16,7 @@ Cada decisión técnica relevante se documenta en un ADR: contexto, alternativas
 | [0010](0010-ventas-entre-modulos.md) | Ventas que descuentan stock con comprobante correlativo | Aceptado | 2026-11-12 |
 | [0011](0011-sesion-en-sessionstorage.md) | La sesión del panel sobrevive a una recarga | Aceptado | 2026-11-12 |
 | [0012](0012-indicadores-y-reportes.md) | Indicadores y reportes de solo lectura en el módulo `reporting` | Aceptado | 2026-11-14 |
+| [0013](0013-sedes-turnos-y-cierre-por-conteo.md) | Sedes con stock propio y turnos que se cierran por conteo | Aceptado | 2026-11-14 |
 
 ## Plantilla
 
