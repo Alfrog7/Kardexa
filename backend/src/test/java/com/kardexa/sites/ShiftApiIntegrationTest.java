@@ -113,6 +113,40 @@ class ShiftApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("el cierre con pagos guarda lo recibido por medio y la diferencia calculada en el servidor")
+    void closesWithPayments() throws Exception {
+        String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));
+        // Sin ventas: vendido por conteo = (10 − 4) × 0.50 = 3.00 = esperado.
+        String body = "{\"counts\": [{\"productId\": \"%s\", \"leftover\": \"4\"}], \"note\": \"Faltó sencillo\", "
+                .formatted(productId)
+                + "\"payments\": {\"cash\": 1.50, \"yape\": 1, \"plin\": 0, \"transfer\": 0}}";
+
+        json(post("/api/v1/shifts/" + shift + "/close"), body, employee)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.expectedAmount").value(3.0))
+                .andExpect(jsonPath("$.payments.cash").value(1.5))
+                .andExpect(jsonPath("$.payments.yape").value(1.0))
+                .andExpect(jsonPath("$.receivedAmount").value(2.5))
+                .andExpect(jsonPath("$.difference").value(-0.5))
+                .andExpect(jsonPath("$.note").value("Faltó sencillo"));
+    }
+
+    @Test
+    @DisplayName("un monto negativo o con 3 decimales responde 400 y el turno sigue abierto")
+    void invalidPayments() throws Exception {
+        String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));
+        for (String cash : new String[] {"-1", "1.005"}) {
+            String body = "{\"counts\": [], \"payments\": {\"cash\": %s, \"yape\": 0, \"plin\": 0, \"transfer\": 0}}"
+                    .formatted(cash);
+            json(post("/api/v1/shifts/" + shift + "/close"), body, employee).andExpect(status().isBadRequest());
+        }
+        json(post("/api/v1/shifts/" + shift + "/close"),
+                "{\"counts\": [], \"payments\": {\"cash\": 1, \"yape\": 0}}", employee)
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/shifts/current").header("Authorization", employee)).andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("un sobrante mayor que el stock responde 422 y el turno sigue abierto")
     void leftoverAboveStock() throws Exception {
         String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));

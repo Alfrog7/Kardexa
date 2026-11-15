@@ -15,6 +15,8 @@ import java.util.UUID;
  * @param registeredSales suma de las ventas registradas una a una durante el turno; nulo mientras está abierto
  * @param countedSales    lo vendido por conteo × precio; nulo mientras está abierto
  * @param expectedAmount  monto que debería haberse recibido: ventas registradas + vendido por conteo
+ * @param payments        lo recibido por medio de pago al cerrar; nulo si no se anotó (HU-23)
+ * @param difference      recibido − esperado, calculado en el servidor: negativo falta, positivo sobra
  */
 public record Shift(
         UUID id,
@@ -29,6 +31,8 @@ public record Shift(
         BigDecimal countedSales,
         BigDecimal expectedAmount,
         String note,
+        Payments payments,
+        BigDecimal difference,
         List<Item> items) {
 
     public static final int NOTE_MAX_LENGTH = 255;
@@ -83,7 +87,7 @@ public record Shift(
 
     public static Shift open(UUID siteId, UUID responsibleId, List<Item> items, Instant now) {
         return new Shift(UUID.randomUUID(), siteId, responsibleId, null, Status.OPEN, now, null, null, null, null, null,
-                null, items);
+                null, null, null, items);
     }
 
     public boolean isOpen() {
@@ -95,11 +99,18 @@ public record Shift(
         return admin || responsibleId.equals(userId);
     }
 
+    /** Total recibido por todos los medios; nulo si no se anotaron los pagos. */
+    public BigDecimal receivedAmount() {
+        return payments == null ? null : payments.total();
+    }
+
     /** El turno cerrado: otra instancia, porque lo cerrado no se modifica. */
-    public Shift closed(UUID userId, Instant now, BigDecimal registeredSales, String observation, List<Item> countedItems) {
+    public Shift closed(UUID userId, Instant now, BigDecimal registeredSales, String observation, Payments payments,
+            List<Item> countedItems) {
         BigDecimal counted = countedItems.stream().map(Item::countedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         String trimmed = observation == null || observation.isBlank() ? null : observation.strip();
         return new Shift(id, siteId, responsibleId, responsibleName, Status.CLOSED, openedAt, now, userId,
-                registeredSales, counted, registeredSales.add(counted), trimmed, countedItems);
+                registeredSales, counted, registeredSales.add(counted), trimmed, payments,
+                payments == null ? null : payments.total().subtract(registeredSales.add(counted)), countedItems);
     }
 }

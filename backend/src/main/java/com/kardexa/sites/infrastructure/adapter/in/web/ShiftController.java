@@ -7,8 +7,11 @@ import com.kardexa.sites.application.port.in.CloseShiftUseCase.CloseShiftCommand
 import com.kardexa.sites.application.port.in.CloseShiftUseCase.Count;
 import com.kardexa.sites.application.port.in.GetCurrentShiftUseCase;
 import com.kardexa.sites.application.port.in.OpenShiftUseCase;
+import com.kardexa.sites.domain.model.Payments;
 import com.kardexa.sites.domain.model.Shift;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -68,7 +71,8 @@ class ShiftController {
                 .toList();
         boolean admin = "ADMIN".equals(jwt.getClaimAsString("role"));
         return ShiftResponse.from(closeShift.close(
-                new CloseShiftCommand(id, UUID.fromString(jwt.getSubject()), admin, counts, request.note())));
+                new CloseShiftCommand(id, UUID.fromString(jwt.getSubject()), admin, counts, request.note(),
+                request.payments() == null ? null : request.payments().toDomain())));
     }
 
     /** Esquema {@code OpenShiftRequest}: el ADMIN indica la sede; la trabajadora usa la suya. */
@@ -77,7 +81,24 @@ class ShiftController {
     /** Esquema {@code CloseShiftRequest}. El sobrante viaja como texto para no perder precisión. */
     record CloseRequest(
             @NotNull(message = "Indica el sobrante de cada producto.") List<@Valid CountRequest> counts,
-            @Size(max = Shift.NOTE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.") String note) {}
+            @Size(max = Shift.NOTE_MAX_LENGTH, message = "Debe tener como máximo {max} caracteres.") String note,
+            @Valid PaymentsRequest payments) {}
+
+    /** Esquema {@code PaymentsRequest}: lo recibido por medio de pago, 0 si no hubo. */
+    record PaymentsRequest(
+            @NotNull(message = "Indica el efectivo (0 si no hubo).") @DecimalMin(value = "0", message = "No puede ser negativo.")
+            @Digits(integer = 20, fraction = 2, message = "Hasta 2 decimales.") BigDecimal cash,
+            @NotNull(message = "Indica Yape (0 si no hubo).") @DecimalMin(value = "0", message = "No puede ser negativo.")
+            @Digits(integer = 20, fraction = 2, message = "Hasta 2 decimales.") BigDecimal yape,
+            @NotNull(message = "Indica Plin (0 si no hubo).") @DecimalMin(value = "0", message = "No puede ser negativo.")
+            @Digits(integer = 20, fraction = 2, message = "Hasta 2 decimales.") BigDecimal plin,
+            @NotNull(message = "Indica la transferencia (0 si no hubo).") @DecimalMin(value = "0", message = "No puede ser negativo.")
+            @Digits(integer = 20, fraction = 2, message = "Hasta 2 decimales.") BigDecimal transfer) {
+
+        Payments toDomain() {
+            return new Payments(cash, yape, plin, transfer);
+        }
+    }
 
     record CountRequest(
             @NotNull(message = "El producto es obligatorio.") UUID productId,
@@ -98,13 +119,25 @@ class ShiftController {
             BigDecimal countedSales,
             BigDecimal expectedAmount,
             String note,
+            PaymentsResponse payments,
+            BigDecimal receivedAmount,
+            BigDecimal difference,
             List<ItemResponse> items) {
 
         static ShiftResponse from(Shift shift) {
             return new ShiftResponse(shift.id(), shift.siteId(), shift.responsibleId(), shift.responsibleName(),
                     shift.status().name(), shift.openedAt(), shift.closedAt(), shift.registeredSales(),
                     shift.countedSales(), shift.expectedAmount(), shift.note(),
+                    shift.payments() == null ? null : PaymentsResponse.from(shift.payments()), shift.receivedAmount(),
+                    shift.difference(),
                     shift.items().stream().map(ItemResponse::from).toList());
+        }
+    }
+
+    record PaymentsResponse(BigDecimal cash, BigDecimal yape, BigDecimal plin, BigDecimal transfer) {
+
+        static PaymentsResponse from(Payments payments) {
+            return new PaymentsResponse(payments.cash(), payments.yape(), payments.plin(), payments.transfer());
         }
     }
 
