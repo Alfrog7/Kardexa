@@ -6,6 +6,7 @@ import com.kardexa.sites.application.port.in.ListSitesUseCase;
 import com.kardexa.sites.application.port.in.UpdateSiteUseCase;
 import com.kardexa.sites.application.port.out.SiteRepository;
 import com.kardexa.sites.domain.exception.DuplicateSiteNameException;
+import com.kardexa.sites.domain.exception.LastActiveSiteException;
 import com.kardexa.sites.domain.exception.SiteNotFoundException;
 import com.kardexa.sites.domain.model.Site;
 import java.util.List;
@@ -47,6 +48,9 @@ public class SiteService
         if (active) {
             site.activate();
         } else {
+            if (site.isActive() && sites.findAllOrderedByName().stream().filter(Site::isActive).count() <= 1) {
+                throw new LastActiveSiteException();
+            }
             site.deactivate();
         }
         return sites.save(site);

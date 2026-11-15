@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { ChangePasswordForm } from '@features/auth'
 import { useSession } from '@shared/auth/session'
+import { useActiveSite } from '@shared/site/activeSite'
 import { Dialog } from '@shared/ui/Dialog'
 import { Icon, KMark } from '@shared/ui/Icon'
 import { Logo } from '@shared/ui/Logo'
 import { Toast } from '@shared/ui/Toast'
-import { navigation } from '../navigation'
+import { navigation, routes } from '../navigation'
 import { NavIcon } from './NavIcon'
 import './PanelLayout.css'
 
@@ -33,6 +34,7 @@ function readCollapsed() {
 /** Estructura del panel: barra lateral (contraíble) con los módulos y el contenido de la ruta activa. */
 export function PanelLayout() {
   const { user, end } = useSession()
+  const activeSite = useActiveSite()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [menuOpen, setMenuOpen] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
@@ -105,6 +107,15 @@ export function PanelLayout() {
             </button>
           )}
         </div>
+        {user?.role === 'ADMIN' && activeSite ? (
+          <NavLink className="panel__site" to={routes.pickSite} title="Cambiar de sede">
+            <Icon name="store" />
+            <span className="panel__label">
+              <span className="panel__site-hint">Sede</span>
+              <span className="panel__site-name">{activeSite.name}</span>
+            </span>
+          </NavLink>
+        ) : null}
         <nav aria-label="Módulos">
           <ul className="panel__nav">
             {visibleNavigation.map((item) => (

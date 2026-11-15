@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '@shared/api/http'
+import { PasswordInput } from '@shared/ui/PasswordInput'
 import { changeOwnPassword } from '../api/auth'
 
 interface ChangePasswordFormProps {
@@ -49,10 +50,9 @@ export function ChangePasswordForm({ onChanged }: ChangePasswordFormProps) {
     <form className="form" onSubmit={handleSubmit}>
       <div className="field">
         <label htmlFor="current-password">Contraseña actual</label>
-        <input
+        <PasswordInput
           data-autofocus
           id="current-password"
-          type="password"
           autoComplete="current-password"
           required
           value={current}
@@ -63,9 +63,8 @@ export function ChangePasswordForm({ onChanged }: ChangePasswordFormProps) {
       </div>
       <div className="field">
         <label htmlFor="new-password">Contraseña nueva</label>
-        <input
+        <PasswordInput
           id="new-password"
-          type="password"
           autoComplete="new-password"
           required
           value={next}

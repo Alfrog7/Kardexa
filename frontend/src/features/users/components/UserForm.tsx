@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '@shared/api/http'
 import type { Role } from '@shared/auth/session'
+import { PasswordInput } from '@shared/ui/PasswordInput'
 import type { User } from '../api/users'
 
 export interface UserFormValues {
@@ -91,10 +92,9 @@ export function UserForm({ user, onSubmit }: UserFormProps) {
           </div>
           <div className="field">
             <label htmlFor="user-password">Contraseña inicial</label>
-            <input
+            <PasswordInput
               id="user-password"
               name="password"
-              type="password"
               autoComplete="new-password"
               value={password}
               required

@@ -38,6 +38,7 @@ describe('registro inicial (HU-01)', () => {
         if (url.endsWith('/auth/login')) {
           return Response.json({ accessToken: 'abc.def.ghi', tokenType: 'Bearer', expiresIn: 3600, user: admin })
         }
+        if (url.endsWith('/sites')) return Response.json([{ id: 's1', name: 'Sede principal', address: null, active: true }])
         return Response.json({})
       }),
     )
@@ -45,6 +46,7 @@ describe('registro inicial (HU-01)', () => {
 
     fill('secreta123')
 
+    fireEvent.click(await screen.findByRole('button', { name: /Sede principal/ }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
   })

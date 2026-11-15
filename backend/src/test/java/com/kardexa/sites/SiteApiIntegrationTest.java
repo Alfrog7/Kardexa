@@ -14,6 +14,7 @@ import com.kardexa.TestSecurity;
 import com.kardexa.TestcontainersConfiguration;
 import com.kardexa.identity.application.port.out.TokenIssuer;
 import com.kardexa.identity.domain.model.Role;
+import com.kardexa.shared.domain.MainSite;
 import com.kardexa.sites.domain.model.Site;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,6 +126,19 @@ class SiteApiIntegrationTest {
         send(patch(URL + "/" + galeno), "{\"active\": true}").andExpect(jsonPath("$.active").value(true));
         send(patch(URL + "/" + galeno), "{}").andExpect(status().isBadRequest());
         send(patch(URL + "/" + UUID.randomUUID()), "{\"active\": false}").andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("el negocio conserva al menos una sede habilitada")
+    void keepsOneActiveSite() throws Exception {
+        String galeno = idOf(create("Galeno", null));
+
+        send(patch(URL + "/" + MainSite.ID), "{\"active\": false}").andExpect(status().isOk());
+        send(patch(URL + "/" + galeno), "{\"active\": false}")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("al menos una sede")));
+        send(patch(URL + "/" + MainSite.ID), "{\"active\": true}").andExpect(jsonPath("$.active").value(true));
+        send(patch(URL + "/" + galeno), "{\"active\": false}").andExpect(status().isOk());
     }
 
     @Test

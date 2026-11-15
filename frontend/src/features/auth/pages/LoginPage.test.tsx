@@ -35,15 +35,19 @@ describe('ingreso y sesión (HU-02)', () => {
             expiresIn: 3600,
             user: { id: '1', fullName: 'Ana Pérez', email: 'ana@correo.com', role: 'ADMIN', active: true },
           })
-        : Response.json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
+        : url.endsWith('/sites')
+          ? Response.json([{ id: 's1', name: 'Galeno', address: null, active: true }])
+          : Response.json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
     )
     vi.stubGlobal('fetch', fetchMock)
     renderApp('/productos')
 
-    fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ana@correo.com' } })
+    fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: 'ana@correo.com' } })
     fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'secreta123' } })
     fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
 
+    // El administrador elige su sede antes de entrar al panel y vuelve a donde iba.
+    fireEvent.click(await screen.findByRole('button', { name: /Galeno/ }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
     await waitFor(() => {
@@ -66,7 +70,7 @@ describe('ingreso y sesión (HU-02)', () => {
     )
     renderApp('/ingresar')
 
-    fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ana@correo.com' } })
+    fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: 'ana@correo.com' } })
     fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'equivocada1' } })
     fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
 

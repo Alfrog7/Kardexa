@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { appRoutes } from '@app/router'
 import { setAccessToken } from '@shared/api/http'
 import type { Session } from '@shared/auth/session'
+import { setActiveSite } from '@shared/site/activeSite'
 import { SessionProvider } from '@shared/auth/SessionProvider'
 
 const problem = { headers: { 'Content-Type': 'application/problem+json' } }
@@ -19,6 +20,7 @@ function page(content: unknown[]) {
 }
 
 function renderAt(path: string, session: Session) {
+  setActiveSite({ id: 's1', name: 'Galeno' })
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] })
   render(
     <SessionProvider initialSession={session}>
