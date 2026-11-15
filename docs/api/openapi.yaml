@@ -559,6 +559,24 @@ paths:
         '422': { $ref: '#/components/responses/BusinessRuleViolation' }
 
   /shifts:
+    get:
+      tags: [sites]
+      operationId: listShifts
+      summary: Turnos de las sedes en un rango (HU-24, solo ADMIN)
+      description: Turnos abiertos en el rango (hora de Lima, ambos días incluidos; por defecto los últimos 30 días), del más reciente al más antiguo, máximo 200, sin el detalle por producto. El EMPLOYEE recibe 403.
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: siteId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Turnos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Shift' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [sites]
       operationId: openShift
@@ -576,6 +594,22 @@ paths:
               schema: { $ref: '#/components/schemas/Shift' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+
+  /shifts/{id}:
+    get:
+      tags: [sites]
+      operationId: getShift
+      summary: Un turno con lo vendido por producto (HU-24, solo ADMIN)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Turno
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shift' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /shifts/current:
     get:
@@ -1562,6 +1596,26 @@ components:
               quantity: { $ref: '#/components/schemas/Decimal3' }
               amount: { $ref: '#/components/schemas/Decimal2' }
               imageUrl: { type: string, description: Ruta de la imagen con su versión; no llega si no tiene }
+        payments:
+          type: object
+          description: Lo recibido por medio de pago en los turnos cerrados del rango (cuentan el día en que cerraron).
+          properties:
+            cash: { $ref: '#/components/schemas/Decimal2' }
+            yape: { $ref: '#/components/schemas/Decimal2' }
+            plin: { $ref: '#/components/schemas/Decimal2' }
+            transfer: { $ref: '#/components/schemas/Decimal2' }
+            total: { $ref: '#/components/schemas/Decimal2' }
+        sites:
+          description: Una fila por sede; las ventas de todas suman el total del negocio. `difference` suma las diferencias de sus turnos cerrados (negativa si faltó).
+          type: array
+          items:
+            type: object
+            properties:
+              siteId: { type: string, format: uuid }
+              name: { type: string }
+              total: { $ref: '#/components/schemas/Decimal2' }
+              count: { type: integer }
+              difference: { $ref: '#/components/schemas/Decimal2' }
         criticalStock:
           description: >-
             Productos activos con stock <= mínimo hoy (RN-09; no depende del rango). Primero los de stock 0, luego

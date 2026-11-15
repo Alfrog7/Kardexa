@@ -4,7 +4,9 @@ import com.kardexa.reporting.application.port.in.GetDashboardUseCase;
 import com.kardexa.reporting.application.port.in.GetDashboardUseCase.Dashboard;
 import com.kardexa.reporting.domain.model.CriticalProduct;
 import com.kardexa.reporting.domain.model.DailySales;
+import com.kardexa.reporting.domain.model.PaymentTotals;
 import com.kardexa.reporting.domain.model.ReportPeriod;
+import com.kardexa.reporting.domain.model.SiteSales;
 import com.kardexa.reporting.domain.model.SalesSummary;
 import com.kardexa.reporting.domain.model.TopProduct;
 import jakarta.validation.Valid;
@@ -52,14 +54,35 @@ class DashboardController {
     }
 
     record DashboardResponse(LocalDate from, LocalDate to, SummaryResponse summary, List<DayResponse> salesByDay,
-            List<TopProductResponse> topProducts, List<CriticalProductResponse> criticalStock) {
+            List<TopProductResponse> topProducts, List<CriticalProductResponse> criticalStock,
+            PaymentsResponse payments, List<SiteResponse> sites) {
 
         static DashboardResponse from(Dashboard dashboard) {
             return new DashboardResponse(dashboard.period().from(), dashboard.period().to(),
                     SummaryResponse.from(dashboard.summary(), dashboard.criticalStock().size()),
                     dashboard.salesByDay().stream().map(DayResponse::from).toList(),
                     dashboard.topProducts().stream().map(TopProductResponse::from).toList(),
-                    dashboard.criticalStock().stream().map(CriticalProductResponse::from).toList());
+                    dashboard.criticalStock().stream().map(CriticalProductResponse::from).toList(),
+                    PaymentsResponse.from(dashboard.payments()),
+                    dashboard.sites().stream().map(SiteResponse::from).toList());
+        }
+    }
+
+    /** Lo recibido por medio de pago en los turnos cerrados del rango. */
+    record PaymentsResponse(String cash, String yape, String plin, String transfer, String total) {
+
+        static PaymentsResponse from(PaymentTotals payments) {
+            return new PaymentsResponse(payments.cash().toString(), payments.yape().toString(),
+                    payments.plin().toString(), payments.transfer().toString(), payments.total().toString());
+        }
+    }
+
+    /** Una sede: sus ventas del rango y la suma de las diferencias de sus turnos (negativa si faltó). */
+    record SiteResponse(UUID siteId, String name, String total, long count, String difference) {
+
+        static SiteResponse from(SiteSales site) {
+            return new SiteResponse(site.siteId(), site.siteName(), site.total().toString(), site.count(),
+                    site.difference().toString());
         }
     }
 

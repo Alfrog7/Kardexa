@@ -2,6 +2,7 @@ package com.kardexa.reporting.application.service;
 
 import com.kardexa.reporting.application.port.in.GetDashboardUseCase;
 import com.kardexa.reporting.application.port.out.SalesFigures;
+import com.kardexa.reporting.application.port.out.ShiftFigures;
 import com.kardexa.reporting.application.port.out.StockFigures;
 import com.kardexa.reporting.domain.model.DailySales;
 import com.kardexa.reporting.domain.model.ReportPeriod;
@@ -19,11 +20,13 @@ public class DashboardService implements GetDashboardUseCase {
 
     private final SalesFigures sales;
     private final StockFigures stock;
+    private final ShiftFigures shifts;
     private final Clock clock;
 
-    public DashboardService(SalesFigures sales, StockFigures stock, Clock clock) {
+    public DashboardService(SalesFigures sales, StockFigures stock, ShiftFigures shifts, Clock clock) {
         this.sales = Objects.requireNonNull(sales);
         this.stock = Objects.requireNonNull(stock);
+        this.shifts = Objects.requireNonNull(shifts);
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -32,6 +35,6 @@ public class DashboardService implements GetDashboardUseCase {
         ReportPeriod period = ReportPeriod.resolve(from, to, LocalDate.now(clock.withZone(BusinessCalendar.ZONE)));
         List<DailySales> days = sales.dailySales(period, siteId);
         return new Dashboard(period, SalesSummary.of(days), days, sales.topProducts(period, TopProduct.LIMIT, siteId),
-                stock.criticalStock(siteId));
+                stock.criticalStock(siteId), shifts.payments(period, siteId), shifts.bySite(period));
     }
 }

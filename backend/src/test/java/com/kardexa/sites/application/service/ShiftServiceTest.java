@@ -68,6 +68,11 @@ class ShiftServiceTest {
         public void saveClosed(Shift shift) {
             saved.put(shift.id(), shift);
         }
+
+        @Override
+        public List<Shift> search(java.time.Instant from, java.time.Instant to, UUID siteId, int limit) {
+            return saved.values().stream().toList();
+        }
     }, new ShiftStock() {
         @Override
         public List<StockLine> withStock(UUID siteId) {
@@ -153,6 +158,13 @@ class ShiftServiceTest {
         assertThat(closed.receivedAmount()).isEqualByComparingTo("27.50");
         assertThat(closed.difference()).isEqualByComparingTo("-2.00");
         assertThat(closed.payments().yape()).isEqualByComparingTo("5.50");
+    }
+
+    @Test
+    @DisplayName("la lista de turnos rechaza un rango con la fecha inicial posterior a la final")
+    void rejectsReversedRange() {
+        assertThatThrownBy(() -> service.list(java.time.LocalDate.of(2026, 11, 10), java.time.LocalDate.of(2026, 11, 1), null))
+                .isInstanceOf(InvalidShiftException.class);
     }
 
     @Test

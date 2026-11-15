@@ -44,8 +44,21 @@ class DashboardServiceTest {
             return top;
         }
     };
+    private final com.kardexa.reporting.application.port.out.ShiftFigures shiftFigures =
+            new com.kardexa.reporting.application.port.out.ShiftFigures() {
+                @Override
+                public com.kardexa.reporting.domain.model.PaymentTotals payments(ReportPeriod period, UUID siteId) {
+                    var zero = com.kardexa.shared.domain.Money.of(java.math.BigDecimal.ZERO);
+                    return new com.kardexa.reporting.domain.model.PaymentTotals(zero, zero, zero, zero);
+                }
+
+                @Override
+                public List<com.kardexa.reporting.domain.model.SiteSales> bySite(ReportPeriod period) {
+                    return List.of();
+                }
+            };
     private List<CriticalProduct> critical = List.of();
-    private final DashboardService service = new DashboardService(figures, siteId -> critical, CLOCK);
+    private final DashboardService service = new DashboardService(figures, siteId -> critical, shiftFigures, CLOCK);
 
     @Test
     @DisplayName("sin fechas toma los últimos 30 días hasta hoy en hora de Lima")

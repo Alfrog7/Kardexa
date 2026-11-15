@@ -132,6 +132,57 @@ class ShiftApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("el ADMIN lista los turnos con su diferencia y ve el detalle; el EMPLEADO recibe 403")
+    void adminReviewsShifts() throws Exception {
+        String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));
+        String body = "{\"counts\": [{\"productId\": \"%s\", \"leftover\": \"4\"}], "
+                .formatted(productId)
+                + "\"payments\": {\"cash\": 1.50, \"yape\": 1, \"plin\": 0, \"transfer\": 0}}";
+        json(post("/api/v1/shifts/" + shift + "/close"), body, employee).andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/shifts").param("siteId", monserrate))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].difference").value(-0.5))
+                .andExpect(jsonPath("$[0].payments.yape").value(1.0))
+                .andExpect(jsonPath("$[0].items.length()").value(0));
+        mvc.perform(get("/api/v1/shifts/" + shift))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].soldByCount").value("6.000"));
+
+        mvc.perform(get("/api/v1/shifts").header("Authorization", employee)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/shifts/" + shift).header("Authorization", employee)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/shifts/current").header("Authorization", employee)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("el inicio del dueño trae lo recibido por medio y las sedes suman el total del negocio")
+    void dashboardShowsPaymentsAndSites() throws Exception {
+        String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));
+        json(post("/api/v1/sales"), "{\"items\": [{\"productId\": \"%s\", \"quantity\": \"2\"}]}".formatted(productId), employee)
+                .andExpect(status().isCreated());
+        String body = "{\"counts\": [{\"productId\": \"%s\", \"leftover\": \"3\"}], "
+                .formatted(productId)
+                + "\"payments\": {\"cash\": 3, \"yape\": 0.50, \"plin\": 0, \"transfer\": 0}}";
+        json(post("/api/v1/shifts/" + shift + "/close"), body, employee).andExpect(status().isOk());
+
+        String today = java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")).toString();
+        String dashboard = mvc.perform(get("/api/v1/dashboard").param("from", today).param("to", today))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payments.cash").value("3.00"))
+                .andExpect(jsonPath("$.payments.yape").value("0.50"))
+                .andExpect(jsonPath("$.payments.total").value("3.50"))
+                .andReturn().getResponse().getContentAsString();
+
+        java.math.BigDecimal total = new java.math.BigDecimal((String) JsonPath.read(dashboard, "$.summary.total"));
+        java.util.List<String> perSite = JsonPath.read(dashboard, "$.sites[*].total");
+        assertThat(perSite.stream().map(java.math.BigDecimal::new).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add))
+                .isEqualByComparingTo(total);
+        mvc.perform(get("/api/v1/dashboard").param("from", today).param("to", today).param("siteId", monserrate))
+                .andExpect(jsonPath("$.payments.total").value("3.50"));
+    }
+
+    @Test
     @DisplayName("un monto negativo o con 3 decimales responde 400 y el turno sigue abierto")
     void invalidPayments() throws Exception {
         String shift = idOf(json(post("/api/v1/shifts"), "{}", employee));

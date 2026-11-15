@@ -71,6 +71,21 @@ class ShiftPersistenceAdapter implements ShiftRepository {
     }
 
     @Override
+    public List<Shift> search(java.time.Instant from, java.time.Instant to, UUID siteId, int limit) {
+        return jdbc.sql(SELECT + " " + """
+                 WHERE s.opened_at >= :from AND s.opened_at < :to
+                   AND (CAST(:siteId AS uuid) IS NULL OR s.site_id = :siteId)
+                 ORDER BY s.opened_at DESC
+                 LIMIT :limit""")
+                .param("from", Timestamp.from(from))
+                .param("to", Timestamp.from(to))
+                .param("siteId", siteId, java.sql.Types.OTHER)
+                .param("limit", limit)
+                .query(this::toShift)
+                .list();
+    }
+
+    @Override
     public void saveClosed(Shift shift) {
         // Primero el detalle, mientras el turno sigue abierto: la base no deja tocar lo de un turno cerrado.
         for (Item item : shift.items()) {

@@ -7,6 +7,7 @@ import com.kardexa.sites.application.port.in.CloseShiftUseCase.CloseShiftCommand
 import com.kardexa.sites.application.port.in.CloseShiftUseCase.Count;
 import com.kardexa.sites.application.port.in.GetCurrentShiftUseCase;
 import com.kardexa.sites.application.port.in.OpenShiftUseCase;
+import com.kardexa.sites.application.port.in.ReviewShiftsUseCase;
 import com.kardexa.sites.domain.model.Payments;
 import com.kardexa.sites.domain.model.Shift;
 import jakarta.validation.Valid;
@@ -42,13 +43,15 @@ class ShiftController {
     private final OpenShiftUseCase openShift;
     private final GetCurrentShiftUseCase currentShift;
     private final CloseShiftUseCase closeShift;
+    private final ReviewShiftsUseCase reviewShifts;
     private final SiteScope siteScope;
 
     ShiftController(OpenShiftUseCase openShift, GetCurrentShiftUseCase currentShift, CloseShiftUseCase closeShift,
-            SiteScope siteScope) {
+            ReviewShiftsUseCase reviewShifts, SiteScope siteScope) {
         this.openShift = openShift;
         this.currentShift = currentShift;
         this.closeShift = closeShift;
+        this.reviewShifts = reviewShifts;
         this.siteScope = siteScope;
     }
 
@@ -62,6 +65,23 @@ class ShiftController {
     @GetMapping("/current")
     ShiftResponse current(@AuthenticationPrincipal Jwt jwt, @RequestParam(required = false) UUID siteId) {
         return ShiftResponse.from(currentShift.current(siteScope.single(jwt, siteId)));
+    }
+
+    /** Solo {@code ADMIN} (HU-24): los turnos de sus sedes en un rango de fechas, sin el detalle por producto. */
+    @GetMapping
+    List<ShiftResponse> list(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam(required = false) UUID siteId) {
+        return reviewShifts.list(from, to, siteScope.filter(jwt, siteId)).stream().map(ShiftResponse::from).toList();
+    }
+
+    /** Solo {@code ADMIN}: un turno con lo vendido por producto. */
+    @GetMapping("/{id}")
+    ShiftResponse get(@PathVariable UUID id) {
+        return ShiftResponse.from(reviewShifts.get(id));
     }
 
     @PostMapping("/{id}/close")

@@ -8,6 +8,27 @@ export interface Dashboard {
   salesByDay: DaySales[]
   topProducts: TopProduct[]
   criticalStock: CriticalProduct[]
+  /** Lo recibido por medio de pago en los turnos cerrados del rango. */
+  payments: PaymentTotals
+  /** Una fila por sede; las ventas de todas suman el total del negocio. */
+  sites: SiteSales[]
+}
+
+export interface PaymentTotals {
+  cash: string
+  yape: string
+  plin: string
+  transfer: string
+  total: string
+}
+
+export interface SiteSales {
+  siteId: string
+  name: string
+  total: string
+  count: number
+  /** Suma de las diferencias de sus turnos cerrados: negativa si faltó dinero. */
+  difference: string
 }
 
 export interface DashboardSummary {
@@ -46,4 +67,30 @@ export interface CriticalProduct {
 /** Fechas `AAAA-MM-DD` del negocio (hora de Lima), ambas incluidas. */
 export function getDashboard(from: string, to: string): Promise<Dashboard> {
   return apiRequest<Dashboard>(`/dashboard?${new URLSearchParams({ from, to })}`)
+}
+
+/** Un turno de la lista del dueño (`GET /shifts`, solo `ADMIN`); `payments` y `difference` son nulos mientras sigue abierto. */
+export interface ShiftRow {
+  id: string
+  siteId: string
+  responsible: string
+  status: 'OPEN' | 'CLOSED'
+  openedAt: string
+  closedAt: string | null
+  expectedAmount: number | null
+  receivedAmount: number | null
+  difference: number | null
+  payments: { cash: number; yape: number; plin: number; transfer: number } | null
+  note: string | null
+  items: { productId: string; productName: string; soldByCount: string | null; unitPrice: number | null }[]
+}
+
+/** Turnos abiertos en el rango (fechas `AAAA-MM-DD`), del más reciente al más antiguo. */
+export function listShifts(from: string, to: string): Promise<ShiftRow[]> {
+  return apiRequest<ShiftRow[]>(`/shifts?${new URLSearchParams({ from, to })}`)
+}
+
+/** Un turno con lo vendido por producto. */
+export function getShift(id: string): Promise<ShiftRow> {
+  return apiRequest<ShiftRow>(`/shifts/${id}`)
 }

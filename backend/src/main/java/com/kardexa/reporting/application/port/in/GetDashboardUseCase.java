@@ -2,7 +2,9 @@ package com.kardexa.reporting.application.port.in;
 
 import com.kardexa.reporting.domain.model.CriticalProduct;
 import com.kardexa.reporting.domain.model.DailySales;
+import com.kardexa.reporting.domain.model.PaymentTotals;
 import com.kardexa.reporting.domain.model.ReportPeriod;
+import com.kardexa.reporting.domain.model.SiteSales;
 import com.kardexa.reporting.domain.model.SalesSummary;
 import com.kardexa.reporting.domain.model.TopProduct;
 import java.time.LocalDate;
@@ -21,12 +23,14 @@ public interface GetDashboardUseCase {
      * vendidos y los productos en stock crítico hoy (estos no dependen del rango).
      */
     record Dashboard(ReportPeriod period, SalesSummary summary, List<DailySales> salesByDay,
-            List<TopProduct> topProducts, List<CriticalProduct> criticalStock) {
+            List<TopProduct> topProducts, List<CriticalProduct> criticalStock, PaymentTotals payments,
+            List<SiteSales> sites) {
 
         public Dashboard {
             salesByDay = List.copyOf(salesByDay);
             topProducts = List.copyOf(topProducts);
             criticalStock = List.copyOf(criticalStock);
+            sites = List.copyOf(sites);
         }
     }
 }
