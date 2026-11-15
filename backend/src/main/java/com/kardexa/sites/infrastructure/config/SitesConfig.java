@@ -26,6 +26,6 @@ class SitesConfig {
     TransactionalShifts shiftUseCases(ShiftRepository shifts, ShiftStock stock, ShiftSales sales, ShiftLedger ledger,
             TransactionTemplate transactionTemplate) {
         ShiftService service = new ShiftService(shifts, stock, sales, ledger, Clock.systemUTC());
-        return new TransactionalShifts(service, service, service, transactionTemplate);
+        return new TransactionalShifts(service, service, service, service, transactionTemplate);
     }
 }

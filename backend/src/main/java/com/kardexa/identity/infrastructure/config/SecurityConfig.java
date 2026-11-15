@@ -87,6 +87,9 @@ class SecurityConfig {
                     // Las sedes las administra el ADMIN; cada quien lee la suya (HU-20, ADR 0013).
                     auth.requestMatchers(HttpMethod.GET, API + "/sites/mine").authenticated();
                     auth.requestMatchers(API + "/sites", API + "/sites/**").hasRole("ADMIN");
+                    // El turno abierto lo ve cualquiera; revisar los turnos de las sedes es del ADMIN (HU-24).
+                    auth.requestMatchers(HttpMethod.GET, API + "/shifts/current").authenticated();
+                    auth.requestMatchers(HttpMethod.GET, API + "/shifts", API + "/shifts/*").hasRole("ADMIN");
                     // Los indicadores muestran montos de todo el negocio: solo ADMIN (ADR 0012).
                     auth.requestMatchers(API + "/dashboard", API + "/dashboard/**").hasRole("ADMIN");
                     // RN-05: registrar y consultar ventas es de todos; anularlas, solo del ADMIN (ADR 0010).

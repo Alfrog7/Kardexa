@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@shared/api/http'
 import { SessionContext, type Role } from '@shared/auth/session'
 import { formatMoney } from '@shared/lib/format'
-import { getDashboard, type Dashboard } from '../api/dashboard'
+import { getDashboard, listShifts, type Dashboard } from '../api/dashboard'
 import { DashboardPage } from './DashboardPage'
 
-vi.mock('../api/dashboard', () => ({ getDashboard: vi.fn() }))
+vi.mock('../api/dashboard', () => ({ getDashboard: vi.fn(), listShifts: vi.fn(), getShift: vi.fn() }))
 
 function dashboard(from: string, to: string, count = 3): Dashboard {
   return {
@@ -17,6 +17,8 @@ function dashboard(from: string, to: string, count = 3): Dashboard {
     salesByDay: [],
     topProducts: [],
     criticalStock: [],
+    payments: { cash: '0.00', yape: '0.00', plin: '0.00', transfer: '0.00', total: '0.00' },
+    sites: [],
   }
 }
 
@@ -41,6 +43,7 @@ describe('DashboardPage', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-15T02:00:00Z'))
     vi.mocked(getDashboard).mockImplementation(async (from, to) => dashboard(from, to))
+    vi.mocked(listShifts).mockResolvedValue([])
   })
 
   afterEach(() => {

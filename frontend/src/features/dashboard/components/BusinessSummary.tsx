@@ -8,6 +8,7 @@ import { FROM_PARAM, TO_PARAM, formatBusinessDate, rangeFromParams, type DateRan
 import { RangePicker } from './RangePicker'
 import { CriticalStock } from './CriticalStock'
 import { SalesChart } from './SalesChart'
+import { ShiftsPanel } from './ShiftsPanel'
 import { TopProducts } from './TopProducts'
 
 interface Loaded {
@@ -125,6 +126,7 @@ export function BusinessSummary({ today }: { today: string }) {
             </li>
           </ul>
           <SalesChart days={shown?.dashboard?.salesByDay ?? []} />
+          {shown?.dashboard ? <ShiftsPanel dashboard={shown.dashboard} /> : null}
           <div className="home__panels">
             <TopProducts products={shown?.dashboard?.topProducts ?? []} />
             <CriticalStock products={shown?.dashboard?.criticalStock ?? []} />
