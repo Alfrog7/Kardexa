@@ -39,6 +39,7 @@ record StockMovementResponse(
             case ADJUSTMENT -> "Ajuste";
             case PURCHASE -> "Compra";
             case SALE -> "Venta";
+            case RECEIPT -> "Entrada";
         };
     }
 }

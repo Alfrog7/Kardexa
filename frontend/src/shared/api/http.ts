@@ -101,11 +101,11 @@ export function filenameOf(disposition: string | null): string | undefined {
 /** Consultas que dependen de la sede (ADR 0013): reciben `siteId` en la URL. */
 const SITE_READS = ['/products', '/stock-movements', '/sales', '/purchases', '/dashboard']
 /** Operaciones que se registran en una sede: reciben `siteId` en el cuerpo. */
-const SITE_WRITES = ['/sales', '/purchases', '/stock-adjustments']
+const SITE_WRITES = ['/sales', '/purchases', '/stock-adjustments', '/receipts']
 
 /**
- * Aplica la sede elegida por el administrador: añade `siteId` a las consultas y a los registros de ventas, compras
- * y ajustes. Sin sede elegida no toca nada (la API usa la Sede principal en los registros); con «Todas las sedes» las
+ * Aplica la sede elegida por el administrador: añade `siteId` a las consultas y a los registros de ventas, compras,
+ * ajustes y entradas. Sin sede elegida no toca nada (la API usa la Sede principal en los registros); con «Todas las sedes» las
  * consultas juntan todas y los registros se rechazan: hay que elegir una sede concreta. El empleado nunca elige: su sede la decide la API.
  */
 function withSite(path: string, init: RequestInit): { path: string; init: RequestInit } {

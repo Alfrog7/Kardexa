@@ -4,5 +4,6 @@ package com.kardexa.inventory.domain.model;
 public enum SourceType {
     PURCHASE,
     SALE,
-    ADJUSTMENT
+    ADJUSTMENT,
+    RECEIPT
 }
