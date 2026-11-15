@@ -18,7 +18,7 @@ function parseQuantity(text: string): string | undefined {
 }
 
 /**
- * Entradas de mercadería (HU-21): la trabajadora marca lo que llegó a su sede y confirma, sin costo ni
+ * Recepción de mercadería (HU-21): la trabajadora marca lo que llegó a su sede y confirma, sin costo ni
  * proveedor. Pensada para el celular: una lista de productos con su cantidad y un botón.
  */
 export function ReceiptsPage() {
@@ -71,11 +71,11 @@ export function ReceiptsPage() {
         items: filled.map(([productId, text]) => ({ productId, quantity: parseQuantity(text) as string })),
       })
       setQuantities({})
-      setNotice(filled.length === 1 ? 'Entrada registrada: 1 producto.' : `Entrada registrada: ${filled.length} productos.`)
+      setNotice(filled.length === 1 ? 'Recepción registrada: 1 producto.' : `Recepción registrada: ${filled.length} productos.`)
       loadProducts()
       loadEntries()
     } catch (failure) {
-      setError(failure instanceof ApiError ? failure.message : 'No se pudo registrar la entrada. Inténtalo de nuevo.')
+      setError(failure instanceof ApiError ? failure.message : 'No se pudo registrar la recepción. Inténtalo de nuevo.')
     } finally {
       setSaving(false)
     }
@@ -84,11 +84,11 @@ export function ReceiptsPage() {
   return (
     <section className="page">
       <header className="page__header">
-        <h1>Entradas</h1>
+        <h1>Recepción de mercadería</h1>
       </header>
 
       <form className="card receipts__form" noValidate onSubmit={handleSubmit}>
-        <h2>Lo que llegó hoy</h2>
+        <h2>Lo que llegó a la sede</h2>
         <div className="field">
           <label htmlFor="receipt-search">Buscar producto</label>
           <input
@@ -137,14 +137,14 @@ export function ReceiptsPage() {
           </p>
         ) : null}
         <button className="button receipts__submit" type="submit" disabled={saving || filled.length === 0}>
-          {saving ? 'Registrando…' : 'Confirmar entrada'}
+          {saving ? 'Registrando…' : 'Confirmar recepción'}
         </button>
       </form>
 
       <section className="card receipts__history" aria-labelledby="receipts-history-title">
-        <h2 id="receipts-history-title">Entradas de hoy</h2>
+        <h2 id="receipts-history-title">Recibido hoy</h2>
         {entries.length === 0 ? (
-          <p className="muted">Todavía no se registró ninguna entrada hoy.</p>
+          <p className="muted">Todavía no se registró ninguna recepción hoy.</p>
         ) : (
           <ul className="receipts__entries">
             {entries.map((entry) => (

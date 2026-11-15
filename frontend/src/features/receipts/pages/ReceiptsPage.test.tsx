@@ -28,8 +28,8 @@ describe('ReceiptsPage', () => {
 
     expect(await screen.findByText('Pan francés')).toBeInTheDocument()
     expect(screen.getByText('Stock: 2.5')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Confirmar entrada' })).toBeDisabled()
-    expect(screen.getByText('Todavía no se registró ninguna entrada hoy.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirmar recepción' })).toBeDisabled()
+    expect(screen.getByText('Todavía no se registró ninguna recepción hoy.')).toBeInTheDocument()
   })
 
   it('registra solo los productos con cantidad y acepta la coma decimal', async () => {
@@ -37,7 +37,7 @@ describe('ReceiptsPage', () => {
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '40' } })
     fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '12,5' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrada' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar recepción' }))
 
     await waitFor(() =>
       expect(registerReceipt).toHaveBeenCalledWith({
@@ -47,7 +47,7 @@ describe('ReceiptsPage', () => {
         ],
       }),
     )
-    expect(await screen.findByText('Entrada registrada: 2 productos.')).toBeInTheDocument()
+    expect(await screen.findByText('Recepción registrada: 2 productos.')).toBeInTheDocument()
     expect(screen.getByLabelText(/Pan francés/)).toHaveValue('')
     expect(listReceiptsOfDay).toHaveBeenCalledTimes(2)
   })
@@ -56,7 +56,7 @@ describe('ReceiptsPage', () => {
     render(<ReceiptsPage />)
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '0' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrada' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar recepción' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('mayor que 0')
     expect(registerReceipt).not.toHaveBeenCalled()
@@ -77,13 +77,13 @@ describe('ReceiptsPage', () => {
     render(<ReceiptsPage />)
     fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '3' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrada' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar recepción' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Elige una sede concreta.')
     expect(screen.getByLabelText(/Pan francés/)).toHaveValue('3')
   })
 
-  it('muestra las entradas de hoy', async () => {
+  it('muestra lo recibido hoy', async () => {
     vi.mocked(listReceiptsOfDay).mockResolvedValue([
       { productName: 'Pan francés', movement: { id: 'm1', occurredAt: '2026-11-15T15:00:00Z', quantity: '40.000', user: 'Luis Soto' } },
     ])
