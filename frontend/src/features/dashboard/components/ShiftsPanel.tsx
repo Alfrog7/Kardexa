@@ -85,6 +85,7 @@ export function ShiftsPanel({ dashboard }: { dashboard: Dashboard }) {
     <div className="shifts">
       <section className="card shifts__block" aria-labelledby="shifts-payments">
         <h3 id="shifts-payments">Recibido por medio de pago</h3>
+        <p className="muted">Lo que las trabajadoras anotaron al cerrar sus turnos, sumado por efectivo, Yape, Plin y transferencia.</p>
         <dl className="shifts__media">
           {MEDIA.map((medium) => (
             <div key={medium.key}>
@@ -102,6 +103,7 @@ export function ShiftsPanel({ dashboard }: { dashboard: Dashboard }) {
       {dashboard.sites.length > 1 ? (
         <section className="card shifts__block" aria-labelledby="shifts-sites">
           <h3 id="shifts-sites">Por sede</h3>
+          <p className="muted">Lo vendido en cada sede; en rojo, lo que faltó al cuadrar sus turnos.</p>
           <ul className="shifts__list" aria-label="Ventas por sede">
             {dashboard.sites.map((site) => (
               <li key={site.siteId} className="shifts__row">
@@ -122,7 +124,8 @@ export function ShiftsPanel({ dashboard }: { dashboard: Dashboard }) {
       ) : null}
 
       <section className="card shifts__block" aria-labelledby="shifts-list">
-        <h3 id="shifts-list">Turnos del rango</h3>
+        <h3 id="shifts-list">Turnos</h3>
+        <p className="muted">Quién llevó la caja, de qué hora a qué hora, y si lo recibido cuadró con lo esperado.</p>
         {failed ? <p className="alert">No se pudieron cargar los turnos.</p> : null}
         {!failed && !shifts ? <p className="muted">Cargando turnos…</p> : null}
         {shifts && shifts.length === 0 ? <p className="muted">No hubo turnos en este rango.</p> : null}

@@ -50,11 +50,11 @@ function validDate(value: string | null): value is string {
   return value !== null && ISO_DATE.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
 }
 
-/** Rango guardado en la URL; si falta o no es una fecha válida, los últimos 30 días. */
+/** Rango guardado en la URL; si falta o no es una fecha válida, el día de hoy. */
 export function rangeFromParams(params: URLSearchParams, today: string): DateRange {
   const from = params.get(FROM_PARAM)
   const to = params.get(TO_PARAM)
-  return validDate(from) && validDate(to) ? { from, to } : presetRange('last30', today)
+  return validDate(from) && validDate(to) ? { from, to } : presetRange('today', today)
 }
 
 const longDate = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })

@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
-import { login } from '../api/auth'
+import { isSetupPending, login } from '../api/auth'
 import { PasswordInput } from '@shared/ui/PasswordInput'
 import { AuthLayout } from '../components/AuthLayout'
 
@@ -14,6 +14,16 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string>()
   const [sending, setSending] = useState(false)
+  const [setupPending, setSetupPending] = useState(false)
+
+  // El acceso inicial solo se ofrece mientras el sistema no tiene ningún usuario.
+  useEffect(() => {
+    let current = true
+    void isSetupPending().then((pending) => current && setSetupPending(pending === true))
+    return () => {
+      current = false
+    }
+  }, [])
 
   if (user) {
     const from = (location.state as { from?: string } | null)?.from
@@ -73,9 +83,11 @@ export function LoginPage() {
           {sending ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>
-      <p className="muted auth__alt">
-        ¿Aún no hay cuentas? <Link to="/registro-inicial">Configura el acceso inicial</Link>
-      </p>
+      {setupPending ? (
+        <p className="muted auth__alt">
+          ¿Aún no hay cuentas? <Link to="/registro-inicial">Configura el acceso inicial</Link>
+        </p>
+      ) : null}
     </AuthLayout>
   )
 }

@@ -29,7 +29,10 @@ const open: Shift = {
   payments: null,
   receivedAmount: null,
   difference: null,
-  items: [],
+  items: [
+    { productId: 'pan', productName: 'Pan francés', openingStock: '40.000', leftover: null, soldByCount: null, unitPrice: null },
+    { productId: 'boc', productName: 'Bocadillo', openingStock: '10.000', leftover: null, soldByCount: null, unitPrice: null },
+  ],
 }
 
 const closed: Shift = {
@@ -50,6 +53,7 @@ const closed: Shift = {
 const products = [
   { id: 'pan', code: 'PAN-1', name: 'Pan francés', salePrice: '0.50', stock: '40.000' },
   { id: 'boc', code: 'BOC-1', name: 'Bocadillo', salePrice: '2.00', stock: '10.000' },
+  { id: 'emp', code: 'EMP-1', name: 'Empanada', salePrice: '3.00', stock: '60.000' },
 ]
 
 const luis = { id: 'u1', fullName: 'Luis Soto', email: 'luis@correo.com', role: 'EMPLOYEE' as const, active: true }
@@ -88,13 +92,13 @@ describe('ShiftPage', () => {
     expect(await screen.findByText('Turno abierto')).toBeInTheDocument()
     expect(openShift).toHaveBeenCalledTimes(1)
     expect(screen.getByText(/Luis Soto/)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Pan francés/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Pan francés/)).toBeInTheDocument()
   })
 
   it('con el turno abierto pide contar cada producto antes de cerrar', async () => {
     vi.mocked(getCurrentShift).mockResolvedValue(open)
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
@@ -105,8 +109,8 @@ describe('ShiftPage', () => {
   it('cierra con el conteo (acepta 0 y coma decimal) y muestra lo que debe haber en caja', async () => {
     vi.mocked(getCurrentShift).mockResolvedValue(open)
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
-    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0,5' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/^Bocadillo/), { target: { value: '0,5' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     fillPayments()
@@ -139,8 +143,8 @@ describe('ShiftPage', () => {
       new ApiError({ title: 'Sobrante mayor', status: 422, detail: 'El sobrante de «Pan francés» supera el stock.' }),
     )
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
-    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/^Bocadillo/), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     fillPayments()
     fireEvent.click(await screen.findByRole('button', { name: 'Cerrar turno' }))
@@ -153,8 +157,8 @@ describe('ShiftPage', () => {
   it('«Todavía no» vuelve al conteo sin cerrar el turno', async () => {
     vi.mocked(getCurrentShift).mockResolvedValue(open)
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
-    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/^Bocadillo/), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     fillPayments()
     fireEvent.click(await screen.findByRole('button', { name: 'Cerrar turno' }))
@@ -168,11 +172,11 @@ describe('ShiftPage', () => {
   it('muestra lo vendido al contar y avisa si sobra más de lo registrado', async () => {
     vi.mocked(getCurrentShift).mockResolvedValue(open)
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
 
     expect(screen.getByText(/Vendiste 35/)).toHaveTextContent('S/ 17.50')
 
-    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '11' } })
+    fireEvent.change(screen.getByLabelText(/^Bocadillo/), { target: { value: '11' } })
     expect(screen.getByText('No puede ser más de lo registrado.')).toBeInTheDocument()
   })
 
@@ -187,8 +191,8 @@ describe('ShiftPage', () => {
   it('no pasa a cerrar si falta un monto: el error nombra el medio de pago', async () => {
     vi.mocked(getCurrentShift).mockResolvedValue(open)
     renderPage()
-    fireEvent.change(await screen.findByLabelText(/Pan francés/), { target: { value: '5' } })
-    fireEvent.change(screen.getByLabelText(/Bocadillo/), { target: { value: '0' } })
+    fireEvent.change(await screen.findByLabelText(/^Pan francés/), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/^Bocadillo/), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     fireEvent.change(await screen.findByLabelText('Efectivo'), { target: { value: '20' } })
 
@@ -207,5 +211,34 @@ describe('ShiftPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Marcar ingreso' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya hay un turno abierto')
+  })
+
+  it('el conteo trae solo los productos del turno; uno que no salió en la lista se busca y se agrega', async () => {
+    vi.mocked(getCurrentShift).mockResolvedValue(open)
+    renderPage()
+    await screen.findByLabelText(/^Pan francés/)
+    expect(screen.queryByLabelText(/^Empanada/)).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Buscar o agregar producto'), { target: { value: 'empa' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar Empanada' }))
+
+    expect(await screen.findByLabelText(/^Empanada/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Buscar o agregar producto')).toHaveValue('')
+  })
+
+  it('el buscador filtra la lista del turno y un producto que no se cuenta se quita', async () => {
+    vi.mocked(getCurrentShift).mockResolvedValue(open)
+    renderPage()
+    await screen.findByLabelText(/^Pan francés/)
+
+    fireEvent.change(screen.getByLabelText('Buscar o agregar producto'), { target: { value: 'boc' } })
+    expect(screen.queryByLabelText(/^Pan francés/)).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Buscar o agregar producto'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'No contar Bocadillo' }))
+
+    expect(screen.queryByLabelText(/^Bocadillo/)).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/^Pan francés/), { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(await screen.findByText(/Paso 2 de 2/)).toBeInTheDocument()
   })
 })

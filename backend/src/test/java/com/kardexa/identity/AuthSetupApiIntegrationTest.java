@@ -1,6 +1,7 @@
 package com.kardexa.identity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -62,6 +63,20 @@ class AuthSetupApiIntegrationTest {
         setup("Luis Gómez", "luis@correo.com", "otraclave123")
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.rule").value("RF-01"));
+    }
+
+    @Test
+    @DisplayName("el estado del acceso inicial es público y deja de estar pendiente con el primer usuario")
+    void setupStatus() throws Exception {
+        mvc.perform(get("/api/v1/auth/setup-status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(true));
+
+        setup("Ana Pérez", "ana@correo.com", "secreta123").andExpect(status().isCreated());
+
+        mvc.perform(get("/api/v1/auth/setup-status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(false));
     }
 
     @Test

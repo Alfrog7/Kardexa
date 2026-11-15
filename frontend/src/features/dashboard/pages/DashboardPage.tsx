@@ -29,14 +29,14 @@ export function DashboardPage() {
 
   return (
     <section className="page home">
-      <header className="home__header">
-        <h1>Inicio</h1>
+      <h1 className="home__title">Inicio</h1>
+      <div>
+        <p className="home__greeting">
+          {greeting(now.getHours())}
+          {firstName ? `, ${firstName}` : ''}.
+        </p>
         <p className="home__date">{today}</p>
-      </header>
-      <p className="home__greeting">
-        {greeting(now.getHours())}
-        {firstName ? `, ${firstName}` : ''}.
-      </p>
+      </div>
       {admin ? (
         <BusinessSummary today={businessDate(now)} />
       ) : (

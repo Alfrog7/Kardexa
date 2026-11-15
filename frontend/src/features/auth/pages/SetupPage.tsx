@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router'
 import { ApiError } from '@shared/api/http'
 import { useSession } from '@shared/auth/session'
-import { login, registerFirstAdmin } from '../api/auth'
+import { isSetupPending, login, registerFirstAdmin } from '../api/auth'
 import { PasswordInput } from '@shared/ui/PasswordInput'
 import { AuthLayout } from '../components/AuthLayout'
 
@@ -18,9 +18,22 @@ export function SetupPage() {
   const [formError, setFormError] = useState<string>()
   const [closed, setClosed] = useState(false)
   const [sending, setSending] = useState(false)
+  const [alreadyConfigured, setAlreadyConfigured] = useState(false)
+
+  // Con cuentas existentes esta pantalla no tiene sentido: se vuelve al ingreso.
+  useEffect(() => {
+    let current = true
+    void isSetupPending().then((pending) => current && setAlreadyConfigured(pending === false))
+    return () => {
+      current = false
+    }
+  }, [])
 
   if (user) {
     return <Navigate to="/" replace />
+  }
+  if (alreadyConfigured && !sending) {
+    return <Navigate to="/ingresar" replace />
   }
 
   async function handleSubmit(event: FormEvent) {

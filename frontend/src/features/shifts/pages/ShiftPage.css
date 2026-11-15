@@ -196,3 +196,12 @@
     display: none;
   }
 }
+
+.shift__search {
+  max-width: 24rem;
+}
+
+.shift__remove {
+  flex: none;
+  min-height: 2.75rem;
+}

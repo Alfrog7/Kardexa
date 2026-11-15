@@ -39,6 +39,11 @@ public class UserService implements RegisterFirstAdminUseCase, LoginUseCase, Get
     }
 
     @Override
+    public boolean isSetupPending() {
+        return !users.existsAny();
+    }
+
+    @Override
     public LoginResult login(LoginCommand command) {
         String email = command.email() == null ? "" : command.email().strip();
         User user = users.findByEmail(email)

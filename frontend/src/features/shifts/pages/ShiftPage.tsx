@@ -57,6 +57,9 @@ export function ShiftPage() {
   const [closed, setClosed] = useState<Shift>()
   const [products, setProducts] = useState<CountProduct[]>([])
   const [leftovers, setLeftovers] = useState<Record<string, string>>({})
+  const [search, setSearch] = useState('')
+  const [added, setAdded] = useState<string[]>([])
+  const [removed, setRemoved] = useState<string[]>([])
   const [step, setStep] = useState<'count' | 'payments'>('count')
   const [paid, setPaid] = useState<Record<Medium, string>>({ cash: '', yape: '', plin: '', transfer: '' })
   const [note, setNote] = useState('')
@@ -76,6 +79,23 @@ export function ShiftPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Se cuenta lo que tenía stock al abrir el turno más lo que la trabajadora agregó; puede quitar lo que no salió.
+  const inShift = new Set((shift?.items ?? []).map((item) => item.productId))
+  const counted = products.filter(
+    (product) => (inShift.has(product.id) || added.includes(product.id)) && !removed.includes(product.id),
+  )
+  const term = search.trim().toLowerCase()
+  const matches = (product: CountProduct) =>
+    term === '' || product.name.toLowerCase().includes(term) || product.code.toLowerCase().includes(term)
+  const visible = counted.filter(matches)
+  const addable = term === '' ? [] : products.filter((product) => !counted.includes(product) && matches(product))
+
+  function addProduct(id: string) {
+    setAdded((current) => [...current, id])
+    setRemoved((current) => current.filter((item) => item !== id))
+    setSearch('')
+  }
+
   function messageOf(failure: unknown, fallback: string) {
     return failure instanceof ApiError ? failure.message : fallback
   }
@@ -87,6 +107,9 @@ export function ShiftPage() {
       const opened = await openShift()
       setClosed(undefined)
       setLeftovers({})
+      setSearch('')
+      setAdded([])
+      setRemoved([])
       setPaid({ cash: '', yape: '', plin: '', transfer: '' })
       setNote('')
       setStep('count')
@@ -103,8 +126,9 @@ export function ShiftPage() {
   /** Revisa el conteo y, si está completo, pide confirmar antes de cerrar. */
   function handleReview(event: FormEvent) {
     event.preventDefault()
-    const problem = products.find((product) => soldOf(product, leftovers[product.id] ?? '') === undefined)
+    const problem = counted.find((product) => soldOf(product, leftovers[product.id] ?? '') === undefined)
     if (problem) {
+      setSearch('')
       setError(
         `Revisa «${problem.name}»: escribe lo que te quedó (0 si no quedó nada) y que no sea más de lo registrado (${formatQuantity(problem.stock)}).`,
       )
@@ -132,7 +156,7 @@ export function ShiftPage() {
     try {
       const result = await closeShift(
         shift.id,
-        products.map((product) => ({
+        counted.map((product) => ({
           productId: product.id,
           leftover: parseLeftover(leftovers[product.id] ?? '') as string,
         })),
@@ -153,7 +177,7 @@ export function ShiftPage() {
     }
   }
 
-  const countedTotal = products.reduce((sum, product) => {
+  const countedTotal = counted.reduce((sum, product) => {
     const sold = soldOf(product, leftovers[product.id] ?? '')
     return sum + (sold === undefined ? 0 : sold * Number(product.salePrice))
   }, 0)
@@ -244,11 +268,40 @@ export function ShiftPage() {
                 Mira lo que queda de cada producto y escríbelo (0 si no quedó nada). El sistema calcula lo que vendiste: lo
                 registrado menos lo que te quedó. Si llegó mercadería que no anotaste, regístrala antes en Inventario.
               </p>
-              {products.length === 0 ? (
-                <p className="muted">No hay productos con stock en la sede: puedes cerrar el turno.</p>
+              <div className="field shift__search">
+                <label htmlFor="shift-search">Buscar o agregar producto</label>
+                <input
+                  id="shift-search"
+                  type="search"
+                  placeholder="Nombre o código"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
+              {addable.length > 0 ? (
+                <ul className="shift__list" aria-label="Productos que puedes agregar">
+                  {addable.slice(0, 8).map((product) => (
+                    <li key={product.id} className="shift__row">
+                      <span className="shift__product">
+                        <strong>{product.name}</strong>
+                        <span className="muted">Registrado: {formatQuantity(product.stock)}</span>
+                      </span>
+                      <button className="button button--secondary" type="button" onClick={() => addProduct(product.id)}>
+                        Agregar {product.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {counted.length === 0 ? (
+                <p className="muted">
+                  No hay productos para contar. Búscalos arriba si te quedó alguno; si no, puedes cerrar el turno.
+                </p>
+              ) : visible.length === 0 ? (
+                <p className="muted">Ningún producto del turno coincide con la búsqueda.</p>
               ) : (
                 <ul className="shift__list" aria-label="Productos">
-                  {products.map((product) => {
+                  {visible.map((product) => {
                     const text = leftovers[product.id] ?? ''
                     const sold = soldOf(product, text)
                     const wrong = text.trim() !== '' && sold === undefined
@@ -264,6 +317,14 @@ export function ShiftPage() {
                           ) : null}
                           {wrong ? <span className="shift__wrong">No puede ser más de lo registrado.</span> : null}
                         </label>
+                        <button
+                          className="link-button shift__remove"
+                          type="button"
+                          aria-label={`No contar ${product.name}`}
+                          onClick={() => setRemoved((current) => [...current, product.id])}
+                        >
+                          Quitar
+                        </button>
                         <input
                           id={`left-${product.id}`}
                           className="shift__quantity"
@@ -279,7 +340,7 @@ export function ShiftPage() {
                   })}
                 </ul>
               )}
-              {products.length > 0 ? (
+              {counted.length > 0 ? (
                 <p className="shift__preview">
                   Vendido por conteo hasta ahora: <strong>{formatMoney(String(countedTotal))}</strong>
                 </p>

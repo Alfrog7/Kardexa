@@ -16,10 +16,10 @@ describe('rango del inicio', () => {
     expect(matchingPreset({ from: '2026-01-01', to: '2026-01-31' }, today)).toBeUndefined()
   })
 
-  it('lee el rango de la URL y usa los últimos 30 días si falta o no es válido', () => {
+  it('lee el rango de la URL y usa hoy si falta o no es válido', () => {
     expect(rangeFromParams(new URLSearchParams('desde=2026-01-01&hasta=2026-01-31'), today)).toEqual({ from: '2026-01-01', to: '2026-01-31' })
-    expect(rangeFromParams(new URLSearchParams('desde=ayer&hasta=2026-01-31'), today)).toEqual(presetRange('last30', today))
-    expect(rangeFromParams(new URLSearchParams(''), today)).toEqual(presetRange('last30', today))
+    expect(rangeFromParams(new URLSearchParams('desde=ayer&hasta=2026-01-31'), today)).toEqual(presetRange('today', today))
+    expect(rangeFromParams(new URLSearchParams(''), today)).toEqual(presetRange('today', today))
   })
 
   it('formatea la fecha del negocio sin correrla de día', () => {

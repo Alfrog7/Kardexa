@@ -18,6 +18,19 @@ export async function login(email: string, password: string): Promise<Session> {
   return { token: response.accessToken, user: response.user }
 }
 
+/**
+ * `GET /auth/setup-status`: `true` solo mientras no existe ningún usuario. Ante cualquier fallo devuelve `undefined`
+ * (no se sabe): el servidor igual rechaza el registro inicial si ya hay cuentas.
+ */
+export async function isSetupPending(): Promise<boolean | undefined> {
+  try {
+    const status = await apiRequest<{ pending?: boolean }>('/auth/setup-status')
+    return typeof status?.pending === 'boolean' ? status.pending : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** `POST /auth/setup` (HU-01): crea al primer administrador; con usuarios existentes la API responde 403. */
 export async function registerFirstAdmin(fullName: string, email: string, password: string): Promise<SessionUser> {
   return apiRequest<SessionUser>('/auth/setup', {

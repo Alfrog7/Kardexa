@@ -36,6 +36,24 @@ security:
   - bearerAuth: []
 
 paths:
+  /auth/setup-status:
+    get:
+      tags: [auth]
+      operationId: getSetupStatus
+      summary: Dice si falta crear al primer administrador
+      description: Público. `pending` es `true` solo mientras no existe ningún usuario; el panel ofrece el acceso inicial únicamente entonces.
+      security: []
+      responses:
+        '200':
+          description: Estado del acceso inicial
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pending]
+                properties:
+                  pending: { type: boolean }
+
   /auth/setup:
     post:
       tags: [auth]

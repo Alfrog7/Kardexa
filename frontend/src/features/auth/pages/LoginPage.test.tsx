@@ -102,6 +102,21 @@ describe('ingreso y sesión (HU-02)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Ingresa a tu negocio' })).toBeInTheDocument()
   })
 
+  it('el acceso inicial se ofrece solo mientras el sistema no tiene usuarios', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ pending: true })))
+    renderApp('/ingresar')
+    expect(await screen.findByRole('link', { name: 'Configura el acceso inicial' })).toBeInTheDocument()
+  })
+
+  it('con cuentas existentes no se ofrece crear un administrador', async () => {
+    const fetchMock = vi.fn(async () => Response.json({ pending: false }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderApp('/ingresar')
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    expect(screen.queryByRole('link', { name: 'Configura el acceso inicial' })).not.toBeInTheDocument()
+  })
+
   it('un EMPLEADO puede crear productos, igual que el administrador', async () => {
     vi.stubGlobal(
       'fetch',

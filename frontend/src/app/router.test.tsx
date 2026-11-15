@@ -11,6 +11,11 @@ const adminSession: Session = {
   user: { id: '1', fullName: 'Ana Pérez', email: 'ana@correo.com', role: 'ADMIN', active: true },
 }
 
+const employeeSession: Session = {
+  token: 'token-empleada',
+  user: { id: '2', fullName: 'Luis Gómez', email: 'luis@correo.com', role: 'EMPLOYEE', active: true },
+}
+
 function renderAt(path: string, session: Session | null = adminSession) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] })
   render(
@@ -28,16 +33,21 @@ describe('rutas del panel', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Módulos' })
-    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario', 'Compras', 'Proveedores']) {
+    for (const label of ['Inicio', 'Ventas', 'Productos', 'Categorías', 'Inventario']) {
       expect(nav).toHaveTextContent(label)
+    }
+    // El administrador supervisa: no lleva caja ni compra mercadería.
+    for (const label of ['Mi turno', 'Compras', 'Proveedores']) {
+      expect(nav).not.toHaveTextContent(label)
     }
   })
 
-  it('/ventas muestra la pantalla de ventas con el buscador de productos', () => {
-    renderAt('/ventas')
+  it('/ventas muestra el historial y, a la trabajadora, el buscador para vender', () => {
+    renderAt('/ventas', employeeSession)
 
     expect(screen.getByRole('heading', { level: 1, name: 'Ventas' })).toBeInTheDocument()
     expect(screen.getByLabelText('Agregar producto')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).toHaveTextContent('Mi turno')
   })
 
   it('/inventario muestra la pantalla de inventario', () => {

@@ -45,6 +45,18 @@ async function addProduct(name: string) {
   fireEvent.click(await screen.findByRole('button', { name }))
 }
 
+/** Quien registra ventas es la trabajadora; el administrador solo las consulta. */
+function renderAsEmployee() {
+  const session = {
+    user: { id: 'u1', fullName: 'Ana Pérez', email: 'ana@bodega.pe', role: 'EMPLOYEE' as const },
+  } as unknown as React.ContextType<typeof SessionContext>
+  render(
+    <SessionContext.Provider value={session}>
+      <SalesPage />
+    </SessionContext.Provider>,
+  )
+}
+
 describe('SalesPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -60,7 +72,7 @@ describe('SalesPage', () => {
 
   it('registra una venta de dos productos con el total en vivo y muestra su número', async () => {
     vi.mocked(registerSale).mockResolvedValue(sale)
-    render(<SalesPage />)
+    renderAsEmployee()
 
     await addProduct('Arroz')
     await addProduct('Aceite')
@@ -85,7 +97,7 @@ describe('SalesPage', () => {
   })
 
   it('marca una cantidad mayor que el stock antes de enviar', async () => {
-    render(<SalesPage />)
+    renderAsEmployee()
 
     await addProduct('Aceite')
     fireEvent.change(screen.getByLabelText('Cantidad de Aceite'), { target: { value: '3' } })
@@ -96,7 +108,7 @@ describe('SalesPage', () => {
   })
 
   it('no deja agregar un producto sin stock ni enviar una venta vacía', async () => {
-    render(<SalesPage />)
+    renderAsEmployee()
 
     fireEvent.change(screen.getByLabelText('Agregar producto'), { target: { value: 'Sal' } })
     expect(((await screen.findByRole('button', { name: 'Sal' })) as HTMLButtonElement).disabled).toBe(true)
@@ -111,7 +123,7 @@ describe('SalesPage', () => {
       new ApiError({ status: 422, title: 'Stock insuficiente', rule: 'RN-01', detail: 'Stock insuficiente para "Arroz": disponible 1, solicitado 2.' }),
     )
     vi.mocked(registerSale).mockRejectedValueOnce(new ApiError({ status: 409, title: 'Conflicto' }))
-    render(<SalesPage />)
+    renderAsEmployee()
 
     await addProduct('Arroz')
     fireEvent.click(screen.getByRole('button', { name: 'Registrar venta' }))
@@ -158,7 +170,7 @@ describe('SalesPage', () => {
 
   it('vuelve a cargar el historial después de registrar una venta', async () => {
     vi.mocked(registerSale).mockResolvedValue(sale)
-    render(<SalesPage />)
+    renderAsEmployee()
     await screen.findByText('No hay ventas en estas fechas.')
     const calls = vi.mocked(listSales).mock.calls.length
 
@@ -231,5 +243,15 @@ describe('SalesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }))
 
     await waitFor(() => expect(exportSales).toHaveBeenCalledWith('2026-11-01', expect.any(String), 'u2'))
+  })
+
+  it('el ADMIN no registra ventas: ve el historial con lo que se vendió', async () => {
+    vi.mocked(listSales).mockResolvedValue(page([sale]))
+    render(<SalesPage />)
+
+    const table = within(await screen.findByRole('table', { name: 'Ventas' }))
+    expect(table.getByText('Arroz × 2, Aceite × 1')).toBeTruthy()
+    expect(screen.queryByLabelText('Agregar producto')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Registrar venta' })).toBeNull()
   })
 })

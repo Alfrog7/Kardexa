@@ -52,10 +52,14 @@ export function SalesPage() {
         <h1>Ventas</h1>
       </header>
 
-      <div className="card sales__new">
-        <h2>Nueva venta</h2>
-        <SaleForm key={formKey} onSubmit={handleRegister} />
-      </div>
+      {admin ? (
+        <p className="muted">Aquí ves lo que vendieron tus trabajadoras. Las ventas las registran ellas desde su caja.</p>
+      ) : (
+        <div className="card sales__new">
+          <h2>Nueva venta</h2>
+          <SaleForm key={formKey} onSubmit={handleRegister} />
+        </div>
+      )}
 
       <SaleHistory today={today} version={version} onOpen={openReceipt} />
 
