@@ -64,6 +64,17 @@ describe('sede elegida', () => {
 
     expect(fetchMock.mock.calls.map((call) => call[0])).toEqual(['/api/v1/products', '/api/v1/products'])
   })
+
+  it('con «todas las sedes» no se puede registrar una operación', async () => {
+    const fetchMock = mockFetchEach(() => json({}, 201))
+    setActiveSite({ id: null, name: 'Todas las sedes' })
+
+    await expect(apiRequest('/sales', { method: 'POST', body: JSON.stringify({ items: [] }) })).rejects.toThrow(
+      /Elige una sede concreta/,
+    )
+    await expect(apiRequest('/stock-adjustments', { method: 'POST', body: '{}' })).rejects.toThrow()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('apiRequest', () => {
