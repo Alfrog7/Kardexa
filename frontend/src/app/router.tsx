@@ -6,6 +6,7 @@ import { InventoryPage } from '@features/inventory'
 import { PurchasesPage, SuppliersPage } from '@features/purchasing'
 import { UsersPage } from '@features/users'
 import { SalesPage } from '@features/sales'
+import { SitesPage } from '@features/sites'
 import { PanelLayout } from './layout/PanelLayout'
 import { NotFoundPage } from './NotFoundPage'
 import { RequireAdmin } from './RequireAdmin'
@@ -33,6 +34,7 @@ export const appRoutes: RouteObject[] = [
             element: <RequireAdmin />,
             children: [
               { path: routes.purchases, element: <PurchasesPage /> },
+              { path: routes.sites, element: <SitesPage /> },
               { path: routes.users, element: <UsersPage /> },
             ],
           },

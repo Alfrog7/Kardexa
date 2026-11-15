@@ -52,6 +52,21 @@ describe('rutas del panel', () => {
     vi.unstubAllGlobals()
   })
 
+  it('/sedes es solo del administrador: se ve en su menú y no en el del empleado', () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json([])))
+    renderAt('/sedes')
+    expect(screen.getByRole('heading', { level: 1, name: 'Sedes' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).toHaveTextContent('Sedes')
+    vi.unstubAllGlobals()
+  })
+
+  it('un empleado que entra a /sedes vuelve al inicio y no ve el enlace', () => {
+    renderAt('/sedes', { ...adminSession, user: { ...adminSession.user, role: 'EMPLOYEE' } })
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).not.toHaveTextContent('Sedes')
+  })
+
   it('un empleado que entra a /compras vuelve al inicio y no ve el enlace', () => {
     renderAt('/compras', { ...adminSession, user: { ...adminSession.user, role: 'EMPLOYEE' } })
 
